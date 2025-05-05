@@ -1,0 +1,7 @@
+baseURL = 'https://chei-l.github.io/'
+languageCode = 'en-us'
+title = 'Chei Site'
+theme = "neopost"
+
+[params]
+theme = "light-purple"
