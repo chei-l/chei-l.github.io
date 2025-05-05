@@ -1,0 +1,482 @@
+---
+title: "???"
+date: "2025-02-01T10:00:00-03:00"
+author: "chei"
+---
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/tone"></script>
+    <style>
+        body {
+            font-family: 'Press Start 2P', cursive;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+            flex-direction: column;
+            overflow-x: hidden;
+            transition: background-color 0.5s ease;
+        }
+
+        .game-title {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .subject-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .subject-button {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        .subject-button:hover {
+            background-color: #367c39;
+        }
+
+        .subject-button.active {
+            background-color: #e65100;
+        }
+
+        #questionText {
+            font-size: 1.2rem;
+            color: #555;
+            margin-bottom: 1rem;
+            text-align: center;
+            min-height: 1.5em;
+        }
+
+        #answerInput {
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: 2px solid #4CAF50;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            width: 80%;
+            max-width: 300px;
+            font-family: 'Press Start 2P', cursive;
+            text-align: center;
+            display: none;
+        }
+
+        #checkButton {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            background-color: #008CBA;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            font-family: 'Press Start 2P', cursive;
+            display: none;
+        }
+
+        #checkButton:hover {
+            background-color: #0056b3;
+        }
+
+        #message {
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 1rem;
+            min-height: 1.2em;
+            text-align: center;
+        }
+
+        .game-over-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .game-over-content {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .game-over-title {
+            font-size: 1.5rem;
+            color: #ff0000;
+            margin-bottom: 1rem;
+        }
+
+        .game-over-text {
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
+
+        .new-game-button {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            background-color: #008CBA;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        .new-game-button:hover {
+            background-color: #0056b3;
+        }
+
+        .falling-angel {
+            position: absolute;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: auto;
+            transition: top 2s ease-in;
+            z-index: 5;
+            display: none;
+        }
+
+        .falling-sweets {
+            position: absolute;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: auto;
+            z-index: 6;
+            pointer-events: none;
+            display: none;
+        }
+
+        .rabbit-animation {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: auto;
+            z-index: 7;
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .game-title {
+                font-size: 1.5rem;
+            }
+
+            .subject-buttons {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .subject-button {
+                font-size: 0.9rem;
+                padding: 0.75rem 1rem;
+            }
+
+            #questionText {
+                font-size: 1rem;
+            }
+
+            #answerInput {
+                font-size: 0.9rem;
+                padding: 0.5rem;
+            }
+
+            #checkButton {
+                font-size: 0.9rem;
+                padding: 0.75rem 1rem;
+            }
+
+            #message {
+                font-size: 0.9rem;
+            }
+
+            .game-over-content {
+                padding: 1rem;
+            }
+
+            .game-over-title {
+                font-size: 1.2rem;
+            }
+
+            .game-over-text {
+                font-size: 0.9rem;
+            }
+
+            .new-game-button {
+                font-size: 0.9rem;
+                padding: 0.75rem 1rem;
+            }
+
+            .falling-angel {
+                width: 80px;
+            }
+
+            .falling-sweets {
+                width: 40px;
+            }
+
+            .rabbit-animation {
+                width: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h2 class="game-title">재밌고! 기억력도 쑥쑥 넣는. 귀엽고 똑똑한 어린이가 만든. 초딩 재밌는 게임!</h2>
+    <div class="subject-buttons">
+        <button class="subject-button" data-subject="math">수학</button>
+        <button class="subject-button" data-subject="korean">국어</button>
+        <button class="subject-button" data-subject="english">영어</button>
+    </div>
+    <div id="questionText">과목을 선택해 줘!</div>
+    <input type="text" id="answerInput" placeholder="답을 입력해 줘">
+    <button id="checkButton">확인</button>
+    <div id="message">정답을 기다리고 있어!</div>
+
+    <div class="game-over-overlay">
+        <div class="game-over-content" style="display: none;">
+            <h3 class="game-over-title">게임 끝!</h3>
+            <p class="game-over-text">모든 문제를 풀었어! 정말 대단해!</p>
+            <button class="new-game-button">새 게임 시작</button>
+        </div>
+    </div>
+
+    <img id="fallingAngel" class="falling-angel" src="https://clipart-library.com/images/kiKoyBGrT.png" alt="Falling Angel">
+    <img class="falling-sweets" src="https://cdn-icons-png.flaticon.com/512/2518/2518894.png" alt="Candy">
+    <img class="falling-sweets" src="https://cdn-icons-png.flaticon.com/512/2518/2518918.png" alt="Lollipop">
+    <img class="falling-sweets" src="https://cdn-icons-png.flaticon.com/512/901/901352.png" alt="Chocolate">
+    <img class="falling-sweets" src="https://cdn-icons-png.flaticon.com/512/1013/1013419.png" alt="Jellybean">
+    <img class="rabbit-animation" src="https://media.giphy.com/media/3o7527pa7qs9kCG78A/giphy.gif" alt="Rabbit">
+
+    <script>
+        const subjectButtons = document.querySelectorAll('.subject-button');
+        const questionText = document.getElementById('questionText');
+        const answerInput = document.getElementById('answerInput');
+        const checkButton = document.getElementById('checkButton');
+        const messageElement = document.getElementById('message');
+        const gameOverOverlay = document.querySelector('.game-over-overlay');
+        const newGameButton = document.querySelector('.new-game-button');
+        const gameOverText = document.querySelector('.game-over-text');
+        const fallingAngel = document.getElementById('fallingAngel');
+        const fallingSweets = document.querySelectorAll('.falling-sweets');
+        const rabbitAnimation = document.querySelector('.rabbit-animation');
+
+        let currentSubject = '';
+        let currentQuestion;
+        let correctAnswer;
+        let correctAnswersCount = 0;
+        const numberOfQuestions = 5;
+        let isFalling = false;
+
+        // 효과음 생성
+        const correctSound = new Tone.Synth({
+            oscillator: { type: 'triangle' },
+            envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.2 }
+        }).toDestination();
+
+        const wrongSound = new Tone.Synth({
+            oscillator: { type: 'square' },
+            envelope: { attack: 0.001, decay: 0.1, sustain: 0.3, release: 0.5 }
+        }).toDestination();
+
+        function initializeGame() {
+            correctAnswersCount = 0;
+            gameOverOverlay.style.display = 'none';
+            document.body.classList.remove('game-over');
+            answerInput.style.display = 'block';
+            checkButton.style.display = 'block';
+            fallingAngel.style.display = 'none';
+            fallingSweets.forEach(sweet => sweet.style.display = 'none');
+            rabbitAnimation.style.display = 'none';
+            document.body.style.backgroundColor = '#f0f0f0';
+            if (currentSubject === 'math') {
+                generateMathQuestion();
+            } else if (currentSubject === 'korean') {
+                generateKoreanQuestion();
+            } else if (currentSubject === 'english') {
+                generateEnglishQuestion();
+            }
+        }
+
+        subjectButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                currentSubject = this.dataset.subject;
+                subjectButtons.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                initializeGame();
+            });
+        });
+
+        function generateMathQuestion() {
+            const num1 = Math.floor(Math.random() * 10) + 1;
+            const num2 = Math.floor(Math.random() * 6) + 1;
+            const operation = ['+', '-', '*'][Math.floor(Math.random() * 3)];
+
+            let questionString;
+            if (operation === '+') {
+                questionString = `${num1} 더하기 ${num2}는 얼마일까?`;
+                correctAnswer = num1 + num2;
+            } else if (operation === '-') {
+                const maxNum = Math.max(num1, num2);
+                const minNum = Math.min(num1, num2);
+                questionString = `${maxNum} 빼기 ${minNum}는 얼마일까?`;
+                correctAnswer = maxNum - minNum;
+            } else {
+                questionString = `${num1} 곱하기 ${num2}는 얼마일까?`;
+                correctAnswer = num1 * num2;
+            }
+
+            questionText.textContent = questionString;
+            answerInput.value = '';
+            messageElement.textContent = '답을 입력해 줘!';
+            answerInput.focus();
+            questions.math.push(questionString);
+        }
+
+        function generateKoreanQuestion() {
+            const words = ['고진감래', '군계일학', '낭중지추', '면종복배', '사면초가'];
+            const randomWord = words[Math.floor(Math.random() * words.length)];
+            questionString = `${randomWord}는 무슨 뜻일까?`;
+            correctAnswer = randomWord;
+            questionText.textContent = questionString;
+            answerInput.value = '';
+            messageElement.textContent = '답을 입력해 줘!';
+            answerInput.focus();
+            questions.korean.push(questionString);
+        }
+
+        function generateEnglishQuestion() {
+            const words = [
+                { word: 'altruistic', meaning: '이타적인' },
+                { word: 'ineffable', meaning: '말로 표현할 수 없는' },
+                { word: 'laconic', meaning: '간결한' },
+                { word: 'obfuscate', meaning: '흐리게 하다' },
+                { word: 'ubiquitous', meaning: '어디에나 있는' }
+            ];
+            const randomWord = words[Math.floor(Math.random() * words.length)];
+            questionString = `${randomWord.word}는 무슨 뜻일까?`;
+            correctAnswer = randomWord.meaning;
+            questionText.textContent = questionString;
+            answerInput.value = '';
+            messageElement.textContent = '답을 입력해 줘!';
+            answerInput.focus();
+            questions.english.push(questionString);
+        }
+
+        function checkAnswer() {
+            const userAnswer = answerInput.value.trim();
+
+            if (!userAnswer) {
+                messageElement.textContent = '답을 입력해 줘!';
+                answerInput.focus();
+                return;
+            }
+
+            if (userAnswer === correctAnswer.toString()) {
+                messageElement.textContent = '맞았어! 아주 잘했어!';
+                correctAnswersCount++;
+                correctSound.triggerAttackRelease('C4', '8n');
+                //showFallingSweets(); // Remove this
+                //showRabbitAnimation(); // Remove this
+            } else {
+                messageElement.textContent = `틀렸어! 정답은 ${correctAnswer}이야. 다시 생각해 봐!`;
+                wrongSound.triggerAttackRelease('G2', '4n');
+                //showFallingAngel('sad');  // Remove this
+            }
+
+            if (correctAnswersCount < numberOfQuestions) {
+                setTimeout(initializeGame, 1000);
+            } else {
+                gameOverText.textContent = '모든 문제를 풀었어! 정말 대단해!';
+                gameOverOverlay.style.display = 'flex';
+                document.body.classList.add('game-over');
+            }
+        }
+
+        function showFallingAngel(type) {
+            fallingAngel.style.display = 'block';
+            fallingAngel.style.top = '-100px';
+
+            if (type === 'sad') {
+                document.body.style.backgroundColor = '#222';
+                fallingAngel.src = "https://www.clipartmax.com/png/middle/167-1671526_satan-face-clipart-satanic-face-png.png";
+            } else {
+                document.body.style.backgroundColor = '#87CEEB';
+                fallingAngel.src = "https://clipart-library.com/images/kiKoyBGrT.png";
+            }
+
+            setTimeout(() => {
+                fallingAngel.style.top = '100%';
+            }, 10);
+
+            setTimeout(() => {
+                fallingAngel.style.display = 'none';
+                if (type === 'sad') {
+                    document.body.style.backgroundColor = '#f0f0f0';
+                }
+            }, 2000);
+        }
+
+        function showFallingSweets() {
+            fallingSweets.forEach(sweet => {
+                sweet.style.display = 'block';
+                sweet.style.top = '-100px';
+                sweet.style.left = `${Math.random() * 100}%`;
+                sweet.style.transition = `top ${Math.random() * 2 + 1}s linear`;
+
+                setTimeout(() => {
+                    sweet.style.top = '100%';
+                }, 10);
+
+                setTimeout(() => {
+                    sweet.style.display = 'none';
+                }, 2000);
+            });
+        }
+
+        function showRabbitAnimation() {
+            rabbitAnimation.style.display = 'block';
+            setTimeout(() => {
+                rabbitAnimation.style.display = 'none';
+            }, 6000);
+        }
+
+        checkButton.addEventListener('click', checkAnswer);
+        newGameButton.addEventListener('click', () => {
+            correctAnswersCount = 0;
+            gameOverOverlay.style.display = 'none';
+            document.body.classList.remove('game-over');
+            initializeGame();
+        });
+    </script>
+</body>
