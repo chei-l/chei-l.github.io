@@ -1,0 +1,565 @@
+---
+title: "병원게임"
+date: "2025-05-25"
+author: "chei"
+---
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>귀여운 병원 게임</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <style>
+        /* 기본 폰트 설정 및 배경색 */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fce4ec; /* 연한 핑크 배경 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* 말풍선 꼬리 부분은 Tailwind로 직접 구현하기 어려워 커스텀 CSS 유지 */
+        .message-box::after {
+            content: '';
+            position: absolute;
+            bottom: -15px; /* 박스 아래에 위치 */
+            left: 50%;
+            transform: translateX(-50%) rotate(45deg);
+            width: 20px;
+            height: 20px;
+            background-color: #fff; /* 기본 말풍선 배경색과 동일 */
+            border-right: 2px solid #f8bbd0; /* 기본 말풍선 테두리색과 동일 */
+            border-bottom: 2px solid #f8bbd0; /* 기본 말풍선 테두리색과 동일 */
+            z-index: -1; /* 박스 뒤로 보내기 */
+        }
+
+        /* 메시지 타입별 말풍선 꼬리 색상 */
+        .message-box.type-green::after {
+            background-color: #e8f5e9;
+            border-color: #a5d6a7;
+        }
+        .message-box.type-red::after {
+            background-color: #ffebee;
+            border-color: #ef9a9a;
+        }
+        .message-box.type-orange::after {
+            background-color: #fff3e0;
+            border-color: #ffcc80;
+        }
+
+        /* 부상 부위 깜빡이는 애니메이션 */
+        @keyframes pulse {
+            from { transform: scale(1); opacity: 1; }
+            to { transform: scale(1.1); opacity: 0.8; }
+        }
+        .injury-spot {
+            animation: pulse 1.5s infinite alternate; /* 깜빡이는 애니메이션 */
+        }
+
+        /* 새로운 이모지 애니메이션 */
+        @keyframes bounce-emoji {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-10px) scale(1.1); }
+        }
+        .animate-bounce-emoji {
+            animation: bounce-emoji 0.5s ease-out;
+        }
+
+        @keyframes shake-emoji {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        .animate-shake-emoji {
+            animation: shake-emoji 0.3s ease-in-out;
+        }
+
+        /* 부상 부위 팝 애니메이션 */
+        @keyframes pop-injury {
+            0% { transform: scale(1); opacity: 1; background-color: rgba(255, 0, 0, 0.3); }
+            50% { transform: scale(1.3); opacity: 1; background-color: rgba(255, 0, 0, 0.8); } /* 더 밝은 빨간색 */
+            100% { transform: scale(1); opacity: 1; background-color: rgba(255, 0, 0, 0.3); }
+        }
+        .animate-pop-injury {
+            animation: pop-injury 0.3s ease-out; /* 빠른 팝 효과 */
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 768px) {
+            .message-box {
+                top: 2% !important; /* 모바일에서 위쪽으로 조금 더 올림 */
+            }
+            .message-box::after {
+                bottom: -10px; /* 꼬리 크기 조정 */
+                width: 15px;
+                height: 15px;
+            }
+        }
+    </style>
+</head>
+<body class="flex justify-center items-center min-h-screen p-5 bg-pink-100">
+    <div class="game-container bg-white rounded-3xl shadow-xl p-8 flex flex-col items-center gap-6 max-w-3xl w-full">
+        <h1 class="text-4xl font-bold text-pink-700 mb-6">🏥 귀여운 병원 게임 🏥</h1>
+
+        <div class="score-board bg-blue-100 py-4 px-8 rounded-xl text-xl font-bold text-blue-800 mt-4">
+            치료한 환자 수: <span id="treatedPatientsCount">0</span>명
+        </div>
+
+        <div class="tools-container flex flex-wrap justify-center gap-4 mb-6" id="toolsContainer">
+            </div>
+
+        <div class="patient-area bg-pink-50 rounded-2xl p-10 flex flex-col items-center justify-center min-h-72 w-full max-w-xl relative overflow-hidden" id="patientArea">
+            <div class="message-box bg-white text-gray-800 p-4 rounded-3xl text-xl font-bold text-center min-h-16 flex items-center justify-center w-fit max-w-sm shadow-sm absolute top-5 left-1/2 -translate-x-1/2 z-30 border-2 border-pink-200" id="messageBox">
+                환자를 치료해 주세요!
+            </div>
+            <div class="patient-emoji text-9xl mb-5 relative z-10" id="patientEmoji"></div>
+            <div class="injury-spot hidden bg-red-300/50 rounded-full w-20 h-20 absolute cursor-pointer flex justify-center items-center text-5xl z-20" id="injurySpot"></div>
+            <div class="waiting-message hidden text-3xl font-bold text-purple-700 text-center mt-5" id="waitingMessage">새로운 환자가 오고 있어요!</div>
+        </div>
+    </div>
+
+    <script>
+        // 게임에 사용될 도구들 정보
+        const tools = [
+            { name: '밴드', icon: '🩹', correctFor: '상처' },
+            { name: '핀셋', icon: '🤏', correctFor: '가시' },
+            { name: '주사기', icon: '💉', correctFor: '독감' },
+            { name: '붕대', icon: '🤕', correctFor: '골절' },
+            { name: '약', icon: '💊', correctFor: '두통' },
+            { name: '솜', icon: '☁️', correctFor: '벌레물림' },
+            { name: '얼음찜질', icon: '🧊', correctFor: '멍' },
+            { name: '안약', icon: '👁️', correctFor: '눈병' },
+            { name: '화상연고', icon: '🧴', correctFor: '화상' }, // 새로운 도구
+            { name: '파스', icon: '🩹', correctFor: '발목삐끗' }, // 새로운 도구
+            { name: '음식', icon: '🍔', correctFor: '배고픔' }, // 새로운 도구
+            { name: '베개', icon: '🛌', correctFor: '졸림' }, // 새로운 도구
+            { name: '비타민', icon: '🍊', correctFor: '피곤함' }, // 새로운 도구
+            { name: '물', icon: '💧', correctFor: '딸꾹질' }, // 새로운 도구
+            { name: '연고', icon: '🧴', correctFor: '피부가려움' }, // 새로운 도구
+            { name: '멀미약', icon: '🤢', correctFor: '멀미' } // 새로운 도구
+        ];
+
+        // 게임에 사용될 환자들 정보 (메시지 추가)
+        const patients = [
+            { type: '상처', injuryPart: '팔', correctTool: '밴드', patientEmoji: '👧', injuryEmoji: '🩸', injuryPosition: { top: '60%', left: '30%' }, message: '팔에 피가 나요! 아파요 😭' },
+            { type: '가시', injuryPart: '손', correctTool: '핀셋', patientEmoji: '👦', injuryEmoji: '🌵', injuryPosition: { top: '70%', left: '70%' }, message: '손에 가시가 박혔어요 찔렸어요 😖' },
+            { type: '독감', injuryPart: '몸', correctTool: '주사기', patientEmoji: '🧒', injuryEmoji: '🤒', injuryPosition: { top: '40%', left: '50%' }, message: '열이 나고 으슬으슬해요 😷' },
+            { type: '골절', injuryPart: '다리', correctTool: '붕대', patientEmoji: '🧑', injuryEmoji: '🦴', injuryPosition: { top: '80%', left: '50%' }, message: '다리가 부러진 것 같아요 뼈가 아파요 😫' },
+            { type: '두통', injuryPart: '머리', correctTool: '약', patientEmoji: '👩', injuryEmoji: '🤯', injuryPosition: { top: '20%', left: '50%' }, message: '머리가 너무 아파요 띵해요 😵' },
+            { type: '벌레물림', injuryPart: '목', correctTool: '솜', patientEmoji: '👨', injuryEmoji: '🐝', injuryPosition: { top: '30%', left: '60%' }, message: '벌에 물려서 목이 간지러워요 🐝' },
+            { type: '멍', injuryPart: '이마', correctTool: '얼음찜질', patientEmoji: '👶', injuryEmoji: '🤕', injuryPosition: { top: '30%', left: '50%' }, message: '쿵! 이마에 멍들었어요 🤕' },
+            { type: '눈병', injuryPart: '눈', correctTool: '안약', patientEmoji: '👵', injuryEmoji: '👀', injuryPosition: { top: '35%', left: '45%' }, message: '눈이 너무 가려워요 😩' },
+            { type: '배탈', injuryPart: '배', correctTool: '약', patientEmoji: '🧓', injuryEmoji: '🤢', injuryPosition: { top: '60%', left: '50%' }, message: '배가 너무 아파요 꾸르륵 🤢' },
+            { type: '치통', injuryPart: '이빨', correctTool: '약', patientEmoji: '👴', injuryEmoji: '🦷', injuryPosition: { top: '45%', left: '40%' }, message: '이가 너무 아파요 😬' },
+            // 새로 추가된 환자들
+            { type: '목감기', injuryPart: '목', correctTool: '약', patientEmoji: '👩‍🦰', injuryEmoji: '🤧', injuryPosition: { top: '35%', left: '55%' }, message: '목이 칼칼하고 아파요 🤧' },
+            { type: '콧물', injuryPart: '코', correctTool: '약', patientEmoji: '👱‍♀️', injuryEmoji: '👃', injuryPosition: { top: '30%', left: '50%' }, message: '콧물이 줄줄 흘러요 💧' },
+            { type: '감기', injuryPart: '몸', correctTool: '약', patientEmoji: '🧑‍🦱', injuryEmoji: '🥶', injuryPosition: { top: '50%', left: '50%' }, message: '으슬으슬 감기 걸렸어요 🤒' },
+            { type: '화상', injuryPart: '손', correctTool: '화상연고', patientEmoji: '👩‍🦳', injuryEmoji: '🔥', injuryPosition: { top: '65%', left: '60%' }, message: '뜨거워요! 손에 화상 입었어요 ♨️' },
+            { type: '발목삐끗', injuryPart: '발목', correctTool: '파스', patientEmoji: '👨‍🦰', injuryEmoji: '🦶', injuryPosition: { top: '85%', left: '40%' }, message: '발목을 삐끗했어요 삐끗 🦶' },
+            { type: '배고픔', injuryPart: '배', correctTool: '음식', patientEmoji: '👧', injuryEmoji: '🍔', injuryPosition: { top: '60%', left: '50%' }, message: '배가 너무 고파요! 꼬르륵 🤤' },
+            { type: '졸림', injuryPart: '머리', correctTool: '베개', patientEmoji: '😴', injuryEmoji: '💤', injuryPosition: { top: '25%', left: '50%' }, message: '너무 졸려요 😴 잠이 와요' },
+            { type: '피곤함', injuryPart: '몸', correctTool: '비타민', patientEmoji: '😩', injuryEmoji: '⚡', injuryPosition: { top: '50%', left: '50%' }, message: '너무 피곤해요 에너지가 없어요 😩' },
+            { type: '딸꾹질', injuryPart: '몸', correctTool: '물', patientEmoji: '😵', injuryEmoji: '💧', injuryPosition: { top: '55%', left: '50%' }, message: '딸꾹딸꾹 멈추지 않아요 💦' },
+            { type: '피부가려움', injuryPart: '팔', correctTool: '연고', patientEmoji: ' scratching_head', injuryEmoji: '✨', injuryPosition: { top: '60%', left: '30%' }, message: '피부가 너무 가려워요 긁적긁적 😫' },
+            { type: '멀미', injuryPart: '머리', correctTool: '멀미약', patientEmoji: '🤢', injuryEmoji: '🤮', injuryPosition: { top: '30%', left: '50%' }, message: '어지러워요 멀미나요 🤢' }
+        ];
+
+        // HTML 요소 가져오기
+        const toolsContainer = document.getElementById('toolsContainer');
+        const patientEmojiEl = document.getElementById('patientEmoji');
+        const injurySpotEl = document.getElementById('injurySpot');
+        const treatedPatientsCountEl = document.getElementById('treatedPatientsCount');
+        const messageBoxEl = document.getElementById('messageBox');
+        const patientAreaEl = document.getElementById('patientArea');
+        const waitingMessageEl = document.getElementById('waitingMessage');
+
+        // 게임 상태 변수
+        let treatedPatientsCount = 0; // 치료한 환자 수
+        let selectedToolName = null; // 현재 선택된 도구 이름
+        let currentPatient = null; // 현재 환자 정보
+        let isPatientArriving = false; // 환자가 오고 있는지 여부
+        let audioContextStarted = false; // 오디오 컨텍스트 시작 여부
+        let pressTimer = null; // 길게 클릭 감지를 위한 타이머
+        let isLongPress = false; // 길게 클릭 중인지 여부
+
+        // Tone.js 사운드 객체 초기화
+        let correctSound = null;
+        let incorrectSound = null;
+        let arrivalSound = null;
+
+        /**
+         * Tone.js 사운드를 설정하는 함수
+         */
+        function setupSounds() {
+            try {
+                // 치료 성공 사운드: 행복한 종소리 느낌
+                correctSound = new Tone.PolySynth(Tone.Synth, {
+                    oscillator: { type: "triangle" },
+                    envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.5 }
+                }).toDestination();
+
+                // 치료 실패 사운드: 짧고 낮은 '뿅' 소리
+                incorrectSound = new Tone.Synth({
+                    oscillator: { type: "sine" },
+                    envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.1 }
+                }).toDestination();
+
+                // 환자 도착 사운드: 부드러운 종소리
+                arrivalSound = new Tone.Synth({
+                    oscillator: { type: "sine" },
+                    envelope: { attack: 0.05, decay: 0.3, sustain: 0, release: 0.5 }
+                }).toDestination();
+
+            } catch (e) {
+                console.error("Tone.js 사운드 설정 실패:", e);
+            }
+        }
+
+        /**
+         * 오디오 컨텍스트를 시작하는 함수 (사용자 상호작용 시 호출)
+         */
+        function startAudioContext() {
+            if (!audioContextStarted) {
+                Tone.start();
+                audioContextStarted = true;
+                console.log("오디오 컨텍스트 시작됨.");
+            }
+        }
+
+        /**
+         * 치료 성공 사운드를 재생하는 함수
+         */
+        function playCorrectSound() {
+            if (correctSound) {
+                correctSound.triggerAttackRelease(["C5", "E5", "G5"], "8n"); // 행복한 아르페지오
+            }
+        }
+
+        /**
+         * 치료 실패 사운드를 재생하는 함수
+         */
+        function playIncorrectSound() {
+            if (incorrectSound) {
+                incorrectSound.triggerAttackRelease("C3", "16n"); // 낮은 '뿅' 소리
+            }
+        }
+
+        /**
+         * 환자 도착 사운드를 재생하는 함수
+         */
+        function playArrivalSound() {
+            if (arrivalSound) {
+                arrivalSound.triggerAttackRelease("G4", "4n"); // 부드러운 종소리
+            }
+        }
+
+        /**
+         * 텍스트를 음성으로 변환하여 재생하는 함수
+         * @param {string} text - 재생할 텍스트
+         */
+        function speakMessage(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ko-KR'; // 한국어 설정
+                utterance.rate = 1.0; // 말하는 속도 (기본값 1.0)
+                utterance.pitch = 1.0; // 음높이 (기본값 1.0)
+                // 음성 선택 (선택 사항, 특정 음성을 원할 경우)
+                // let voices = window.speechSynthesis.getVoices();
+                // utterance.voice = voices.find(voice => voice.lang === 'ko-KR' && voice.name.includes('Google 한국어'));
+
+                window.speechSynthesis.speak(utterance);
+            } else {
+                console.warn("Speech Synthesis API를 지원하지 않는 브라우저입니다.");
+            }
+        }
+
+        /**
+         * 게임을 초기화하는 함수
+         */
+        function initGame() {
+            setupSounds(); // 사운드 설정
+            renderTools(); // 도구 버튼들을 화면에 그립니다.
+            generatePatient(); // 첫 번째 환자를 생성합니다.
+            updateScore(); // 점수를 업데이트합니다.
+        }
+
+        /**
+         * 선택된 도구를 환자 부상 부위로 애니메이션시키는 함수
+         * @param {string} toolName - 애니메이션할 도구의 이름
+         * @param {number} startX - 시작 X 좌표
+         * @param {number} startY - 시작 Y 좌표
+         */
+        function animateToolToPatient(toolName, startX, startY) {
+            const toolInfo = tools.find(t => t.name === toolName);
+            if (!toolInfo) return;
+
+            const clone = document.createElement('div');
+            clone.innerHTML = `${toolInfo.icon}`; // 이동할 때는 아이콘만 표시
+            clone.className = 'fixed bg-pink-400 text-white rounded-full p-4 text-4xl shadow-lg transition-all duration-600 ease-in-out z-50 flex items-center justify-center';
+            clone.style.left = `${startX}px`;
+            clone.style.top = `${startY}px`;
+            clone.style.transform = 'translate(-50%, -50%)'; // 중앙 정렬
+
+            document.body.appendChild(clone); // body에 추가하여 클리핑 방지
+
+            // 타겟 위치 (부상 부위) 계산
+            const injuryRect = injurySpotEl.getBoundingClientRect();
+            const targetX = injuryRect.left + injuryRect.width / 2;
+            const targetY = injuryRect.top + injuryRect.height / 2;
+
+            // 애니메이션 시작 (약간의 딜레이 후)
+            setTimeout(() => {
+                clone.style.left = `${targetX}px`;
+                clone.style.top = `${targetY}px`;
+            }, 50); // 짧은 딜레이 후 애니메이션 시작
+
+            clone.addEventListener('transitionend', () => {
+                clone.remove(); // 애니메이션 완료 후 클론 제거
+                applyToolLogic(0.6); // 0.6초 딜레이 후 치료 로직 실행
+            }, { once: true }); // 이벤트 리스너는 한 번만 실행
+        }
+
+        /**
+         * 도구 버튼들을 화면에 그리는 함수
+         */
+        function renderTools() {
+            toolsContainer.innerHTML = ''; // 기존 도구들을 지웁니다.
+            tools.forEach(tool => {
+                const button = document.createElement('button');
+                // Tailwind CSS 클래스 적용
+                button.className = 'tool-button bg-pink-200 text-pink-800 py-3 px-6 rounded-full text-2xl font-bold cursor-pointer transition-all duration-200 ease-in-out border-2 border-transparent flex items-center gap-2 hover:bg-pink-300 hover:scale-105 hover:shadow-md';
+                button.innerHTML = `${tool.icon} ${tool.name}`; // 이모지와 이름 표시
+                button.dataset.toolName = tool.name; // 도구 이름을 데이터 속성으로 저장
+
+                // 마우스 클릭 시작 이벤트 (길게 클릭 감지 시작)
+                button.addEventListener('mousedown', (e) => {
+                    startAudioContext();
+                    selectTool(tool.name); // 도구 시각적으로 선택
+
+                    const rect = e.target.getBoundingClientRect();
+                    const startX = rect.left + rect.width / 2;
+                    const startY = rect.top + rect.height / 2;
+
+                    // 이전 타이머가 있다면 클리어
+                    if (pressTimer) clearTimeout(pressTimer);
+                    isLongPress = false; // 길게 클릭 상태 초기화
+
+                    pressTimer = setTimeout(() => {
+                        isLongPress = true; // 0.5초 이상 눌렀으니 길게 클릭으로 간주
+                        animateToolToPatient(tool.name, startX, startY); // 도구 애니메이션 시작
+                    }, 500); // 0.5초
+                });
+
+                // 마우스 클릭 끝 이벤트 (길게 클릭 감지 중지)
+                button.addEventListener('mouseup', () => {
+                    clearTimeout(pressTimer); // 타이머 중지
+                    if (!isLongPress && selectedToolName) { // 짧게 클릭했고, 도구가 선택된 상태라면
+                        // 아무것도 하지 않음. 부상 부위 클릭 시 치료 로직이 실행됨.
+                    }
+                });
+
+                // 마우스가 버튼 밖으로 벗어나는 이벤트 (길게 클릭 감지 중지)
+                button.addEventListener('mouseleave', () => {
+                    clearTimeout(pressTimer); // 타이머 중지
+                    // 마우스가 버튼 밖으로 나가면 길게 클릭이 아니므로 isLongPress는 그대로 false 유지
+                });
+
+                toolsContainer.appendChild(button);
+            });
+        }
+
+        /**
+         * 새로운 환자를 생성하고 화면에 표시하는 함수
+         */
+        function generatePatient() {
+            isPatientArriving = false; // 환자 도착 상태 해제
+            waitingMessageEl.classList.add('hidden'); // 대기 메시지 숨기기
+            patientAreaEl.style.backgroundColor = '#ffebee'; // 환자 영역 원래 색으로 되돌리기 (커스텀 CSS 유지)
+
+            // 랜덤으로 환자 선택
+            const randomIndex = Math.floor(Math.random() * patients.length);
+            currentPatient = patients[randomIndex];
+
+            // 환자 이모지 및 부상 부위 위치 업데이트 (주사기 환자 특별 처리)
+            if (currentPatient.type === '독감') {
+                patientEmojiEl.textContent = '🧍'; // 서 있는 사람 이모지 (엉덩이 주사)
+                injurySpotEl.textContent = currentPatient.injuryEmoji; // '🤒' 유지
+                injurySpotEl.style.top = '75%'; // 엉덩이 위치
+                injurySpotEl.style.left = '50%';
+            } else {
+                patientEmojiEl.textContent = currentPatient.patientEmoji;
+                injurySpotEl.textContent = currentPatient.injuryEmoji;
+                injurySpotEl.style.top = currentPatient.injuryPosition.top;
+                injurySpotEl.style.left = currentPatient.injuryPosition.left;
+            }
+
+            injurySpotEl.classList.remove('hidden'); // 부상 부위 보이게 하기
+            injurySpotEl.classList.remove('pointer-events-none'); // 클릭 가능하게 설정
+            injurySpotEl.classList.add('cursor-pointer'); // 커서 변경
+
+            // 환자 상황에 맞는 메시지 표시 및 음성 재생
+            showMessage(currentPatient.message);
+            speakMessage(currentPatient.message); // 환자 메시지 음성 재생
+            playArrivalSound(); // 환자 도착 사운드 재생
+
+            // 선택된 도구 초기화 및 버튼 스타일 초기화
+            selectedToolName = null;
+            document.querySelectorAll('.tool-button').forEach(btn => {
+                btn.classList.remove('selected', 'border-pink-600', 'bg-pink-600', 'text-white'); // Tailwind 클래스도 함께 제거
+            });
+        }
+
+        /**
+         * 도구를 선택하는 함수 (시각적 선택만 담당)
+         * @param {string} toolName - 선택된 도구의 이름
+         */
+        function selectTool(toolName) {
+            if (isPatientArriving) return; // 환자 도착 중에는 도구 선택 불가
+
+            selectedToolName = toolName;
+            // 모든 도구 버튼의 'selected' 클래스를 제거
+            document.querySelectorAll('.tool-button').forEach(btn => {
+                btn.classList.remove('selected', 'border-pink-600', 'bg-pink-600', 'text-white'); // Tailwind 클래스도 함께 제거
+            });
+            // 선택된 도구 버튼에 'selected' 클래스 추가
+            const selectedButton = document.querySelector(`.tool-button[data-tool-name="${toolName}"]`);
+            if (selectedButton) {
+                selectedButton.classList.add('selected', 'border-pink-600', 'bg-pink-600', 'text-white'); // Tailwind 클래스 추가
+            }
+        }
+
+        /**
+         * 환자의 부상 부위를 클릭했을 때 또는 도구 애니메이션 완료 후 치료 로직을 실행하는 함수
+         * @param {number} delay - 치료 로직 실행 전 대기할 시간 (초 단위)
+         */
+        function applyToolLogic(delay = 0) {
+            // 기존에 재생 중인 음성이 있다면 취소
+            window.speechSynthesis.cancel();
+            startAudioContext(); // Tone.js 오디오 컨텍스트 활성화 확인
+
+            setTimeout(() => {
+                if (!selectedToolName) {
+                    showMessage('먼저 도구를 선택해 주세요!', 'orange');
+                    speakMessage('먼저 도구를 선택해 주세요!'); // 음성 재생
+                    isLongPress = false; // 길게 클릭 상태 초기화
+                    return;
+                }
+
+                if (currentPatient && selectedToolName === currentPatient.correctTool) {
+                    // 올바른 도구로 치료 성공
+                    treatedPatientsCount++;
+                    updateScore();
+                    const successMessage = '🎉 치료 성공! 다음 환자가 오고 있어요!';
+                    showMessage(successMessage, 'green');
+                    speakMessage(successMessage); // 음성 재생
+                    playCorrectSound(); // 성공 사운드 재생
+
+                    // 성공 애니메이션 추가 및 부상 부위 숨기기
+                    injurySpotEl.classList.add('animate-pop-injury');
+                    setTimeout(() => {
+                        injurySpotEl.classList.remove('animate-pop-injury');
+                        injurySpotEl.classList.add('hidden'); // 애니메이션 후 숨기기
+                        injurySpotEl.classList.add('pointer-events-none'); // 클릭 비활성화
+                    }, 300); // 애니메이션 지속 시간
+
+                    patientEmojiEl.textContent = '😊'; // 환자 웃는 얼굴로 변경
+                    patientEmojiEl.classList.add('animate-bounce-emoji');
+                    setTimeout(() => {
+                        patientEmojiEl.classList.remove('animate-bounce-emoji');
+                    }, 500); // 애니메이션 지속 시간
+
+                    isPatientArriving = true; // 환자 도착 상태 설정
+                    waitingMessageEl.classList.remove('hidden'); // 대기 메시지 표시
+                    patientAreaEl.style.backgroundColor = '#c8e6c9'; /* 치료 성공 시 연한 초록색 배경 (커스텀 CSS 유지) */
+
+                    // 1초 후 다음 환자 생성
+                    setTimeout(() => {
+                        isLongPress = false; // 길게 클릭 상태 초기화
+                        generatePatient();
+                    }, 1000); // 원래 환자 도착 대기 시간
+                } else {
+                    // 잘못된 도구로 치료 시도
+                    const wrongMessages = ['아파요!', '간지러워요!', '아야!', '으앙!', '따끔해요!'];
+                    const randomMessage = wrongMessages[Math.floor(Math.random() * wrongMessages.length)];
+                    const fullWrongMessage = `😭 ${randomMessage} (잘못된 도구예요!)`;
+                    showMessage(fullWrongMessage, 'red');
+                    speakMessage(randomMessage); // 잘못된 치료 메시지 음성 재생 (이모지 제외)
+                    playIncorrectSound(); // 실패 사운드 재생
+
+                    // 실패 애니메이션 추가 (부상 부위도 팝)
+                    injurySpotEl.classList.add('animate-pop-injury');
+                    setTimeout(() => {
+                        injurySpotEl.classList.remove('animate-pop-injury');
+                    }, 300); // 애니메이션 지속 시간
+
+                    patientEmojiEl.classList.add('animate-shake-emoji');
+                    setTimeout(() => {
+                        patientEmojiEl.classList.remove('animate-shake-emoji');
+                    }, 300); // 애니메이션 지속 시간
+                    isLongPress = false; // 길게 클릭 상태 초기화
+                }
+            }, delay * 1000); // 초 단위를 밀리초로 변환
+        }
+
+        /**
+         * 치료한 환자 수를 업데이트하는 함수
+         */
+        function updateScore() {
+            treatedPatientsCountEl.textContent = treatedPatientsCount;
+        }
+
+        /**
+         * 메시지 박스에 메시지를 표시하는 함수
+         * @param {string} message - 표시할 메시지
+         * @param {string} type - 메시지 타입 (green, red, orange 등)에 따라 색상 변경
+         */
+        function showMessage(message, type = 'default') {
+            messageBoxEl.textContent = message;
+            // 기존 타입 클래스 제거 후 새 타입 클래스 추가
+            messageBoxEl.classList.remove('type-green', 'type-red', 'type-orange');
+            // Tailwind 클래스도 함께 제거 (메시지 박스 기본 스타일은 유지)
+            messageBoxEl.classList.remove('bg-green-100', 'text-green-800', 'border-green-300',
+                                        'bg-red-100', 'text-red-800', 'border-red-300',
+                                        'bg-orange-100', 'text-orange-800', 'border-orange-300');
+
+
+            if (type === 'green') {
+                messageBoxEl.classList.add('type-green', 'bg-green-100', 'text-green-800', 'border-green-300');
+            } else if (type === 'red') {
+                messageBoxEl.classList.add('type-red', 'bg-red-100', 'text-red-800', 'border-red-300');
+            } else if (type === 'orange') {
+                messageBoxEl.classList.add('type-orange', 'bg-orange-100', 'text-orange-800', 'border-orange-300');
+            } else {
+                // 기본 메시지 스타일 (Tailwind 클래스)
+                messageBoxEl.classList.add('bg-white', 'text-gray-800', 'border-pink-200');
+            }
+            // 기본 스타일 클래스는 유지
+            messageBoxEl.classList.add('message-box');
+        }
+
+        // 부상 부위 클릭 이벤트 리스너 추가 (짧게 클릭했을 때만 작동)
+        injurySpotEl.addEventListener('click', () => {
+            if (isPatientArriving) return; // 환자 도착 중에는 클릭 무시
+            if (isLongPress) return; // 길게 클릭 중에는 클릭 무시 (애니메이션이 대신 처리)
+
+            // 도구가 선택된 상태이고, 짧게 클릭한 경우에만 치료 로직 실행
+            if (selectedToolName) {
+                applyToolLogic(0); // 추가 딜레이 없이 바로 치료 로직 실행
+            } else {
+                showMessage('먼저 도구를 선택해 주세요!', 'orange');
+                speakMessage('먼저 도구를 선택해 주세요!');
+            }
+        });
+
+        // 페이지 로드 시 게임 초기화
+        window.onload = initGame;
+    </script>
+</body>
