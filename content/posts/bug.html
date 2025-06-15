@@ -1,0 +1,906 @@
+---
+title: "벌레잡기 게임"
+date: "2025-06-15"
+author: "chei"
+---
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>짝짝! 소리 나는 벌레 잡기 게임</title>
+    <!-- Tailwind CSS CDN을 사용하여 기본적인 스타일을 적용합니다. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Tone.js 라이브러리를 추가하여 사운드를 생성합니다. -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <style>
+        /* Inter 폰트를 사용합니다. */
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #e0f2f7; /* 밝은 하늘색 배경 */
+            margin: 0;
+            overflow: hidden; /* 스크롤바 숨기기 */
+        }
+        /* 게임 컨테이너 스타일 */
+        .game-container {
+            background-color: #ffffff; /* 흰색 배경 */
+            border-radius: 20px; /* 둥근 모서리 */
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1); /* 그림자 */
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 90%; /* 최대 너비 설정 */
+            width: 600px; /* 데스크톱에서 기본 너비 */
+            box-sizing: border-box; /* 패딩이 너비에 포함되도록 */
+        }
+        /* 캔버스 스타일 */
+        canvas {
+            background-color: #c8e6c9; /* 잔디 같은 연두색 배경 */
+            border-radius: 15px; /* 둥근 모서리 */
+            border: 2px solid #81c784; /* 테두리 */
+            display: block;
+            touch-action: none; /* 터치 기본 동작 방지 (캔버스 내에서 드래그 등) */
+            cursor: none; /* 마우스 커서 숨기기 */
+        }
+        /* 점수 및 타이머 표시 스타일 */
+        .game-info {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-bottom: 20px;
+            color: #2e7d32; /* 진한 녹색 텍스트 */
+            font-weight: bold;
+            font-size: 1.25rem; /* 글자 크기 */
+        }
+        /* 버튼 스타일 */
+        .game-button {
+            background: linear-gradient(145deg, #a5d6a7, #66bb6a); /* 그라데이션 녹색 */
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px; /* 매우 둥근 모서리 */
+            font-weight: bold;
+            font-size: 1.1rem;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); /* 그림자 */
+            transition: all 0.3s ease; /* 부드러운 전환 효과 */
+            margin-top: 20px;
+        }
+        .game-button:hover {
+            background: linear-gradient(145deg, #66bb6a, #a5d6a7); /* 호버 시 그라데이션 반전 */
+            transform: translateY(-2px); /* 살짝 위로 올라가는 효과 */
+            box-shadow: 0 7px 20px rgba(0, 0, 0, 0.3);
+        }
+        .game-button:active {
+            transform: translateY(0); /* 클릭 시 원상 복귀 */
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+        /* 게임 오버 메시지 스타일 */
+        .game-over-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.7); /* 반투명 검은색 배경 */
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 2rem;
+            font-weight: bold;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            display: none; /* 기본적으로 숨김 */
+            z-index: 10;
+        }
+
+        /* 반응형 디자인을 위한 미디어 쿼리 */
+        @media (max-width: 768px) {
+            .game-info {
+                font-size: 1rem; /* 모바일에서 글자 크기 줄이기 */
+            }
+            .game-button {
+                padding: 10px 20px;
+                font-size: 1rem;
+            }
+            .game-over-message {
+                font-size: 1.5rem;
+                padding: 20px;
+            }
+        }
+        @media (max-width: 480px) {
+            .game-container {
+                padding: 10px;
+            }
+            .game-info {
+                font-size: 0.9rem;
+            }
+            .game-button {
+                padding: 8px 15px;
+                font-size: 0.9rem;
+            }
+            .game-over-message {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1 class="text-3xl font-bold text-emerald-700 mb-4 rounded-xl px-4 py-2 bg-emerald-100 shadow-md">짝짝! 소리 나는 벌레 잡기 게임</h1>
+        <div class="game-info">
+            <div id="scoreDisplay">점수: 0</div>
+            <div id="timerDisplay">시간: 30</div>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+        <button id="startButton" class="game-button">게임 시작</button>
+        <button id="restartButton" class="game-button hidden">다시 시작</button>
+    </div>
+
+    <div id="gameOverMessage" class="game-over-message">
+        게임 오버! <br> 당신의 점수: <span id="finalScore">0</span>
+    </div>
+
+    <script>
+        // 캔버스 요소와 컨텍스트를 가져옵니다.
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 게임 정보 요소를 가져옵니다.
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const startButton = document.getElementById('startButton');
+        const restartButton = document.getElementById('restartButton');
+        const gameOverMessage = document.getElementById('gameOverMessage');
+        const finalScoreDisplay = document.getElementById('finalScore');
+
+        // 게임 상태 변수들
+        let score = 0;
+        let timeLeft = 30; // 초 단위
+        let gameInterval; // 게임 타이머를 위한 변수
+        let gameRunning = false; // 게임 실행 중인지 여부
+        let bugs = []; // 벌레 객체들을 저장할 배열
+        let eggs = []; // 알 객체들을 저장할 배열
+        const bugCount = 5; // 화면에 나타날 초기 벌레의 수
+        const bugBaseSize = 40; // 벌레의 기본 크기 (참고용)
+        const minBugSpeed = 1; // 최소 벌레 속도
+        const maxBugSpeed = 3; // 최대 벌레 속도
+
+        const eggSize = 20; // 알의 크기
+        const eggHatchTime = 5000; // 알이 부화하는 시간 (밀리초)
+
+        // 손의 위치와 크기 (캔버스 크기에 따라 동적으로 설정)
+        let handX, handY, handWidth, handHeight;
+
+        // 사운드 관련 변수
+        let clapNoise; // 노이즈 생성기
+        let clapFilter; // 밴드패스 필터
+        let clapAmplitudeEnvelope; // 노이즈의 볼륨을 제어하는 엔벨로프
+        let clapFrequencyEnvelope; // 필터의 주파수를 제어하는 엔벨로프
+
+        // 캔버스 크기를 설정합니다. 반응형을 위해 초기 로드 시 및 창 크기 변경 시 조정합니다.
+        function resizeCanvas() {
+            // 부모 컨테이너의 너비에 맞춰 캔버스 너비를 설정합니다.
+            const containerWidth = canvas.parentElement.offsetWidth - 40; // 패딩 고려
+            canvas.width = Math.min(containerWidth, 560); // 최대 560px
+            canvas.height = canvas.width * 0.75; // 가로세로 비율 유지 (예: 4:3)
+
+            // 손의 크기 설정
+            handWidth = canvas.width * 0.2; // 캔버스 너비의 20%
+            handHeight = handWidth * 0.8; // 손의 비율 유지
+
+            // 손의 초기 위치를 캔버스 중앙 하단으로 설정
+            handX = (canvas.width - handWidth) / 2;
+            handY = canvas.height - handHeight - 20; // 캔버스 하단에서 20px 위
+        }
+
+        // 초기 캔버스 크기 설정
+        resizeCanvas();
+        // 창 크기가 변경될 때마다 캔버스 크기를 다시 설정합니다.
+        window.addEventListener('resize', resizeCanvas);
+
+        // 벌레 객체를 생성하는 함수 (알에서 부화할 때 위치와 종류를 지정할 수 있도록 수정)
+        function createBug(x_param = null, y_param = null, type_param = null) {
+            const bugTypes = ['cockroach', 'silverfish', 'centipede'];
+            const randomType = type_param || bugTypes[Math.floor(Math.random() * bugTypes.length)];
+            
+            // 벌레의 크기는 타입에 따라 약간 달라질 수 있도록 설정합니다.
+            let size = bugBaseSize;
+            if (randomType === 'centipede') {
+                size = bugBaseSize * 1.5; // 그리마는 훨씬 더 길게
+            } else if (randomType === 'silverfish') {
+                size = bugBaseSize * 0.7; // 좀벌레는 좀 더 작게
+            }
+
+            // 벌레의 위치를 캔버스 경계 내에서 무작위로 설정합니다.
+            const x = x_param !== null ? x_param : Math.random() * (canvas.width - size);
+            const y = y_param !== null ? y_param : Math.random() * (canvas.height - size);
+            
+            // 벌레의 이동 방향을 무작위로 설정합니다.
+            const dx = (Math.random() - 0.5) * 2 * (Math.random() * (maxBugSpeed - minBugSpeed) + minBugSpeed);
+            const dy = (Math.random() - 0.5) * 2 * (Math.random() * (maxBugSpeed - minBugSpeed) + minBugSpeed);
+
+            return {
+                x: x,
+                y: y,
+                dx: dx, // x축 이동 속도
+                dy: dy, // y축 이동 속도
+                size: size, // 벌레 크기 (가장 긴 축 기준)
+                type: randomType, // 벌레 종류
+                lastLayTime: Date.now(), // 마지막 알을 낳은 시간
+                layCooldown: Math.random() * 5000 + 10000 // 10~15초마다 알을 낳음 (밀리초)
+            };
+        }
+
+        // 모든 벌레를 다시 생성하는 함수 (알도 초기화 포함)
+        function resetBugs() {
+            bugs = [];
+            eggs = []; // 알도 초기화
+            for (let i = 0; i < bugCount; i++) {
+                bugs.push(createBug());
+            }
+        }
+
+        // 알을 그리는 함수
+        function drawEgg(egg) {
+            ctx.fillStyle = 'rgba(200, 200, 200, 0.7)'; // 반투명 회색 알
+            ctx.strokeStyle = 'rgba(100, 100, 100, 0.7)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            // 타원형 알 모양을 그립니다.
+            ctx.ellipse(egg.x + egg.size / 2, egg.y + egg.size / 2, egg.size / 2, egg.size * 0.7, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // 알 위에 벌레 종류에 따라 작은 색상 힌트를 추가합니다.
+            let eggColor;
+            switch(egg.type) {
+                case 'cockroach': eggColor = '#6F4F28'; break; // 바퀴벌레 알 색상
+                case 'silverfish': eggColor = '#A8A8A8'; break; // 좀벌레 알 색상
+                case 'centipede': eggColor = '#8B4513'; break; // 그리마 알 색상
+                default: eggColor = 'gray';
+            }
+            ctx.fillStyle = eggColor;
+            ctx.beginPath();
+            ctx.arc(egg.x + egg.size / 2, egg.y + egg.size / 2, egg.size * 0.2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+
+        // 벌레를 그리는 함수 (각 벌레 종류에 따라 다르게 그립니다)
+        function drawBug(bug) {
+            ctx.save(); // 현재 캔버스 상태 저장
+            // 벌레의 중심을 기준으로 회전하고 이동합니다.
+            ctx.translate(bug.x + bug.size / 2, bug.y + bug.size / 2);
+            
+            // 이동 방향에 따라 벌레를 회전시킵니다. (오른쪽으로 이동 시 정면을 보게 함)
+            const angle = Math.atan2(bug.dy, bug.dx) + Math.PI / 2; // 기본적으로 위를 보게 하고 방향에 따라 회전
+            ctx.rotate(angle);
+
+            // 벌레 종류에 따라 다르게 그립니다.
+            switch (bug.type) {
+                case 'cockroach':
+                    // 바퀴벌레 (갈색, 타원형 몸통, 다리 6개, 더듬이, 꼬리)
+                    const bodyColor_co = '#3B1F0F'; // 더 어둡고 칙칙한 갈색
+                    const accentColor_co = '#2A150A'; // 어두운 그림자/마디용
+                    ctx.strokeStyle = '#1F0C05'; // 거의 검은색 테두리
+                    ctx.lineWidth = 2; // 테두리 두껍게
+
+                    // 몸통: 머리, 가슴, 배 부분으로 나누어 그립니다.
+                    // 배 (가장 크고 울퉁불퉁하게)
+                    ctx.fillStyle = bodyColor_co;
+                    ctx.beginPath();
+                    ctx.ellipse(0, bug.size * 0.15, bug.size * 0.28, bug.size * 0.4, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // 가슴 (중간 부분, 약간 불규칙하게)
+                    ctx.fillStyle = bodyColor_co;
+                    ctx.beginPath();
+                    ctx.ellipse(0, -bug.size * 0.15, bug.size * 0.25, bug.size * 0.3, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // 머리 (작고 뾰족하게)
+                    ctx.fillStyle = bodyColor_co;
+                    ctx.beginPath();
+                    ctx.ellipse(0, -bug.size * 0.4, bug.size * 0.18, bug.size * 0.2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // 몸통 마디 및 흉터 (배 부분에 그림자 효과와 불규칙한 선)
+                    for (let i = 0; i < 6; i++) { // 마디를 더 추가
+                        ctx.fillStyle = accentColor_co;
+                        ctx.beginPath();
+                        ctx.ellipse(0, bug.size * (0.35 - i * 0.1), bug.size * 0.25, bug.size * 0.04, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    // 불규칙한 흉터나 무늬
+                    ctx.beginPath();
+                    ctx.moveTo(bug.size * 0.1, bug.size * 0.1);
+                    ctx.lineTo(bug.size * 0.2, bug.size * 0.2);
+                    ctx.lineTo(bug.size * 0.15, bug.size * 0.3);
+                    ctx.stroke();
+
+                    // 다리 6개 (더 길고 얇으며 관절 표현, 털 효과)
+                    ctx.strokeStyle = '#2A150A';
+                    ctx.lineWidth = 1.5;
+                    for (let i = 0; i < 3; i++) {
+                        const yOffset = bug.size * (0.2 - i * 0.15);
+                        // 왼쪽 다리
+                        ctx.beginPath();
+                        ctx.moveTo(-bug.size * 0.2, yOffset);
+                        ctx.lineTo(-bug.size * (0.35 + Math.random() * 0.15), yOffset + bug.size * (0.1 + Math.random() * 0.15));
+                        ctx.lineTo(-bug.size * (0.55 + Math.random() * 0.15), yOffset + bug.size * (0.05 + Math.random() * 0.15));
+                        ctx.stroke();
+                        // 오른쪽 다리
+                        ctx.beginPath();
+                        ctx.moveTo(bug.size * 0.2, yOffset);
+                        ctx.lineTo(bug.size * (0.35 + Math.random() * 0.15), yOffset + bug.size * (0.1 + Math.random() * 0.15));
+                        ctx.lineTo(bug.size * (0.55 + Math.random() * 0.15), yOffset + bug.size * (0.05 + Math.random() * 0.15));
+                        ctx.stroke();
+
+                        // 다리 관절 표현
+                        ctx.fillStyle = accentColor_co;
+                        ctx.beginPath();
+                        ctx.arc(-bug.size * (0.35 + Math.random() * 0.1), yOffset + bug.size * (0.1 + Math.random() * 0.1), bug.size * 0.03, 0, Math.PI * 2);
+                        ctx.arc(bug.size * (0.35 + Math.random() * 0.1), yOffset + bug.size * (0.1 + Math.random() * 0.1), bug.size * 0.03, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    // 더듬이 (더 길고 불규칙하게 휘어지게)
+                    ctx.beginPath();
+                    ctx.moveTo(0, -bug.size * 0.45);
+                    ctx.lineTo(-bug.size * 0.3, -bug.size * 0.65);
+                    ctx.lineTo(-bug.size * 0.45, -bug.size * 0.85);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(0, -bug.size * 0.45);
+                    ctx.lineTo(bug.size * 0.3, -bug.size * 0.65);
+                    ctx.lineTo(bug.size * 0.45, -bug.size * 0.85);
+                    ctx.stroke();
+
+                    // 눈 (더 불쾌하게 빛나는 듯한 효과)
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+                    ctx.beginPath();
+                    ctx.arc(-bug.size * 0.1, -bug.size * 0.4, bug.size * 0.04, 0, Math.PI * 2);
+                    ctx.arc(bug.size * 0.1, -bug.size * 0.4, bug.size * 0.04, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = 'red'; // 붉은 빛
+                    ctx.beginPath();
+                    ctx.arc(-bug.size * 0.1 + bug.size * 0.01, -bug.size * 0.4 - bug.size * 0.01, bug.size * 0.01, 0, Math.PI * 2);
+                    ctx.arc(bug.size * 0.1 + bug.size * 0.01, -bug.size * 0.4 - bug.size * 0.01, bug.size * 0.01, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // 꼬리털 (복부 끝, 더 날카롭고 여러 가닥)
+                    ctx.beginPath();
+                    ctx.moveTo(0, bug.size * 0.45);
+                    ctx.lineTo(-bug.size * 0.1, bug.size * 0.6);
+                    ctx.lineTo(-bug.size * 0.05, bug.size * 0.65);
+                    ctx.moveTo(0, bug.size * 0.45);
+                    ctx.lineTo(bug.size * 0.1, bug.size * 0.6);
+                    ctx.lineTo(bug.size * 0.05, bug.size * 0.65);
+                    ctx.stroke();
+                    break;
+
+                case 'silverfish':
+                    // 좀벌레 (은색, 비늘, 길고 마디진 더듬이와 꼬리털, 많은 다리, 눅눅하고 징그러운 질감)
+                    ctx.strokeStyle = '#404040'; // 더 어두운 테두리
+                    ctx.lineWidth = 1.5;
+
+                    // 몸통 (여러 개의 겹치는 비늘과 불규칙한 형태)
+                    for (let i = 0; i < 7; i++) { // 비늘 더 추가
+                        const gradient = ctx.createLinearGradient(-bug.size * 0.2, 0, bug.size * 0.2, 0);
+                        gradient.addColorStop(0, '#A0A0A0'); // 어두운 은색
+                        gradient.addColorStop(0.5, '#C0C0C0'); // 중간 은색
+                        gradient.addColorStop(1, '#A0A0A0');
+                        ctx.fillStyle = gradient;
+
+                        ctx.beginPath();
+                        ctx.ellipse(0, bug.size * (0.35 - i * 0.12), bug.size * 0.22, bug.size * 0.2, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                    }
+
+                    // 머리 (작고 뾰족하게, 눈 디테일)
+                    ctx.fillStyle = '#909090';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -bug.size * 0.45, bug.size * 0.17, bug.size * 0.22, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    // 눈 표현
+                    ctx.fillStyle = 'black';
+                    ctx.beginPath();
+                    ctx.arc(-bug.size * 0.05, -bug.size * 0.45, bug.size * 0.02, 0, Math.PI * 2);
+                    ctx.arc(bug.size * 0.05, -bug.size * 0.45, bug.size * 0.02, 0, Math.PI * 2);
+                    ctx.fill();
+
+
+                    // 다리 (얇고 삐죽삐죽하게, 더 길고 많게)
+                    ctx.lineWidth = 1.2;
+                    for (let i = 0; i < 8; i++) { // 다리 쌍 더 추가
+                        const yPos = -bug.size * 0.35 + i * bug.size * 0.08;
+                        // 왼쪽 다리
+                        ctx.beginPath();
+                        ctx.moveTo(-bug.size * 0.15, yPos);
+                        ctx.lineTo(-bug.size * (0.28 + Math.random() * 0.1), yPos + bug.size * (0.07 + Math.random() * 0.05));
+                        ctx.lineTo(-bug.size * (0.4 + Math.random() * 0.1), yPos + bug.size * (0.05 + Math.random() * 0.05));
+                        ctx.stroke();
+                        // 오른쪽 다리
+                        ctx.beginPath();
+                        ctx.moveTo(bug.size * 0.15, yPos);
+                        ctx.lineTo(bug.size * (0.28 + Math.random() * 0.1), yPos + bug.size * (0.07 + Math.random() * 0.05));
+                        ctx.lineTo(bug.size * (0.4 + Math.random() * 0.1), yPos + bug.size * (0.05 + Math.random() * 0.05));
+                        ctx.stroke();
+                    }
+
+                    // 더듬이 (매우 길고 얇게, 마디 표현, 불규칙하게 흔들리는 듯이)
+                    ctx.beginPath();
+                    ctx.moveTo(0, -bug.size * 0.45);
+                    ctx.lineTo(-bug.size * 0.25, -bug.size * 0.7);
+                    ctx.lineTo(-bug.size * 0.4, -bug.size * 0.9);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(0, -bug.size * 0.45);
+                    ctx.lineTo(bug.size * 0.25, -bug.size * 0.7);
+                    ctx.lineTo(bug.size * 0.4, -bug.size * 0.9);
+                    ctx.stroke();
+
+                    // 꼬리털 3개 (가운데가 가장 길고, 끝이 갈라지게)
+                    ctx.beginPath();
+                    ctx.moveTo(0, bug.size * 0.45);
+                    ctx.lineTo(0, bug.size * 0.85);
+                    ctx.lineTo(bug.size * 0.03, bug.size * 0.9); // 미세하게 갈라짐
+                    ctx.moveTo(0, bug.size * 0.45);
+                    ctx.lineTo(-bug.size * 0.18, bug.size * 0.7);
+                    ctx.moveTo(0, bug.size * 0.45);
+                    ctx.lineTo(bug.size * 0.18, bug.size * 0.7);
+                    ctx.stroke();
+                    break;
+
+                case 'centipede':
+                    // 그리마 (길고 마디가 많고 다리가 아주 많고 징그러운 모습)
+                    ctx.fillStyle = '#603000'; // 더 어둡고 칙칙한 흙 갈색
+                    ctx.strokeStyle = '#402000'; // 거의 검은색 테두리
+                    ctx.lineWidth = 2;
+
+                    // 몸통 (여러 개의 겹치는 직사각형으로 마디 표현, 울퉁불퉁하게)
+                    const numSegments_ce = 15; // 마디 더 추가
+                    const segmentHeight_ce = bug.size / numSegments_ce;
+                    const bodyWidth_ce = bug.size * 0.35;
+                    for (let i = 0; i < numSegments_ce; i++) {
+                        ctx.beginPath();
+                        ctx.rect(-bodyWidth_ce / 2, -bug.size * 0.5 + i * segmentHeight_ce, bodyWidth_ce, segmentHeight_ce + 1); // +1 겹치게
+                        ctx.fill();
+                        ctx.stroke();
+                    }
+
+                    // 머리 (뾰족하고 더듬이 붙은 부분)
+                    ctx.beginPath();
+                    ctx.ellipse(0, -bug.size * 0.58, bug.size * 0.2, bug.size * 0.12, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // 다리 (아주 많고 길게, 삐죽삐죽하고 털이 난 듯한 효과)
+                    const numLegPairs_ce = 18; // 다리 쌍 더 많이
+                    ctx.lineWidth = 1.3;
+                    for (let i = 0; i < numLegPairs_ce; i++) {
+                        const yPos = -bug.size * 0.45 + i * (bug.size / (numLegPairs_ce - 1)) * 0.8;
+                        // 왼쪽 다리
+                        ctx.beginPath();
+                        ctx.moveTo(-bodyWidth_ce / 2, yPos);
+                        ctx.lineTo(-bodyWidth_ce / 2 - bug.size * (0.35 + Math.random() * 0.1), yPos + bug.size * (0.07 + Math.random() * 0.05));
+                        ctx.lineTo(-bodyWidth_ce / 2 - bug.size * (0.55 + Math.random() * 0.1), yPos + bug.size * (0.03 + Math.random() * 0.03));
+                        ctx.stroke();
+                        // 오른쪽 다리
+                        ctx.beginPath();
+                        ctx.moveTo(bodyWidth_ce / 2, yPos);
+                        ctx.lineTo(bodyWidth_ce / 2 + bug.size * (0.35 + Math.random() * 0.1), yPos + bug.size * (0.07 + Math.random() * 0.05));
+                        ctx.lineTo(bodyWidth_ce / 2 + bug.size * (0.55 + Math.random() * 0.1), yPos + bug.size * (0.03 + Math.random() * 0.03));
+                        ctx.stroke();
+
+                        // 다리 마디 (점점 가늘어지는 효과)
+                        ctx.beginPath();
+                        ctx.moveTo(-bodyWidth_ce / 2 - bug.size * (0.35 + Math.random() * 0.1), yPos + bug.size * (0.07 + Math.random() * 0.05));
+                        ctx.lineTo(-bodyWidth_ce / 2 - bug.size * (0.45 + Math.random() * 0.05), yPos + bug.size * (0.05 + Math.random() * 0.05));
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.moveTo(bodyWidth_ce / 2 + bug.size * (0.35 + Math.random() * 0.1), yPos + bug.size * (0.07 + Math.random() * 0.05));
+                        ctx.lineTo(bodyWidth_ce / 2 + bug.size * (0.45 + Math.random() * 0.05), yPos + bug.size * (0.05 + Math.random() * 0.05));
+                        ctx.stroke();
+                    }
+
+                    // 더듬이 (아주 길고 갈라진 모양, 더 삐죽삐죽하게)
+                    ctx.beginPath();
+                    ctx.moveTo(0, -bug.size * 0.58);
+                    ctx.lineTo(-bug.size * 0.25, -bug.size * 0.75);
+                    ctx.lineTo(-bug.size * 0.4, -bug.size * 0.95);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(0, -bug.size * 0.58);
+                    ctx.lineTo(bug.size * 0.25, -bug.size * 0.75);
+                    ctx.lineTo(bug.size * 0.4, -bug.size * 0.95);
+                    ctx.stroke();
+
+                    // 꼬리 (끝이 여러 갈래로 갈라지게, 더 길고 뾰족하게)
+                    ctx.beginPath();
+                    ctx.moveTo(0, bug.size * 0.55);
+                    ctx.lineTo(0, bug.size * 0.8);
+                    ctx.lineTo(-bug.size * 0.05, bug.size * 0.85);
+                    ctx.lineTo(0, bug.size * 0.9);
+                    ctx.lineTo(bug.size * 0.05, bug.size * 0.85);
+                    ctx.lineTo(0, bug.size * 0.8);
+                    ctx.moveTo(0, bug.size * 0.55);
+                    ctx.lineTo(-bug.size * 0.15, bug.size * 0.7);
+                    ctx.moveTo(0, bug.size * 0.55);
+                    ctx.lineTo(bug.size * 0.15, bug.size * 0.7);
+                    ctx.stroke();
+                    break;
+            }
+
+            ctx.restore(); // 저장된 캔버스 상태 복원 (회전 원상 복귀)
+        }
+
+        // 손을 그리는 함수 (더 현실적으로 개선)
+        function drawHand() {
+            ctx.fillStyle = '#FFDAB9'; // 살구색 (좀 더 자연스러운 살색)
+            ctx.strokeStyle = '#8B4513'; // 갈색 (진한 테두리)
+            ctx.lineWidth = 1.5;
+
+            // 손바닥
+            ctx.beginPath();
+            ctx.moveTo(handX + handWidth * 0.2, handY + handHeight);
+            ctx.bezierCurveTo(handX - handWidth * 0.1, handY + handHeight * 0.9,
+                              handX - handWidth * 0.1, handY + handHeight * 0.3,
+                              handX + handWidth * 0.05, handY + handHeight * 0.1); // 엄지 손가락 시작점
+            ctx.bezierCurveTo(handX + handWidth * 0.1, handY - handHeight * 0.05,
+                              handX + handWidth * 0.8, handY - handHeight * 0.05,
+                              handX + handWidth * 0.95, handY + handHeight * 0.1); // 새끼 손가락 끝
+            ctx.bezierCurveTo(handX + handWidth * 1.1, handY + handHeight * 0.3,
+                              handX + handWidth * 1.1, handY + handHeight * 0.9,
+                              handX + handWidth * 0.8, handY + handHeight); // 손바닥 끝
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // 엄지 손가락 (더 자연스러운 곡선)
+            ctx.beginPath();
+            ctx.moveTo(handX + handWidth * 0.05, handY + handHeight * 0.1);
+            ctx.bezierCurveTo(handX - handWidth * 0.05, handY - handHeight * 0.1,
+                              handX + handWidth * 0.1, handY - handHeight * 0.25,
+                              handX + handWidth * 0.2, handY - handHeight * 0.15);
+            ctx.bezierCurveTo(handX + handWidth * 0.25, handY - handHeight * 0.1,
+                              handX + handWidth * 0.2, handY + handHeight * 0.05,
+                              handX + handWidth * 0.15, handY + handHeight * 0.1);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // 네 손가락 (각각 더 뚜렷하고 약간 구부러진 형태)
+            const fingerBaseY = handY + handHeight * 0.08;
+            const fingerLength = handHeight * 0.5;
+            const fingerWidthRatio = 0.12;
+            const fingerSpacing = 0.03;
+
+            // 검지 손가락
+            ctx.beginPath();
+            ctx.moveTo(handX + handWidth * 0.28, fingerBaseY);
+            ctx.bezierCurveTo(handX + handWidth * (0.28 + fingerWidthRatio / 2), fingerBaseY - fingerLength * 0.2,
+                              handX + handWidth * (0.28 + fingerWidthRatio / 2), fingerBaseY - fingerLength,
+                              handX + handWidth * (0.28 + fingerWidthRatio / 2) + handWidth * 0.02, fingerBaseY - fingerLength * 1.05); // 끝부분
+            ctx.bezierCurveTo(handX + handWidth * (0.28 + fingerWidthRatio), fingerBaseY - fingerLength,
+                              handX + handWidth * (0.28 + fingerWidthRatio), fingerBaseY - fingerLength * 0.2,
+                              handX + handWidth * (0.28 + fingerWidthRatio) + handWidth * 0.02, fingerBaseY);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // 중지 손가락 (더 길게)
+            ctx.beginPath();
+            ctx.moveTo(handX + handWidth * (0.28 + fingerWidthRatio + fingerSpacing), fingerBaseY - handHeight * 0.05); // 약간 높게 시작
+            ctx.bezierCurveTo(handX + handWidth * (0.28 + fingerWidthRatio + fingerSpacing + fingerWidthRatio / 2), fingerBaseY - fingerLength * 0.2 - handHeight * 0.05,
+                              handX + handWidth * (0.28 + fingerWidthRatio + fingerSpacing + fingerWidthRatio / 2), fingerBaseY - fingerLength * 1.2,
+                              handX + handWidth * (0.28 + fingerWidthRatio + fingerSpacing + fingerWidthRatio / 2) + handWidth * 0.02, fingerBaseY - fingerLength * 1.25);
+            ctx.bezierCurveTo(handX + handWidth * (0.28 + fingerWidthRatio * 2 + fingerSpacing), fingerBaseY - fingerLength * 1.2,
+                              handX + handWidth * (0.28 + fingerWidthRatio * 2 + fingerSpacing), fingerBaseY - fingerLength * 0.2 - handHeight * 0.05,
+                              handX + handWidth * (0.28 + fingerWidthRatio * 2 + fingerSpacing) + handWidth * 0.02, fingerBaseY - handHeight * 0.05);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // 약지 손가락
+            ctx.beginPath();
+            ctx.moveTo(handX + handWidth * (0.28 + fingerWidthRatio * 2 + fingerSpacing * 2), fingerBaseY);
+            ctx.bezierCurveTo(handX + handWidth * (0.28 + fingerWidthRatio / 2 + fingerSpacing * 2), fingerBaseY - fingerLength * 0.2,
+                              handX + handWidth * (0.28 + fingerWidthRatio / 2 + fingerSpacing * 2), fingerBaseY - fingerLength,
+                              handX + handWidth * (0.28 + fingerWidthRatio / 2 + fingerSpacing * 2) + handWidth * 0.02, fingerBaseY - fingerLength * 1.05);
+            ctx.bezierCurveTo(handX + handWidth * (0.28 + fingerWidthRatio * 3 + fingerSpacing * 2), fingerBaseY - fingerLength,
+                              handX + handWidth * (0.28 + fingerWidthRatio * 3 + fingerSpacing * 2), fingerBaseY - fingerLength * 0.2,
+                              handX + handWidth * (0.28 + fingerWidthRatio * 3 + fingerSpacing * 2) + handWidth * 0.02, fingerBaseY);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // 새끼 손가락
+            ctx.beginPath();
+            ctx.moveTo(handX + handWidth * (0.28 + fingerWidthRatio * 3 + fingerSpacing * 3), fingerBaseY + handHeight * 0.05); // 약간 낮게 시작
+            ctx.bezierCurveTo(handX + handWidth * (0.28 + fingerWidthRatio * 3 + fingerSpacing * 3 + fingerWidthRatio / 2), fingerBaseY - fingerLength * 0.1 + handHeight * 0.05,
+                              handX + handWidth * (0.28 + fingerWidthRatio * 3 + fingerSpacing * 3 + fingerWidthRatio / 2), fingerBaseY - fingerLength * 0.7,
+                              handX + handWidth * (0.28 + fingerWidthRatio * 3 + fingerSpacing * 3 + fingerWidthRatio / 2) + handWidth * 0.02, fingerBaseY - fingerLength * 0.75);
+            ctx.bezierCurveTo(handX + handWidth * (0.28 + fingerWidthRatio * 4 + fingerSpacing * 3), fingerBaseY - fingerLength * 0.7,
+                              handX + handWidth * (0.28 + fingerWidthRatio * 4 + fingerSpacing * 3), fingerBaseY - fingerLength * 0.1 + handHeight * 0.05,
+                              handX + handWidth * (0.28 + fingerWidthRatio * 4 + fingerSpacing * 3) + handWidth * 0.02, fingerBaseY + handHeight * 0.05);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+
+
+        // 벌레의 위치를 업데이트하는 함수
+        function updateBugPosition(bug) {
+            bug.x += bug.dx;
+            bug.y += bug.dy;
+
+            // 캔버스 경계에 닿으면 방향을 바꿉니다.
+            // 벌레의 회전 중심이 중앙이므로, 경계 계산 시 벌레 크기의 절반을 더하고 빼줍니다.
+            if (bug.x + bug.size / 2 > canvas.width || bug.x + bug.size / 2 < 0) {
+                bug.dx *= -1;
+            }
+            if (bug.y + bug.size / 2 > canvas.height || bug.y + bug.size / 2 < 0) {
+                bug.dy *= -1;
+            }
+
+            // 알 낳는 로직
+            if (gameRunning && Date.now() - bug.lastLayTime > bug.layCooldown) {
+                const eggX = bug.x + bug.size / 2 - eggSize / 2; // 벌레 중앙에 알 위치
+                const eggY = bug.y + bug.size / 2 - eggSize / 2;
+                eggs.push({
+                    x: eggX,
+                    y: eggY,
+                    size: eggSize,
+                    type: bug.type,
+                    hatchTime: Date.now() + eggHatchTime
+                });
+                bug.lastLayTime = Date.now(); // 알 낳은 시간 업데이트
+                // 다음 알 낳을 시간을 랜덤하게 다시 설정 (변동성 추가)
+                bug.layCooldown = Math.random() * 5000 + 10000;
+            }
+        }
+
+        // 벌레와 손의 충돌을 감지하고 처리하는 함수
+        function checkCollision() {
+            // 벌레 배열을 역순으로 반복하여 충돌을 감지하고 제거합니다.
+            for (let i = bugs.length - 1; i >= 0; i--) {
+                const bug = bugs[i];
+                // 벌레와 손의 충돌을 확인합니다.
+                // AABB (Axis-Aligned Bounding Box) 충돌 감지
+                // 벌레의 실제 좌표는 translate 이후의 좌표가 아닌, x, y 변수에 저장된 원래 좌표입니다.
+                // 충돌 감지 영역을 벌레의 중심과 크기를 고려하여 조정합니다.
+                const bugCollisionX = bug.x + bug.size / 2;
+                const bugCollisionY = bug.y + bug.size / 2;
+                const bugCollisionRadius = bug.size / 2; // 원형 충돌 범위 (대략적으로)
+
+                // 손은 직사각형 형태이므로, 손과 벌레의 원형 충돌을 대략적으로 계산합니다.
+                // 가장 가까운 손의 점을 찾아서 벌레 중심과의 거리를 비교합니다.
+                let testX = bugCollisionX;
+                let testY = bugCollisionY;
+
+                if (bugCollisionX < handX) {
+                    testX = handX;
+                } else if (bugCollisionX > handX + handWidth) {
+                    testX = handX + handWidth;
+                }
+                if (bugCollisionY < handY) {
+                    testY = handY;
+                } else if (bugCollisionY > handY + handHeight) {
+                    testY = handY + handHeight;
+                }
+
+                const distX = bugCollisionX - testX;
+                const distY = bugCollisionY - testY;
+                const distance = Math.sqrt((distX * distX) + (distY * distY));
+
+                if (distance <= bugCollisionRadius) {
+                    score++; // 점수 증가
+                    scoreDisplay.textContent = `점수: ${score}`;
+                    playClapSound(); // 벌레 잡았을 때 소리 재생
+
+                    // 잡은 벌레를 배열에서 제거하고 새로운 벌레를 생성합니다.
+                    bugs.splice(i, 1);
+                    bugs.push(createBug());
+                }
+            }
+        }
+
+        // Tone.js 사운드 시스템 초기화 함수
+        function initAudio() {
+            // 이미 초기화되어 있으면 다시 초기화하지 않습니다.
+            if (clapNoise) return;
+
+            // 1. 화이트 노이즈 생성
+            clapNoise = new Tone.Noise("white");
+            clapNoise.volume.value = -Infinity; // 초기 볼륨은 0 (소리 안 나게)
+
+            // 2. 밴드패스 필터 생성
+            clapFilter = new Tone.Filter(5000, "bandpass"); // 초기 주파수 5000Hz, 밴드패스 필터
+            clapFilter.Q.value = 1; // Q 값 설정 (공명도)
+
+            // 3. 진폭 엔벨로프 (노이즈의 볼륨 조절)
+            clapAmplitudeEnvelope = new Tone.AmplitudeEnvelope({
+                attack: 0.005, // 매우 빠르게 시작
+                decay: 0.1, // 빠르게 감소
+                sustain: 0.0, // 유지 시간 없음
+                release: 0.05 // 빠르게 소멸
+            });
+
+            // 4. 주파수 엔벨로프 (필터의 주파수 조절)
+            clapFrequencyEnvelope = new Tone.FrequencyEnvelope({
+                attack: 0.005,
+                decay: 0.1,
+                sustain: 0.0,
+                release: 0.05,
+                baseFrequency: 5000, // 시작 주파수
+                octaves: 3 // 내려갈 옥타브 수
+            });
+
+            // 오디오 체인 설정: Noise -> Filter -> Destination
+            clapNoise.chain(clapFilter, Tone.Destination);
+            
+            // 엔벨로프를 각각의 파라미터에 연결
+            clapAmplitudeEnvelope.connect(clapNoise.volume); // 노이즈 볼륨을 엔벨로프로 제어
+            clapFrequencyEnvelope.connect(clapFilter.frequency); // 필터 주파수를 엔벨로프로 제어
+
+            // 노이즈를 시작합니다. (볼륨이 0이므로 소리 안 남)
+            // AudioContext가 resume되면 소리 출력이 활성화됩니다.
+            clapNoise.start();
+        }
+
+        // 박수 소리 효과음 재생 함수 (Tone.js 사용)
+        function playClapSound() {
+            // AudioContext가 실행 중인지 확인하고, 아니면 시작 (사용자 제스처 필요)
+            if (Tone.context.state !== 'running') {
+                Tone.start().then(() => {
+                    console.log("AudioContext resumed, attempting to play sound.");
+                    _triggerClapSoundActual();
+                }).catch(e => console.error("Error resuming AudioContext for clap sound:", e));
+                return;
+            }
+            _triggerClapSoundActual();
+        }
+
+        // 실제 박수 소리 트리거 로직
+        function _triggerClapSoundActual() {
+            // 두 엔벨로프를 동시에 트리거하여 박수 소리 효과를 만듭니다.
+            // 진폭 엔벨로프는 노이즈의 볼륨을 조절하여 소리가 들리게 합니다.
+            // 주파수 엔벨로프는 필터의 주파수를 조절하여 박수 소리의 질감을 만듭니다.
+            clapAmplitudeEnvelope.triggerAttackRelease("0.1", Tone.now());
+            clapFrequencyEnvelope.triggerAttackRelease("0.1", Tone.now());
+        }
+
+
+        // 게임 화면을 그리는 메인 루프 함수
+        function gameLoop() {
+            if (!gameRunning) return; // 게임이 실행 중이 아니면 그리지 않습니다.
+
+            // 캔버스를 지웁니다.
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 손을 그립니다.
+            drawHand();
+
+            // 알들을 그리고 부화 여부 확인
+            for (let i = eggs.length - 1; i >= 0; i--) {
+                const egg = eggs[i];
+                if (Date.now() > egg.hatchTime) {
+                    // 알 부화! 새로운 벌레를 알 위치에서 생성합니다.
+                    bugs.push(createBug(egg.x, egg.y, egg.type));
+                    eggs.splice(i, 1); // 부화한 알 제거
+                } else {
+                    drawEgg(egg); // 아직 부화 안 했으면 알을 그립니다.
+                }
+            }
+
+            // 모든 벌레를 업데이트하고 그립니다.
+            bugs.forEach(bug => {
+                updateBugPosition(bug);
+                drawBug(bug);
+            });
+
+            // 벌레와 손의 충돌을 확인합니다.
+            checkCollision();
+
+            // 다음 프레임을 요청합니다.
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 게임을 시작하는 함수
+        function startGame() {
+            score = 0;
+            timeLeft = 30;
+            gameRunning = true;
+            scoreDisplay.textContent = `점수: ${score}`;
+            timerDisplay.textContent = `시간: ${timeLeft}`;
+            gameOverMessage.style.display = 'none'; // 게임 오버 메시지 숨기기
+            startButton.classList.add('hidden'); // 시작 버튼 숨기기
+            restartButton.classList.add('hidden'); // 다시 시작 버튼 숨기기 (초기엔 숨김)
+
+            // 오디오 시스템 초기화
+            initAudio(); 
+
+            // Tone.js 오디오 컨텍스트 시작 (사용자 제스처 필요)
+            Tone.start().then(() => {
+                console.log("AudioContext is running");
+                resetBugs(); // 벌레와 알 초기화는 오디오 컨텍스트 시작 후
+                gameLoop(); // 게임 루프 시작
+            }).catch(e => {
+                console.error("Error starting AudioContext:", e);
+                // 오디오 시작 실패 시에도 게임은 진행되도록 처리
+                resetBugs();
+                gameLoop();
+            });
+
+            // 타이머 설정
+            clearInterval(gameInterval); // 기존 타이머가 있으면 클리어
+            gameInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = `시간: ${timeLeft}`;
+                if (timeLeft <= 0) {
+                    endGame(); // 시간이 0이 되면 게임 종료
+                }
+            }, 1000); // 1초마다 실행
+        }
+
+        // 게임을 종료하는 함수
+        function endGame() {
+            gameRunning = false;
+            clearInterval(gameInterval); // 타이머 멈춤
+            gameOverMessage.style.display = 'block'; // 게임 오버 메시지 표시
+            finalScoreDisplay.textContent = score; // 최종 점수 표시
+            restartButton.classList.remove('hidden'); // 다시 시작 버튼 표시
+        }
+
+        // 캔버스 위에서 마우스가 움직일 때 손의 위치를 업데이트합니다.
+        canvas.addEventListener('mousemove', (event) => {
+            if (!gameRunning) return;
+
+            // 캔버스 내에서의 마우스 X, Y 좌표를 계산합니다.
+            const rect = canvas.getBoundingClientRect();
+            let mouseX = event.clientX - rect.left;
+            let mouseY = event.clientY - rect.top; // Y 좌표 추가
+
+            // 손이 캔버스 경계를 벗어나지 않도록 제한합니다.
+            handX = Math.max(0, Math.min(mouseX - handWidth / 2, canvas.width - handWidth));
+            handY = Math.max(0, Math.min(mouseY - handHeight / 2, canvas.height - handHeight)); // Y 좌표 제한 추가
+        });
+
+        // 캔버스 위에서 터치가 움직일 때 손의 위치를 업데이트합니다.
+        canvas.addEventListener('touchmove', (event) => {
+            if (!gameRunning) return;
+            event.preventDefault(); // 터치 시 스크롤 등 기본 동작 방지
+
+            // 첫 번째 터치 지점의 X, Y 좌표를 사용합니다.
+            const touch = event.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            let touchX = touch.clientX - rect.left;
+            let touchY = touch.clientY - rect.top; // Y 좌표 추가
+
+            // 손이 캔버스 경계를 벗어나지 않도록 제한합니다.
+            handX = Math.max(0, Math.min(touchX - handWidth / 2, canvas.width - handWidth));
+            handY = Math.max(0, Math.min(touchY - handHeight / 2, canvas.height - handHeight)); // Y 좌표 제한 추가
+        });
+
+
+        // 시작 버튼 클릭 이벤트 리스너
+        startButton.addEventListener('click', startGame);
+        // 다시 시작 버튼 클릭 이벤트 리스너
+        restartButton.addEventListener('click', startGame);
+
+        // 윈도우 로드 시 캔버스 크기 설정 및 게임 초기화
+        window.onload = function() {
+            resizeCanvas();
+        };
+    </script>
+</body>
