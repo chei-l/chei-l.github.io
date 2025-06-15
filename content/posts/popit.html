@@ -1,0 +1,127 @@
+---
+title: "팝잇 게임"
+date: "2025-06-15"
+author: "chei"
+---
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>팝잇 게임</title>
+    <!-- Tailwind CSS CDN을 로드하여 스타일링에 사용합니다. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tone.js CDN을 로드하여 소리 효과를 생성합니다. -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <style>
+        /* 기본 폰트를 Inter로 설정하여 가독성을 높입니다. */
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex; /* 플렉스박스를 사용하여 중앙 정렬을 쉽게 합니다. */
+            flex-direction: column; /* 세로 방향으로 정렬 */
+            justify-content: center; /* 세로 중앙 정렬 */
+            align-items: center; /* 가로 중앙 정렬 */
+            min-height: 100vh; /* 뷰포트 높이의 최소 100%를 차지하게 합니다. */
+            background-color: #FFF3E0; /* 밝은 오렌지색 배경 (bg-orange-100과 유사) */
+            margin: 0;
+            padding: 20px; /* 전체적인 여백 추가 */
+            box-sizing: border-box; /* 패딩이 너비에 포함되도록 설정 */
+        }
+        /* 주먹 이모지가 클릭될 때 약간의 축소 효과를 위한 CSS */
+        .btn-press:active {
+            transform: scale(0.95); /* 주먹 클릭 시 약간 작아지는 효과 */
+        }
+        /* 주먹 그림 스타일 */
+        #punchClickArea {
+            cursor: pointer; /* 마우스 오버 시 손가락 모양으로 변경 */
+            user-select: none; /* 드래그 방지 */
+            font-size: 150px; /* 주먹 이모지 크기 키우기 */
+            display: inline-block; /* 크기 및 변형 적용을 위해 블록 요소로 변경 */
+            transition: transform 0.1s ease-out; /* 부드러운 클릭 효과 */
+        }
+
+        /* 게임 컨테이너 스타일 */
+        .game-container {
+            border: 4px solid #F97316; /* 진한 오렌지색 테두리 (border-orange-500과 유사) */
+        }
+    </style>
+</head>
+<body class="bg-orange-100">
+    <div class="game-container bg-white p-6 md:p-10 rounded-2xl shadow-xl text-center max-w-sm w-full border-4 border-orange-500">
+        <!-- 게임 제목 -->
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-6">팝잇 게임!</h1>
+
+        <!-- 점수 표시 영역 -->
+        <div class="score-display mb-8">
+            <p class="text-xl md:text-2xl text-gray-700">점수: <span id="score" class="font-extrabold text-blue-600">0</span></p>
+        </div>
+
+        <!-- 주먹 클릭 영역 (파이 대신 주먹 이모지 사용) -->
+        <div id="punchClickArea"
+             class="btn-press mb-8">
+            👊
+        </div>
+
+        <!-- 다시 시작 버튼 -->
+        <button id="restartButton"
+                class="bg-green-500 hover:bg-green-600 active:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-xl md:text-2xl shadow-md transition duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-300">
+            점수 초기화!
+        </button>
+    </div>
+
+    <script>
+        // DOM 요소들을 JavaScript 변수로 가져옵니다.
+        const punchClickArea = document.getElementById('punchClickArea');
+        const scoreSpan = document.getElementById('score');
+        const restartButton = document.getElementById('restartButton');
+
+        let score = 0; // 현재 점수
+        let audioContextStarted = false; // 오디오 컨텍스트가 시작되었는지 확인하는 플래그
+
+        // Tone.js를 사용하여 소리 생성기를 만듭니다.
+        // 펀치 소리를 위한 MembraneSynth (타악기 소리에 적합)
+        const punchSynth = new Tone.MembraneSynth({
+            pitchDecay: 0.02, // 음높이 감소 속도 (낮은 값일수록 짧게)
+            octaves: 4,      // 음높이 범위
+            oscillator: {
+                type: 'sine' // 기본 진동파형
+            },
+            envelope: {
+                attack: 0.001, // 소리 시작 속도 (매우 짧게)
+                decay: 0.4,    // 소리 감소 속도 (펀치 소리처럼 약간의 잔향)
+                sustain: 0.001, // 소리 지속 시간 (거의 없음)
+                release: 0.8  // 건반에서 손을 뗄 때 소리가 사라지는 시간
+            }
+        }).toDestination();
+
+
+        // 게임을 초기화하는 함수 (점수만 초기화)
+        function initializeGame() {
+            score = 0; // 점수를 0으로 초기화
+            scoreSpan.textContent = score; // 화면에 점수 업데이트
+        }
+
+        // 주먹 클릭 영역에 이벤트 리스너 추가
+        punchClickArea.addEventListener('click', async () => {
+            // Tone.js 오디오 컨텍스트를 사용자 제스처로 시작합니다.
+            // 이 코드는 오디오가 처음 재생될 때 한 번만 실행됩니다.
+            if (!audioContextStarted) {
+                await Tone.start();
+                audioContextStarted = true;
+            }
+
+            score++; // 점수 1 증가
+            scoreSpan.textContent = score; // 화면에 점수 업데이트
+            // 펀치 소리 재생 (낮은 C음을 16분음표 길이로 재생)
+            // MembraneSynth는 'note' 파라미터 대신 'triggerAttackRelease(note, duration)'을 사용
+            punchSynth.triggerAttackRelease("C2", "16n");
+        });
+
+        // 다시 시작 (점수 초기화) 버튼에 이벤트 리스너 추가
+        restartButton.addEventListener('click', () => {
+            initializeGame(); // 게임 초기화 (점수만 초기화)
+        });
+
+        // 페이지 로드 시 게임 초기화
+        window.onload = initializeGame;
+    </script>
+</body>
