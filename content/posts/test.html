@@ -1,0 +1,1650 @@
+---
+title: "실험실"
+date: "2025-07-02"
+author: "chei"
+---
+
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f0f4f8; /* Light blue-gray background */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        padding: 20px;
+        box-sizing: border-box;
+        overflow: auto; /* Allow scrolling if content overflows */
+    }
+    .game-container {
+        background-color: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        max-width: 900px; /* Max width for larger screens */
+        box-sizing: border-box;
+    }
+    canvas {
+        background-color: #e0f2f7; /* Light sky blue */
+        border: 2px solid #a7d9ed;
+        border-radius: 15px;
+        display: block;
+        width: 100%;
+        max-width: 800px; /* Max width for canvas */
+        height: 500px; /* Fixed height for consistency */
+        margin-bottom: 20px;
+        touch-action: none; /* Prevent default touch actions like scrolling */
+    }
+    .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        justify-content: center;
+        width: 100%;
+    }
+    .control-button {
+        background-color: #60a5fa; /* Blue */
+        color: white;
+        padding: 12px 25px;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border: none;
+        flex: 1 1 auto; /* Allow buttons to grow and shrink */
+        min-width: 150px; /* Minimum width for buttons */
+        text-align: center;
+    }
+    .control-button:hover {
+        background-color: #3b82f6; /* Darker blue */
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    .control-button:active {
+        background-color: #2563eb; /* Even darker blue */
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .message-box {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        font-size: 1.2rem;
+        text-align: center;
+        z-index: 1000;
+        display: none; /* Hidden by default */
+    }
+    /* Language Selection Screen Styles */
+    #languageSelection {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100vh;
+        background-color: #f0f4f8;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 2000;
+    }
+    #languageSelection h2 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #334155;
+        margin-bottom: 30px;
+    }
+    #languageSelection .lang-button {
+        background-color: #4ade80; /* Greenish */
+        color: white;
+        padding: 15px 40px;
+        border-radius: 12px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        border: none;
+        margin: 10px;
+    }
+    #languageSelection .lang-button:hover {
+        background-color: #22c55e; /* Darker green */
+        transform: translateY(-3px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+    #languageSelection .lang-button:active {
+        background-color: #16a34a; /* Even darker green */
+        transform: translateY(0);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    #selectedCountryDisplay {
+        margin-top: 20px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #475569;
+    }
+</style>
+<body>
+    <!-- Game Screen -->
+    <div id="gameScreen" class="game-container">
+        <h1 id="gameTitle" class="text-3xl font-bold text-gray-800 mb-6">아주아주 실재적인 사람 실험 게임 🧪</h1>
+        <canvas id="gameCanvas"></canvas>
+        <div class="controls">
+            <button id="addPersonBtn" class="control-button">🧍 사람 추가하기</button>
+            <button id="giveAppleBtn" class="control-button">🍎 사과 주기</button>
+            <button id="makeItRainBtn" class="control-button">🌧️ 비 내리게 하기</button>
+            <button id="removeSunBtn" class="control-button">🌙 해 없애기</button>
+            <button id="makeThemDanceBtn" class="control-button">💃 춤추게 하기</button>
+            <button id="summonSnakeBtn" class="control-button">🐍 뱀 소환하기</button>
+            <button id="summonFireBtn" class="control-button">🔥 불 소환</button>
+            <button id="plantTreeBtn" class="control-button">🌳 나무 심기</button>
+            <button id="injectBtn" class="control-button">💉 주사 맞기</button>
+            <button id="birthBabyBtn" class="control-button">👶 아기 낳기</button>
+            <button id="showerBtn" class="control-button">🚿 샤워하기</button>
+            <button id="thunderBtn" class="control-button">⚡ 천둥</button>
+            <button id="windRainBtn" class="control-button">🌬️ 비바람</button>
+            <button id="snowBtn" class="control-button">❄️ 눈 내리기</button>
+            <button id="fogBtn" class="control-button">🌫️ 안개 끼기</button>
+            <button id="sunnyBtn" class="control-button">☀️ 햇살 쨍쨍</button>
+            <button id="removePersonBtn" class="control-button">🗑️ 사람 없애기</button>
+            <button id="clearAllBtn" class="control-button">🔄 모두 삭제하기</button>
+            <button id="healBtn" class="control-button">🩹 치료하기</button>
+            <button id="randomEventBtn" class="control-button">🎲 랜덤 이벤트</button>
+            <!-- New Buttons -->
+            <button id="buildShelterBtn" class="control-button">🏠 집 짓기</button>
+            <button id="plantFlowerBtn" class="control-button">🌷 꽃 심기</button>
+            <button id="strongWindBtn" class="control-button">💨 강한 바람</button>
+            <button id="makeFriendsBtn" class="control-button">🤝 친구 사귀기</button>
+            <button id="giveWaterBtn" class="control-button">💧 물 주기</button>
+        </div>
+        <div id="messageBox" class="message-box"></div>
+        <div id="selectedCountryDisplay"></div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const addPersonBtn = document.getElementById('addPersonBtn');
+        const giveAppleBtn = document.getElementById('giveAppleBtn');
+        const makeItRainBtn = document.getElementById('makeItRainBtn');
+        const removeSunBtn = document.getElementById('removeSunBtn');
+        const makeThemDanceBtn = document.getElementById('makeThemDanceBtn');
+        const summonSnakeBtn = document.getElementById('summonSnakeBtn');
+        const summonFireBtn = document.getElementById('summonFireBtn');
+        const plantTreeBtn = document.getElementById('plantTreeBtn');
+        const injectBtn = document.getElementById('injectBtn');
+        const birthBabyBtn = document.getElementById('birthBabyBtn');
+        const showerBtn = document.getElementById('showerBtn');
+        const thunderBtn = document.getElementById('thunderBtn');
+        const windRainBtn = document.getElementById('windRainBtn');
+        const snowBtn = document.getElementById('snowBtn');
+        const fogBtn = document.getElementById('fogBtn');
+        const sunnyBtn = document.getElementById('sunnyBtn');
+        const removePersonBtn = document.getElementById('removePersonBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const healBtn = document.getElementById('healBtn');
+        const randomEventBtn = document.getElementById('randomEventBtn');
+        // New button references
+        const buildShelterBtn = document.getElementById('buildShelterBtn');
+        const plantFlowerBtn = document.getElementById('plantFlowerBtn');
+        const strongWindBtn = document.getElementById('strongWindBtn');
+        const makeFriendsBtn = document.getElementById('makeFriendsBtn');
+        const giveWaterBtn = document.getElementById('giveWaterBtn');
+        const messageBox = document.getElementById('messageBox');
+
+        // Language Selection Elements
+        const languageSelectionScreen = document.getElementById('languageSelection');
+        const gameScreen = document.getElementById('gameScreen');
+        const koreanLangBtn = document.getElementById('koreanLangBtn');
+        const japaneseLangBtn = document.getElementById('japaneseLangBtn');
+        const englishLangBtn = document.getElementById('englishLangBtn'); // New English button
+        const selectedCountryDisplay = document.getElementById('selectedCountryDisplay');
+        const gameTitle = document.getElementById('gameTitle');
+        const selectLanguageText = document.getElementById('selectLanguageText');
+
+        // Translations object
+        const translations = {
+            ko: {
+                gameTitle: "아주아주 실재적인 사람 실험 게임 🧪",
+                addPersonBtn: "🧍 사람 추가하기",
+                giveAppleBtn: "🍎 사과 주기",
+                makeItRainBtn: "🌧️ 비 내리게 하기",
+                removeSunBtn: "🌙 해 없애기",
+                makeThemDanceBtn: "💃 춤추게 하기",
+                summonSnakeBtn: "🐍 뱀 소환하기",
+                summonFireBtn: "🔥 불 소환",
+                plantTreeBtn: "🌳 나무 심기",
+                injectBtn: "💉 주사 맞기",
+                birthBabyBtn: "👶 아기 낳기",
+                showerBtn: "🚿 샤워하기",
+                thunderBtn: "⚡ 천둥",
+                windRainBtn: "🌬️ 비바람",
+                snowBtn: "❄️ 눈 내리기",
+                fogBtn: "🌫️ 안개 끼기",
+                sunnyBtn: "☀️ 햇살 쨍쨍",
+                removePersonBtn: "🗑️ 사람 없애기",
+                clearAllBtn: "🔄 모두 삭제하기",
+                healBtn: "🩹 치료하기",
+                randomEventBtn: "🎲 랜덤 이벤트",
+                buildShelterBtn: "🏠 집 짓기",
+                plantFlowerBtn: "🌷 꽃 심기",
+                strongWindBtn: "💨 강한 바람",
+                makeFriendsBtn: "🤝 친구 사귀기",
+                giveWaterBtn: "💧 물 주기",
+                msgAddPerson: "새로운 사람이 나타났어요!",
+                msgMaxPeople: "사람은 5명까지만 추가할 수 있어요!",
+                msgGiveApple: "누군가 사과를 먹고 행복해졌어요!",
+                msgNoPeople: "사람이 없어요. 먼저 사람을 추가해주세요!",
+                msgNoAlivePeople: "살아있는 사람이 없어요!",
+                msgRainStart: "비가 내리기 시작했어요!",
+                msgNight: "밤이 되었어요! 🌙",
+                msgDay: "다시 낮이 되었어요! ☀️",
+                msgDanceStart: "모두 춤추기 시작했어요!",
+                msgDanceStop: "춤추는 것을 멈췄어요!",
+                msgSnakeSummon: "뱀이 나타났어요! 🐍",
+                msgMaxSnakes: "뱀은 2마리까지만 소환할 수 있어요!",
+                msgFireSummon: "불이 나타났어요! 🔥",
+                msgMaxFires: "불은 3개까지만 소환할 수 있어요!",
+                msgTreePlant: "나무를 심었어요! 🌳",
+                msgMaxTrees: "나무는 5그루까지만 심을 수 있어요!",
+                msgInject: "누군가 주사를 맞고 잠시 보호를 받아요! 💉",
+                msgNoInjectTarget: "주사를 맞을 사람이 없어요!",
+                msgBabyBirth: "아기가 태어났어요! 👶",
+                msgNoBabyParent: "아기를 낳을 사람이 없어요!",
+                msgShower: "누군가 샤워를 하고 깨끗해졌어요! 🚿",
+                msgNoShowerTarget: "샤워할 사람이 없어요!",
+                msgThunder: "천둥이 쳤어요! ⚡",
+                msgWindRain: "비바람이 몰아쳐요! 🌬️🌧️",
+                msgSnowStart: "눈이 내리기 시작했어요! ❄️",
+                msgFogStart: "안개가 끼기 시작했어요! 🌫️",
+                msgSunny: "햇살이 쨍쨍해요! ☀️",
+                msgRemovePerson: "사람 한 명이 사라졌어요! 💨",
+                msgNoRemoveTarget: "없앨 사람이 없어요!",
+                msgClearAll: "모든 것이 사라졌어요! ✨",
+                msgHeal: "누군가 기운을 되찾았어요! 😊",
+                msgNoHealTarget: "치료할 대상이 없어요!",
+                msgHappyBurst: "모두가 갑자기 행복해졌어요! 😄",
+                msgFlowerBloom: "예쁜 꽃들이 피어났어요! 🌷",
+                msgSmallEarthquake: "작은 지진이 발생했어요! 💥",
+                msgThirstyPerson: "누군가 목마르기 시작했어요! 💧",
+                msgNoThirstyTarget: "사람이 없어서 목마르게 할 수 없어요!",
+                msgShelterBuilt: "새로운 집이 지어졌어요! 🏠",
+                msgMaxShelters: "집은 2채까지만 지을 수 있어요!",
+                msgFlowerPlant: "예쁜 꽃을 심었어요! 🌷",
+                msgMaxFlowers: "꽃은 15개까지만 심을 수 있어요!",
+                msgStrongWindStart: "강한 바람이 불기 시작했어요! 💨",
+                msgWindStop: "바람이 멈췄어요!",
+                msgFriendsMade: "두 사람이 친구가 되었어요! 🤝",
+                msgNotEnoughFriends: "친구를 사귈 수 있는 사람이 부족해요!",
+                msgNoFriendsPossible: "사람이 2명 이상 있어야 친구를 사귈 수 있어요!",
+                msgWaterGiven: "누군가 물을 마시고 기운을 차렸어요! 💧",
+                msgNoThirstyForWater: "목마른 사람이 없어요!",
+                msgPersonEnterShelter: "이(가) 집으로 들어갔어요! 🏠",
+                msgPersonExitShelter: "이(가) 집에서 나왔어요! ☀️",
+                selectLanguage: "언어를 선택해주세요:",
+                korean: "한국",
+                japanese: "日本",
+                english: "English",
+                selectedCountry: "선택된 나라: ",
+                koreaCountryName: "대한민국",
+                japanCountryName: "일본",
+                usaCountryName: "미국",
+                msgBaby: "아기",
+                msgPerson: "사람",
+            },
+            ja: {
+                gameTitle: "とてもリアルな人間実験ゲーム 🧪",
+                addPersonBtn: "🧍 人を追加",
+                giveAppleBtn: "🍎 リンゴをあげる",
+                makeItRainBtn: "🌧️ 雨を降らせる",
+                removeSunBtn: "🌙 太陽を消す",
+                makeThemDanceBtn: "💃 踊らせる",
+                summonSnakeBtn: "🐍 ヘビを召喚",
+                summonFireBtn: "🔥 火を召喚",
+                plantTreeBtn: "🌳 木を植える",
+                injectBtn: "💉 注射する",
+                birthBabyBtn: "👶 赤ちゃんを産む",
+                showerBtn: "🚿 シャワーを浴びる",
+                thunderBtn: "⚡ 雷",
+                windRainBtn: "🌬️ 暴風雨",
+                snowBtn: "❄️ 雪を降らせる",
+                fogBtn: "🌫️ 霧を発生させる",
+                sunnyBtn: "☀️ 晴れにする",
+                removePersonBtn: "🗑️ 人を消す",
+                clearAllBtn: "🔄 全て削除",
+                healBtn: "🩹 治療する",
+                randomEventBtn: "🎲 ランダムイベント",
+                buildShelterBtn: "🏠 家を建てる",
+                plantFlowerBtn: "🌷 花を植える",
+                strongWindBtn: "💨 強風",
+                makeFriendsBtn: "🤝 友達を作る",
+                giveWaterBtn: "💧 水をあげる",
+                msgAddPerson: "新しい人が現れました！",
+                msgMaxPeople: "人は5人まで追加できます！",
+                msgGiveApple: "誰かがリンゴを食べて幸せになりました！",
+                msgNoPeople: "人がいません。まず人を追加してください！",
+                msgNoAlivePeople: "生きている人がいません！",
+                msgRainStart: "雨が降り始めました！",
+                msgNight: "夜になりました！ 🌙",
+                msgDay: "昼になりました！ ☀️",
+                msgDanceStart: "みんな踊り始めました！",
+                msgDanceStop: "踊るのをやめました！",
+                msgSnakeSummon: "ヘビが現れました！ 🐍",
+                msgMaxSnakes: "ヘビは2匹まで召喚できます！",
+                msgFireSummon: "火が現れました！ 🔥",
+                msgMaxFires: "火は3つまで召喚できます！",
+                msgTreePlant: "木を植えました！ 🌳",
+                msgMaxTrees: "木は5本まで植えられます！",
+                msgInject: "誰かが注射を打って一時的に保護されました！ 💉",
+                msgNoInjectTarget: "注射を打つ人がいません！",
+                msgBabyBirth: "赤ちゃんが生まれました！ 👶",
+                msgNoBabyParent: "赤ちゃんを産む人がいません！",
+                msgShower: "誰かがシャワーを浴びてきれいになりました！ 🚿",
+                msgNoShowerTarget: "シャワーを浴びる人がいません！",
+                msgThunder: "雷が鳴りました！ ⚡",
+                msgWindRain: "暴風雨が吹き荒れています！ 🌬️🌧️",
+                msgSnowStart: "雪が降り始めました！ ❄️",
+                msgFogStart: "霧がかかり始めました！ 🌫️",
+                msgSunny: "日差しがさんさんと降り注いでいます！ ☀️",
+                msgRemovePerson: "人が一人消えました！ 💨",
+                msgNoRemoveTarget: "消す人がいません！",
+                msgClearAll: "全て消えました！ ✨",
+                msgHeal: "誰かが元気を取り戻しました！ 😊",
+                msgNoHealTarget: "治療対象がいません！",
+                msgHappyBurst: "みんなが突然幸せになりました！ 😄",
+                msgFlowerBloom: "きれいな花が咲きました！ 🌷",
+                msgSmallEarthquake: "小さな地震が発生しました！ 💥",
+                msgThirstyPerson: "誰かが喉が渇き始めました！ 💧",
+                msgNoThirstyTarget: "人がいないので喉を渇かせられません！",
+                msgShelterBuilt: "新しい家が建てられました！ 🏠",
+                msgMaxShelters: "家は2軒まで建てられます！",
+                msgFlowerPlant: "きれいな花を植えました！ 🌷",
+                msgMaxFlowers: "花は15個まで植えられます！",
+                msgStrongWindStart: "強風が吹き始めました！ 💨",
+                msgWindStop: "風が止みました！",
+                msgFriendsMade: "二人が友達になりました！ 🤝",
+                msgNotEnoughFriends: "友達になれる人が足りません！",
+                msgNoFriendsPossible: "友達を作るには2人以上の人が必要です！",
+                msgWaterGiven: "誰かが水を飲んで元気を取り戻しました！ 💧",
+                msgNoThirstyForWater: "喉が渇いている人がいません！",
+                msgPersonEnterShelter: "が家に入りました！ 🏠",
+                msgPersonExitShelter: "が家から出ました！ ☀️",
+                selectLanguage: "言語を選択してください:",
+                korean: "韓国",
+                japanese: "日本",
+                english: "English",
+                selectedCountry: "選択された国: ",
+                koreaCountryName: "大韓民国",
+                japanCountryName: "日本",
+                usaCountryName: "アメリカ合衆国",
+                msgBaby: "赤ちゃん",
+                msgPerson: "人",
+            },
+            en: {
+                gameTitle: "Very Realistic Human Experiment Game 🧪",
+                addPersonBtn: "🧍 Add Person",
+                giveAppleBtn: "🍎 Give Apple",
+                makeItRainBtn: "🌧️ Make it Rain",
+                removeSunBtn: "🌙 Remove Sun",
+                makeThemDanceBtn: "💃 Make Them Dance",
+                summonSnakeBtn: "🐍 Summon Snake",
+                summonFireBtn: "🔥 Summon Fire",
+                plantTreeBtn: "🌳 Plant Tree",
+                injectBtn: "💉 Inject",
+                birthBabyBtn: "👶 Birth Baby",
+                showerBtn: "🚿 Shower",
+                thunderBtn: "⚡ Thunder",
+                addPersonBtn: "🧍 Add Person",
+                windRainBtn: "🌬️ Windy Rain",
+                snowBtn: "❄️ Make it Snow",
+                fogBtn: "🌫️ Make it Foggy",
+                sunnyBtn: "☀️ Make it Sunny",
+                removePersonBtn: "🗑️ Remove Person",
+                clearAllBtn: "🔄 Clear All",
+                healBtn: "🩹 Heal",
+                randomEventBtn: "🎲 Random Event",
+                buildShelterBtn: "🏠 Build Shelter",
+                plantFlowerBtn: "🌷 Plant Flower",
+                strongWindBtn: "💨 Strong Wind",
+                makeFriendsBtn: "🤝 Make Friends",
+                giveWaterBtn: "💧 Give Water",
+                msgAddPerson: "A new person appeared!",
+                msgMaxPeople: "You can only add up to 5 people!",
+                msgGiveApple: "Someone ate an apple and became happy!",
+                msgNoPeople: "No people. Please add a person first!",
+                msgNoAlivePeople: "No living people!",
+                msgRainStart: "It started raining!",
+                msgNight: "It's night! 🌙",
+                msgDay: "It's daytime again! ☀️",
+                msgDanceStart: "Everyone started dancing!",
+                msgDanceStop: "They stopped dancing!",
+                msgSnakeSummon: "A snake appeared! 🐍",
+                msgMaxSnakes: "You can only summon up to 2 snakes!",
+                msgFireSummon: "Fire appeared! 🔥",
+                msgMaxFires: "You can only summon up to 3 fires!",
+                msgTreePlant: "A tree was planted! 🌳",
+                msgMaxTrees: "You can only plant up to 5 trees!",
+                msgInject: "Someone got an injection and is temporarily protected! 💉",
+                msgNoInjectTarget: "No one to inject!",
+                msgBabyBirth: "A baby was born! 👶",
+                msgNoBabyParent: "No one to give birth to a baby!",
+                msgShower: "Someone took a shower and became clean! 🚿",
+                msgNoShowerTarget: "No one to shower!",
+                msgThunder: "Thunder struck! ⚡",
+                msgWindRain: "Windy rain is raging! 🌬️🌧️",
+                msgSnowStart: "It started snowing! ❄️",
+                msgFogStart: "It started getting foggy! 🌫️",
+                msgSunny: "It's sunny! ☀️",
+                msgRemovePerson: "A person disappeared! 💨",
+                msgNoRemoveTarget: "No one to remove!",
+                msgClearAll: "Everything disappeared! ✨",
+                msgHeal: "Someone regained their energy! 😊",
+                msgNoHealTarget: "No one to heal!",
+                msgHappyBurst: "Everyone suddenly became happy! 😄",
+                msgFlowerBloom: "Beautiful flowers bloomed! 🌷",
+                msgSmallEarthquake: "A small earthquake occurred! 💥",
+                msgThirstyPerson: "Someone started getting thirsty! 💧",
+                msgNoThirstyTarget: "No people to make thirsty!",
+                msgShelterBuilt: "A new shelter was built! 🏠",
+                msgMaxShelters: "You can only build up to 2 shelters!",
+                msgFlowerPlant: "A beautiful flower was planted! 🌷",
+                msgMaxFlowers: "You can only plant up to 15 flowers!",
+                msgStrongWindStart: "Strong wind started blowing! 💨",
+                msgWindStop: "The wind stopped!",
+                msgFriendsMade: "Two people became friends! 🤝",
+                msgNotEnoughFriends: "Not enough people to make friends!",
+                msgNoFriendsPossible: "You need at least 2 people to make friends!",
+                msgWaterGiven: "Someone drank water and regained energy! 💧",
+                msgNoThirstyForWater: "No one is thirsty!",
+                msgPersonEnterShelter: " entered the shelter! 🏠",
+                msgPersonExitShelter: " exited the shelter! ☀️",
+                selectLanguage: "Please select a language:",
+                korean: "Korean",
+                japanese: "Japanese",
+                english: "English",
+                selectedCountry: "Selected Country: ",
+                koreaCountryName: "South Korea",
+                japanCountryName: "Japan",
+                usaCountryName: "United States",
+                msgBaby: "Baby",
+                msgPerson: "Person",
+            }
+        };
+
+        let currentLanguage = 'ko'; // Default language, will be set by user selection
+        let selectedCountryName = translations[currentLanguage].koreaCountryName; // Default country name
+
+        let people = [];
+        let rainDrops = [];
+        let snakes = [];
+        let fires = [];
+        let trees = [];
+        let showers = [];
+        let thunderbolts = [];
+        let snowflakes = [];
+        let flowers = [];
+        let shelters = []; // New array for shelters
+
+        let isRaining = false;
+        let isNight = false;
+        let isDancing = false;
+        let isWindyRain = false;
+        let isSnowing = false;
+        let isFoggy = false;
+        let isSunny = false;
+        let isStrongWind = false; // New state for strong wind
+        let danceFrame = 0;
+
+        let PERSON_SIZE;
+        let GROUND_Y;
+
+        // Function to update all text elements based on the current language
+        function applyTranslations() {
+            const t = translations[currentLanguage];
+
+            gameTitle.textContent = t.gameTitle;
+            addPersonBtn.textContent = t.addPersonBtn;
+            giveAppleBtn.textContent = t.giveAppleBtn;
+            makeItRainBtn.textContent = t.makeItRainBtn;
+            removeSunBtn.textContent = t.removeSunBtn;
+            makeThemDanceBtn.textContent = t.makeThemDanceBtn;
+            summonSnakeBtn.textContent = t.summonSnakeBtn;
+            summonFireBtn.textContent = t.summonFireBtn;
+            plantTreeBtn.textContent = t.plantTreeBtn;
+            injectBtn.textContent = t.injectBtn;
+            birthBabyBtn.textContent = t.birthBabyBtn;
+            showerBtn.textContent = t.showerBtn;
+            thunderBtn.textContent = t.thunderBtn;
+            windRainBtn.textContent = t.windRainBtn;
+            snowBtn.textContent = t.snowBtn;
+            fogBtn.textContent = t.fogBtn;
+            sunnyBtn.textContent = t.sunnyBtn;
+            removePersonBtn.textContent = t.removePersonBtn;
+            clearAllBtn.textContent = t.clearAllBtn;
+            healBtn.textContent = t.healBtn;
+            randomEventBtn.textContent = t.randomEventBtn;
+            buildShelterBtn.textContent = t.buildShelterBtn;
+            plantFlowerBtn.textContent = t.plantFlowerBtn;
+            strongWindBtn.textContent = t.strongWindBtn;
+            makeFriendsBtn.textContent = t.makeFriendsBtn;
+            giveWaterBtn.textContent = t.giveWaterBtn;
+
+            selectedCountryDisplay.textContent = t.selectedCountry + selectedCountryName;
+
+            // Update language selection screen text if it's visible
+            if (languageSelectionScreen.style.display !== 'none') {
+                selectLanguageText.textContent = t.selectLanguage;
+                koreanLangBtn.textContent = t.korean;
+                japaneseLangBtn.textContent = t.japanese;
+                englishLangBtn.textContent = t.english; // Update English button text
+            }
+        }
+
+        // Function to show a temporary message using translated keys
+        function showMessage(msgKey) {
+            let msg = translations[currentLanguage][msgKey];
+            messageBox.textContent = msg;
+            messageBox.style.display = 'block';
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 2000); // Hide after 2 seconds
+        }
+
+        // Helper function for simple circular collision detection
+        function checkCollision(obj1, obj2, thresholdMultiplier = 0.7) {
+            const dx = obj1.x - obj2.x;
+            const dy = obj1.y - obj2.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            // Collision if distance is less than a certain threshold (e.g., sum of half sizes)
+            return distance < (PERSON_SIZE * thresholdMultiplier);
+        }
+
+        // Person class to manage individual people
+        class Person {
+            constructor(x, y, isBaby = false) {
+                this.x = x;
+                this.y = y;
+                this.isBaby = isBaby;
+                this.emoji = isBaby ? '👶' : '🧍';
+                this.state = 'normal'; // normal, happy, sad, sleeping, dancing, scared, clean, cold, confused, thirsty, friendly
+                this.vy = 0;
+                this.onGround = true;
+                this.appleEffect = { active: false, timer: 0 };
+                this.umbrellaEffect = { active: false, timer: 0 };
+                this.danceOffset = 0;
+                this.isAlive = true;
+                this.isScared = false;
+                this.scaredVx = 0;
+                this.scaredTimer = 0;
+                this.isImmune = false;
+                this.immuneTimer = 0;
+                this.isClean = false;
+                this.cleanTimer = 0;
+                this.isThirsty = false; // New state
+                this.thirstyTimer = 0; // New timer for thirst
+                this.isFriendly = false; // New state for friendship
+                this.friendEmoji = ''; // Emoji for friend
+                this.isInShelter = false; // New: Track if person is in a shelter
+            }
+
+            // Update person's state and position
+            update() {
+                if (!this.isAlive) return;
+
+                // Update immunity timer
+                if (this.isImmune) {
+                    this.immuneTimer--;
+                    if (this.immuneTimer <= 0) {
+                        this.isImmune = false;
+                        this.emoji = this.isBaby ? '👶' : '🧍'; // Revert emoji if immunity wears off
+                    } else {
+                        this.emoji = '✨'; // Show immunity emoji
+                    }
+                }
+
+                // Update clean timer
+                if (this.isClean) {
+                    this.cleanTimer--;
+                    if (this.cleanTimer <= 0) {
+                        this.isClean = false;
+                        if (!this.isImmune && !this.isScared && !this.isDancing && !this.isBaby) {
+                            this.state = 'normal'; // Revert to normal if clean effect wears off
+                            this.emoji = '🧍';
+                        }
+                    } else {
+                        this.state = 'clean'; // Set state to clean
+                    }
+                }
+
+                // Update thirsty timer
+                if (this.isThirsty) {
+                    this.thirstyTimer--;
+                    if (this.thirstyTimer <= 0) {
+                        this.isThirsty = false;
+                        if (!this.isImmune && !this.isScared && !this.isDancing && !this.isBaby && this.state === 'thirsty') {
+                            this.state = 'normal';
+                            this.emoji = this.isBaby ? '👶' : '🧍';
+                        }
+                    } else {
+                         this.state = 'thirsty';
+                         this.emoji = '😩'; // Thirsty people are distressed
+                    }
+                }
+
+                // NEW: Shelter logic
+                if (isNight) {
+                    if (!this.isInShelter && shelters.length > 0) {
+                        // For simplicity, make them instantly go to the first shelter
+                        const nearestShelter = shelters[0];
+                        this.x = nearestShelter.x;
+                        this.y = GROUND_Y - this.getSize() / 2; // Position on ground inside/at shelter
+                        this.isInShelter = true;
+                        this.state = 'sleeping'; // People sleep in shelters at night
+                        this.emoji = '😴';
+                        showMessage((this.isBaby ? 'msgBaby' : 'msgPerson') + 'EnterShelter'); // Use translated message
+                    }
+                } else { // Daytime
+                    if (this.isInShelter) {
+                        this.isInShelter = false;
+                        this.state = 'normal';
+                        this.emoji = this.isBaby ? '👶' : '🧍';
+                        // Optionally, move them slightly away from the shelter
+                        this.x += (Math.random() - 0.5) * PERSON_SIZE;
+                        showMessage((this.isBaby ? 'msgBaby' : 'msgPerson') + 'ExitShelter'); // Use translated message
+                    }
+                }
+
+
+                // Apply gravity if not on ground
+                if (!this.onGround) {
+                    this.vy += 0.5; // Gravity
+                    this.y += this.vy;
+                    if (this.y >= GROUND_Y - this.getSize() / 2) { // Use dynamic size for ground check
+                        this.y = GROUND_Y - this.getSize() / 2;
+                        this.vy = 0;
+                        this.onGround = true;
+                    }
+                }
+
+                // Handle scared state (prioritized)
+                if (this.isScared) {
+                    this.x += this.scaredVx;
+                    this.scaredTimer--;
+                    if (this.scaredTimer <= 0) {
+                        this.isScared = false;
+                        this.scaredVx = 0;
+                        if (!this.isImmune && !this.isClean && !this.isInShelter) this.state = 'normal';
+                        if (!this.isImmune && !this.isClean && !this.isInShelter) this.emoji = this.isBaby ? '👶' : '🧍';
+                    }
+                    // Bounce off canvas edges when scared
+                    if (this.x < this.getSize() / 2) {
+                        this.x = this.getSize() / 2;
+                        this.scaredVx *= -1;
+                    } else if (this.x > canvas.width - this.getSize() / 2) {
+                        this.x = canvas.width - this.getSize() / 2;
+                        this.scaredVx *= -1;
+                    }
+                }
+
+                // Update apple effect timer
+                if (this.appleEffect.active) {
+                    this.appleEffect.timer--;
+                    if (this.appleEffect.timer <= 0) {
+                        this.appleEffect.active = false;
+                        if (this.state === 'happy' && !this.isImmune && !this.isScared && !this.isClean && !this.isInShelter) {
+                            this.state = 'normal';
+                        }
+                    }
+                }
+
+                // Update umbrella effect timer
+                if (this.umbrellaEffect.active) {
+                    this.umbrellaEffect.timer--;
+                    if (this.umbrellaEffect.timer <= 0) {
+                        this.umbrellaEffect.active = false;
+                        if (this.state === 'normal' && isRaining && !this.isImmune && !this.isScared && !this.isClean && !this.isInShelter) {
+                            this.state = 'sad';
+                        }
+                    }
+                }
+
+                // Handle dancing animation
+                if (isDancing) {
+                    this.state = 'dancing';
+                    this.danceOffset = Math.sin(danceFrame * 0.1 + this.x * 0.01) * 5;
+                } else if (this.state === 'dancing') {
+                    if (!this.isImmune && !this.isScared && !this.isClean && !this.isInShelter) this.state = 'normal';
+                    this.danceOffset = 0;
+                }
+
+                // Apply strong wind effect
+                if (isStrongWind && !this.isScared && !this.isImmune && !this.isInShelter) { // Not affected if in shelter
+                    this.x += (Math.random() - 0.5) * 5; // Stronger random horizontal sway
+                    // Ensure they don't go off screen
+                    if (this.x < this.getSize() / 2) this.x = this.getSize() / 2;
+                    if (this.x > canvas.width - this.getSize() / 2) this.x = canvas.width - this.getSize() / 2;
+                    this.emoji = '💨'; // Show wind effect on person
+                } else if (this.emoji === '💨' && !this.isInShelter) { // Revert if wind stops or if they enter shelter
+                    this.emoji = this.isBaby ? '👶' : '🧍'; // Revert emoji if wind stops
+                }
+
+
+                // Set emoji based on state (prioritized from most impactful)
+                if (this.isInShelter && isNight) { // Highest priority: safe in shelter at night
+                    this.emoji = '😴';
+                    this.state = 'sleeping';
+                } else if (this.isImmune) {
+                    this.emoji = '✨';
+                } else if (this.isScared) {
+                    this.emoji = '😱';
+                } else if (this.isClean) {
+                    this.emoji = '😊'; // Clean people are happy
+                } else if (this.isDancing) {
+                    this.emoji = '🕺';
+                } else if (this.isFriendly) { // New: Friendly state
+                    this.emoji = '🤝';
+                } else if (this.isBaby) {
+                    this.emoji = '👶';
+                } else if (isStrongWind && !this.isInShelter) { // Strong wind, if not protected by other states or in shelter
+                    this.emoji = '💨';
+                } else if (isSnowing && !this.isInShelter) { // Cold in snow, if not in shelter
+                    this.state = 'cold';
+                    this.emoji = '🥶';
+                } else if (isFoggy && !this.isInShelter) { // Confused in fog, if not in shelter
+                    this.state = 'confused';
+                    this.emoji = '🤔';
+                } else if (this.isThirsty) { // Thirsty
+                    this.emoji = '😩';
+                } else if (isRaining && !this.umbrellaEffect.active && !this.isInShelter) { // Sad in rain if no umbrella and not in shelter
+                    this.state = 'sad';
+                    this.emoji = '😞';
+                } else if (isNight && !this.isInShelter) { // If it's night but somehow not in shelter (e.g., no shelters built yet)
+                    this.state = 'sleeping'; // Still attempt to sleep
+                    this.emoji = '😴';
+                }
+                else { // Default normal state
+                    this.state = 'normal';
+                    this.emoji = '🧍';
+                }
+            }
+
+            // Get dynamic size for person/baby
+            getSize() {
+                return this.isBaby ? PERSON_SIZE * 0.7 : PERSON_SIZE; // Babies are 70% of normal person size
+            }
+
+            // Draw the person on the canvas
+            draw() {
+                if (!this.isAlive) return;
+
+                ctx.font = `${this.getSize()}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.emoji, this.x, this.y + this.danceOffset);
+
+                // Draw apple if active (if not immune or scared)
+                if (this.appleEffect.active && !this.isImmune && !this.isScared) {
+                    ctx.font = `${this.getSize() * 0.5}px sans-serif`;
+                    ctx.fillText('🍎', this.x + this.getSize() / 2, this.y - this.getSize() / 2);
+                }
+
+                // Draw umbrella if active (if not immune or scared)
+                if (this.umbrellaEffect.active && !this.isImmune && !this.isScared) {
+                    ctx.font = `${this.getSize() * 0.5}px sans-serif`;
+                    ctx.fillText('☔', this.x - this.getSize() / 2, this.y - this.getSize() / 2);
+                }
+
+                // Draw immunity indicator
+                if (this.isImmune) {
+                    ctx.font = `${this.getSize() * 0.6}px sans-serif`;
+                    ctx.fillText('🛡️', this.x, this.y - this.getSize());
+                }
+            }
+        }
+
+        // Raindrop class
+        class Raindrop {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = -Math.random() * canvas.height;
+                this.speed = 5 + Math.random() * 5;
+                this.length = 10 + Math.random() * 10;
+                this.vx = 0; // New horizontal velocity for wind
+            }
+
+            update() {
+                this.y += this.speed;
+                this.x += this.vx; // Apply horizontal velocity
+
+                // Wrap around horizontally
+                if (this.x < 0) this.x = canvas.width;
+                if (this.x > canvas.width) this.x = 0;
+
+                if (this.y > canvas.height) {
+                    this.y = -20;
+                    this.x = Math.random() * canvas.width;
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x, this.y + this.length);
+                ctx.strokeStyle = '#60a5fa';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        }
+
+        // New Snowflake class
+        class Snowflake {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = -Math.random() * canvas.height;
+                this.speed = 1 + Math.random() * 2; // Slower speed than rain
+                this.emoji = '❄️';
+            }
+
+            update() {
+                this.y += this.speed;
+                // Add slight horizontal drift for snow
+                this.x += Math.sin(this.y * 0.05) * 0.5;
+
+                if (this.y > canvas.height) {
+                    this.y = -20;
+                    this.x = Math.random() * canvas.width;
+                }
+            }
+
+            draw() {
+                ctx.font = '15px sans-serif'; // Smaller snowflakes
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.emoji, this.x, this.y);
+            }
+        }
+
+
+        // Snake class
+        class Snake {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.emoji = '🐍';
+                this.vx = (Math.random() < 0.5 ? 1 : -1) * (1 + Math.random() * 2);
+                this.timer = 300; // Visible for 5 seconds (60 frames/sec * 5)
+            }
+
+            update() {
+                this.x += this.vx;
+                // Bounce off walls
+                if (this.x < 0 || this.x > canvas.width) {
+                    this.vx *= -1;
+                }
+                this.timer--;
+            }
+
+            draw() {
+                ctx.font = `${PERSON_SIZE * 0.8}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.emoji, this.x, this.y);
+            }
+        }
+
+        // Fire class
+        class Fire {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.emoji = '🔥';
+                this.timer = 180; // Visible for 3 seconds
+            }
+
+            update() {
+                this.timer--;
+            }
+
+            draw() {
+                ctx.font = `${PERSON_SIZE * 0.7}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.emoji, this.x, this.y);
+            }
+        }
+
+        // Tree class
+        class Tree {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.emoji = '🌳';
+                this.isBurned = false;
+            }
+
+            draw() {
+                if (this.isBurned) return;
+                ctx.font = `${PERSON_SIZE * 1.2}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(this.emoji, this.x, this.y);
+            }
+        }
+
+        // Shower class (visual effect for showering)
+        class ShowerEffect {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.emoji = '💦'; // Water splash emoji
+                this.timer = 60; // Lasts 1 second
+            }
+            update() {
+                this.timer--;
+            }
+            draw() {
+                ctx.font = `${PERSON_SIZE * 0.7}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.emoji, this.x, this.y);
+            }
+        }
+
+        // Thunderbolt class (visual effect for thunder)
+        class ThunderboltEffect {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * (canvas.height / 3); // Top third of canvas
+                this.emoji = '⚡';
+                this.timer = 15; // Very short flash
+                this.opacity = 1;
+            }
+            update() {
+                this.timer--;
+                this.opacity = this.timer / 15; // Fade out
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.opacity;
+                ctx.font = `${PERSON_SIZE * 2}px sans-serif`; // Large lightning bolt
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.emoji, this.x, this.y);
+                ctx.restore();
+            }
+        }
+
+        // New Flower class (for random event and new button)
+        class Flower {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.emoji = ['🌸', '🌼', '🌷', '🌻'][Math.floor(Math.random() * 4)]; // Random flower emoji
+                this.timer = 300; // Lasts 5 seconds
+                this.opacity = 1;
+            }
+            update() {
+                this.timer--;
+                this.opacity = this.timer / 300; // Fade out
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.opacity;
+                ctx.font = `${PERSON_SIZE * 0.6}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(this.emoji, this.x, this.y);
+                ctx.restore();
+            }
+        }
+
+        // New Shelter class
+        class Shelter {
+            constructor(x, y, width, height) {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.emoji = '🏠'; // House emoji
+            }
+
+            draw() {
+                ctx.font = `${this.width}px sans-serif`; // Scale emoji based on width
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(this.emoji, this.x, this.y);
+            }
+        }
+
+
+        // Initialize rain drops and snowflakes
+        for (let i = 0; i < 100; i++) {
+            rainDrops.push(new Raindrop());
+            snowflakes.push(new Snowflake());
+        }
+
+        // Function to reset all weather states
+        function resetWeather() {
+            isRaining = false;
+            isWindyRain = false;
+            isSnowing = false;
+            isFoggy = false;
+            isSunny = false;
+            isNight = false;
+            isStrongWind = false; // Reset strong wind too
+
+            // Reset people's weather-related states if applicable
+            people.forEach(person => {
+                if (person.state === 'sad' || person.state === 'cold' || person.state === 'confused' || person.emoji === '😩' || person.state === 'sleeping' || person.emoji === '💨') {
+                    person.state = 'normal';
+                    person.emoji = person.isBaby ? '👶' : '🧍';
+                }
+                person.umbrellaEffect.active = false;
+            });
+            canvas.style.backgroundColor = '#e0f2f7'; // Default background
+        }
+
+        // Event Listeners for buttons
+        addPersonBtn.addEventListener('click', () => {
+            if (people.length < 5) {
+                const x = Math.random() * (canvas.width - PERSON_SIZE) + PERSON_SIZE / 2;
+                const y = GROUND_Y - PERSON_SIZE / 2;
+                people.push(new Person(x, y));
+                showMessage('msgAddPerson');
+            } else {
+                showMessage('msgMaxPeople');
+            }
+        });
+
+        giveAppleBtn.addEventListener('click', () => {
+            if (people.length > 0) {
+                const alivePeople = people.filter(p => p.isAlive);
+                if (alivePeople.length > 0) {
+                    const randomPerson = alivePeople[Math.floor(Math.random() * alivePeople.length)];
+                    randomPerson.state = 'happy';
+                    randomPerson.appleEffect.active = true;
+                    randomPerson.appleEffect.timer = 120;
+                    showMessage('msgGiveApple');
+                } else {
+                    showMessage('msgNoAlivePeople');
+                }
+            } else {
+                showMessage('msgNoPeople');
+            }
+        });
+
+        makeItRainBtn.addEventListener('click', () => {
+            resetWeather();
+            isRaining = true;
+            showMessage('msgRainStart');
+            people.forEach(person => {
+                if (person.isAlive && !person.isImmune && !person.isClean && !person.isInShelter) { // Not affected if in shelter
+                    if (Math.random() < 0.5) {
+                        person.umbrellaEffect.active = true;
+                        person.umbrellaEffect.timer = 300;
+                        person.state = 'normal';
+                    } else {
+                        person.state = 'sad';
+                    }
+                }
+            });
+        });
+
+        removeSunBtn.addEventListener('click', () => {
+            isNight = !isNight;
+            if (isNight) {
+                showMessage('msgNight');
+            } else {
+                showMessage('msgDay');
+            }
+        });
+
+        makeThemDanceBtn.addEventListener('click', () => {
+            isDancing = !isDancing;
+            if (isDancing) {
+                showMessage('msgDanceStart');
+            } else {
+                showMessage('msgDanceStop');
+            }
+        });
+
+        // New event listeners for summoning
+        summonSnakeBtn.addEventListener('click', () => {
+            if (snakes.length < 2) {
+                const x = Math.random() * (canvas.width - PERSON_SIZE) + PERSON_SIZE / 2;
+                const y = GROUND_Y - PERSON_SIZE / 4;
+                snakes.push(new Snake(x, y));
+                showMessage('msgSnakeSummon');
+            } else {
+                showMessage('msgMaxSnakes');
+            }
+        });
+
+        summonFireBtn.addEventListener('click', () => {
+            if (fires.length < 3) {
+                const x = Math.random() * canvas.width;
+                const y = GROUND_Y - (PERSON_SIZE / 2);
+                fires.push(new Fire(x, y));
+                showMessage('msgFireSummon');
+            } else {
+                showMessage('msgMaxFires');
+            }
+        });
+
+        plantTreeBtn.addEventListener('click', () => {
+            if (trees.length < 5) { // Limit to 5 trees
+                const x = Math.random() * (canvas.width - PERSON_SIZE) + PERSON_SIZE / 2;
+                const y = GROUND_Y; // Trees sit on the ground
+                trees.push(new Tree(x, y));
+                showMessage('msgTreePlant');
+            } else {
+                showMessage('msgMaxTrees');
+            }
+        });
+
+        injectBtn.addEventListener('click', () => {
+            const alivePeople = people.filter(p => p.isAlive);
+            if (alivePeople.length > 0) {
+                const randomPerson = alivePeople[Math.floor(Math.random() * alivePeople.length)];
+                randomPerson.isImmune = true;
+                randomPerson.immuneTimer = 300; // Immune for 5 seconds
+                randomPerson.emoji = '✨'; // Show a special emoji for immunity
+                showMessage('msgInject');
+            } else {
+                showMessage('msgNoInjectTarget');
+            }
+        });
+
+        birthBabyBtn.addEventListener('click', () => {
+            if (people.length < 5) {
+                const alivePeople = people.filter(p => p.isAlive && !p.isBaby);
+                if (alivePeople.length > 0) {
+                    const parent = alivePeople[Math.floor(Math.random() * alivePeople.length)];
+                    const babyX = parent.x + (Math.random() * PERSON_SIZE - PERSON_SIZE / 2);
+                    const babyY = GROUND_Y - (PERSON_SIZE * 0.7) / 2;
+                    people.push(new Person(babyX, babyY, true));
+                    showMessage('msgBabyBirth');
+                } else {
+                    showMessage('msgNoBabyParent');
+                }
+            } else {
+                showMessage('msgMaxPeople'); // Reusing message for max people
+            }
+        });
+
+        // Shower button functionality
+        showerBtn.addEventListener('click', () => {
+            const alivePeople = people.filter(p => p.isAlive);
+            if (alivePeople.length > 0) {
+                const randomPerson = alivePeople[Math.floor(Math.random() * alivePeople.length)];
+                randomPerson.isClean = true;
+                randomPerson.cleanTimer = 180; // Clean for 3 seconds
+                randomPerson.state = 'happy'; // Showering makes them happy
+                // Add a visual shower effect around the person
+                for (let i = 0; i < 5; i++) {
+                    showers.push(new ShowerEffect(randomPerson.x + (Math.random() - 0.5) * PERSON_SIZE, randomPerson.y - PERSON_SIZE / 2 + (Math.random() - 0.5) * PERSON_SIZE / 2));
+                }
+                showMessage('msgShower');
+            } else {
+                showMessage('msgNoShowerTarget');
+            }
+        });
+
+        // Thunder button functionality
+        thunderBtn.addEventListener('click', () => {
+            thunderbolts.push(new ThunderboltEffect()); // Create a visual thunderbolt
+            people.forEach(person => {
+                if (person.isAlive && !person.isImmune && !person.isInShelter) { // Not affected if in shelter
+                    person.isScared = true;
+                    person.scaredTimer = 180; // Scared for 3 seconds
+                    person.emoji = '😱';
+                    person.scaredVx = (Math.random() < 0.5 ? 1 : -1) * (2 + Math.random() * 1); // Random direction to run
+                }
+            });
+            showMessage('msgThunder');
+        });
+
+        // Wind and Rain button functionality
+        windRainBtn.addEventListener('click', () => {
+            resetWeather();
+            isWindyRain = true;
+            isRaining = true; // If windy rain, it's also raining
+            showMessage('msgWindRain');
+            people.forEach(person => {
+                if (person.isAlive && !person.isImmune && !person.umbrellaEffect.active && !person.isClean && !person.isInShelter) { // Not affected if in shelter
+                    person.state = 'sad'; // More intense sadness
+                    person.emoji = '😩'; // More distressed emoji
+                }
+            });
+        });
+
+        // New Snow button functionality
+        snowBtn.addEventListener('click', () => {
+            resetWeather();
+            isSnowing = true;
+            showMessage('msgSnowStart');
+            people.forEach(person => {
+                if (person.isAlive && !person.isImmune && !person.isClean && !person.isInShelter) { // Not affected if in shelter
+                    person.state = 'cold'; // People feel cold
+                    person.emoji = '🥶';
+                }
+            });
+        });
+
+        // New Fog button functionality
+        fogBtn.addEventListener('click', () => {
+            resetWeather();
+            isFoggy = true;
+            showMessage('msgFogStart');
+            people.forEach(person => {
+                if (person.isAlive && !person.isImmune && !person.isClean && !person.isInShelter) { // Not affected if in shelter
+                    person.state = 'confused'; // People feel confused
+                    person.emoji = '🤔';
+                }
+            });
+        });
+
+        // New Sunny button functionality
+        sunnyBtn.addEventListener('click', () => {
+            resetWeather(); // Clear all other weather
+            isSunny = true;
+            isNight = false; // Ensure it's daytime
+            showMessage('msgSunny');
+            people.forEach(person => {
+                if (person.isAlive && (person.state === 'sad' || person.state === 'cold' || person.state === 'confused' || person.emoji === '😩' || person.state === 'sleeping')) {
+                    person.state = 'happy'; // Make them happy or normal
+                    person.emoji = '😊';
+                }
+            });
+        });
+
+        // New Remove Person button functionality
+        removePersonBtn.addEventListener('click', () => {
+            if (people.length > 0) {
+                // Remove a random person
+                const randomIndex = Math.floor(Math.random() * people.length);
+                people.splice(randomIndex, 1);
+                showMessage('msgRemovePerson');
+            } else {
+                showMessage('msgNoRemoveTarget');
+            }
+        });
+
+        // New Clear All button functionality
+        clearAllBtn.addEventListener('click', () => {
+            people = [];
+            snakes = [];
+            fires = [];
+            trees = [];
+            showers = [];
+            thunderbolts = [];
+            snowflakes = [];
+            flowers = [];
+            shelters = []; // Clear shelters too
+            resetWeather(); // Reset all weather conditions
+            showMessage('msgClearAll');
+        });
+
+        // New Heal button functionality (modified for no zombies)
+        healBtn.addEventListener('click', () => {
+            const sadScaredPeople = people.filter(p => p.isAlive && (p.state === 'sad' || p.isScared || p.isThirsty));
+            if (sadScaredPeople.length > 0) {
+                const personToHeal = sadScaredPeople[Math.floor(Math.random() * sadScaredPeople.length)];
+                personToHeal.state = 'normal';
+                personToHeal.isScared = false;
+                personToHeal.scaredTimer = 0;
+                personToHeal.isThirsty = false;
+                personToHeal.thirstyTimer = 0;
+                personToHeal.emoji = personToHeal.isBaby ? '👶' : '🧍';
+                showMessage('msgHeal');
+            } else {
+                showMessage('msgNoHealTarget');
+            }
+        });
+
+        // New Random Event button functionality
+        randomEventBtn.addEventListener('click', () => {
+            const events = [
+                () => { // Happy Burst
+                    people.forEach(person => {
+                        if (person.isAlive && !person.isImmune) {
+                            person.state = 'happy';
+                            person.appleEffect.active = true; // Reuse apple effect timer for happiness
+                            person.appleEffect.timer = 180; // Happy for 3 seconds
+                        }
+                    });
+                    showMessage('msgHappyBurst');
+                },
+                () => { // Flower Bloom
+                    for (let i = 0; i < 10; i++) {
+                        const x = Math.random() * canvas.width;
+                        const y = GROUND_Y - (Math.random() * PERSON_SIZE * 0.5); // Appear slightly above ground
+                        flowers.push(new Flower(x, y));
+                    }
+                    showMessage('msgFlowerBloom');
+                },
+                () => { // Small Earthquake (people jump)
+                    people.forEach(person => {
+                        if (person.isAlive && person.onGround) {
+                            person.vy = -10; // Make them jump
+                            person.onGround = false;
+                        }
+                    });
+                    showMessage('msgSmallEarthquake');
+                },
+                () => { // Make a person thirsty
+                    if (people.length > 0) {
+                        const randomPerson = people[Math.floor(Math.random() * people.length)];
+                        randomPerson.isThirsty = true;
+                        randomPerson.thirstyTimer = 300; // Thirsty for 5 seconds
+                        showMessage('msgThirstyPerson');
+                    } else {
+                        showMessage('msgNoThirstyTarget');
+                    }
+                }
+            ];
+            const randomEvent = events[Math.floor(Math.random() * events.length)];
+            randomEvent(); // Execute the chosen random event
+        });
+
+        // NEW: Build Shelter button functionality
+        buildShelterBtn.addEventListener('click', () => {
+            if (shelters.length < 2) { // Limit to 2 shelters
+                const x = Math.random() * (canvas.width - PERSON_SIZE * 2) + PERSON_SIZE;
+                const y = GROUND_Y;
+                shelters.push(new Shelter(x, y, PERSON_SIZE * 1.5, PERSON_SIZE * 1.5)); // Size relative to person
+                showMessage('msgShelterBuilt');
+            } else {
+                showMessage('msgMaxShelters');
+            }
+        });
+
+        // NEW: Plant Flower button functionality
+        plantFlowerBtn.addEventListener('click', () => {
+            if (flowers.length < 15) { // Limit to 15 flowers
+                const x = Math.random() * canvas.width;
+                const y = GROUND_Y - (Math.random() * PERSON_SIZE * 0.5);
+                flowers.push(new Flower(x, y));
+                showMessage('msgFlowerPlant');
+            } else {
+                showMessage('msgMaxFlowers');
+            }
+        });
+
+        // NEW: Strong Wind button functionality
+        strongWindBtn.addEventListener('click', () => {
+            isStrongWind = !isStrongWind;
+            if (isStrongWind) {
+                resetWeather(); // Clear other weather effects
+                isStrongWind = true; // Re-enable strong wind
+                showMessage('msgStrongWindStart');
+            } else {
+                showMessage('msgWindStop');
+            }
+        });
+
+        // NEW: Make Friends button functionality
+        makeFriendsBtn.addEventListener('click', () => {
+            if (people.length >= 2) {
+                const availablePeople = people.filter(p => p.isAlive && !p.isFriendly);
+                if (availablePeople.length >= 2) {
+                    // Pick two distinct random people
+                    let person1 = availablePeople[Math.floor(Math.random() * availablePeople.length)];
+                    let person2;
+                    do {
+                        person2 = availablePeople[Math.floor(Math.random() * availablePeople.length)];
+                    } while (person1 === person2);
+
+                    person1.isFriendly = true;
+                    person1.friendEmoji = '🤝';
+                    person2.isFriendly = true;
+                    person2.friendEmoji = '🤝';
+                    showMessage('msgFriendsMade');
+                } else {
+                    showMessage('msgNotEnoughFriends');
+                }
+            } else {
+                showMessage('msgNoFriendsPossible');
+            }
+        });
+
+        // NEW: Give Water button functionality
+        giveWaterBtn.addEventListener('click', () => {
+            const thirstyPeople = people.filter(p => p.isAlive && p.isThirsty);
+            if (thirstyPeople.length > 0) {
+                const randomPerson = thirstyPeople[Math.floor(Math.random() * thirstyPeople.length)];
+                randomPerson.isThirsty = false;
+                randomPerson.thirstyTimer = 0;
+                randomPerson.state = 'happy'; // Happy after drinking water
+                randomPerson.appleEffect.active = true; // Reuse apple effect for happy timer
+                randomPerson.appleEffect.timer = 120;
+                showMessage('msgWaterGiven');
+            } else {
+                showMessage('msgNoThirstyForWater');
+            }
+        });
+
+
+        // Game Loop
+        function animate() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Background color based on day/night and sunny
+            if (isSunny) {
+                canvas.style.backgroundColor = '#fef08a'; // Bright yellow for sunny
+            } else if (isNight) {
+                canvas.style.backgroundColor = '#334155'; // Dark blue for night
+            } else if (isFoggy) {
+                ctx.fillStyle = 'rgba(200, 200, 200, 0.4)'; // Semi-transparent gray for fog
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                canvas.style.backgroundColor = '#e0e7eb'; // Light gray for fog
+            } else {
+                canvas.style.backgroundColor = '#e0f2f7'; // Default light blue
+            }
+
+
+            // Update rain drops based on wind
+            if (isRaining) {
+                rainDrops.forEach(drop => {
+                    if (isWindyRain) {
+                        drop.vx = 3; // Push right for windy rain
+                        drop.speed = 10 + Math.random() * 5; // Faster rain
+                    } else {
+                        drop.vx = 0; // No horizontal wind for regular rain
+                        drop.speed = 5 + Math.random() * 5; // Normal rain speed
+                    }
+                    drop.update();
+                    drop.draw();
+                });
+            }
+
+            // Update and draw snowflakes if snowing
+            if (isSnowing) {
+                snowflakes.forEach(flake => {
+                    flake.update();
+                    flake.draw();
+                });
+            }
+
+            // Draw fog overlay (if not already drawn as background)
+            if (isFoggy && canvas.style.backgroundColor !== '#e0e7eb') { // Only draw if not set as background
+                ctx.fillStyle = 'rgba(200, 200, 200, 0.4)'; // Semi-transparent gray
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+
+            // Update and draw showers
+            showers = showers.filter(shower => {
+                shower.update();
+                shower.draw();
+                return shower.timer > 0;
+            });
+
+            // Update and draw thunderbolts
+            thunderbolts = thunderbolts.filter(thunder => {
+                thunder.update();
+                thunder.draw();
+                return thunder.timer > 0;
+            });
+
+            // Update and draw flowers
+            flowers = flowers.filter(flower => {
+                flower.update();
+                flower.draw();
+                return flower.timer > 0;
+            });
+
+            // Draw trees (no update needed for static trees)
+            trees.forEach(tree => {
+                tree.draw();
+            });
+
+            // Draw shelters
+            shelters.forEach(shelter => {
+                shelter.draw();
+            });
+
+            // Update and draw people
+            people.forEach(person => {
+                person.update();
+                person.draw();
+                // Apply wind push to people if windy rain and not immune/scared and NOT IN SHELTER
+                if (isWindyRain && person.isAlive && !person.isImmune && !person.isScared && !person.isInShelter) {
+                     person.x += (Math.random() - 0.5) * 2; // Slight random horizontal sway
+                    // Ensure they don't go off screen
+                    if (person.x < person.getSize() / 2) person.x = person.getSize() / 2;
+                    if (person.x > canvas.width - person.getSize() / 2) person.x = canvas.width - person.getSize() / 2;
+                }
+            });
+
+            // Handle interactions
+            // Snake-Person interaction
+            snakes.forEach(snake => {
+                people.forEach(person => {
+                    // Only interact if person is alive, not scared, not immune, AND NOT IN SHELTER
+                    if (person.isAlive && !person.isScared && !person.isImmune && !person.isInShelter && checkCollision(snake, person, 0.8)) {
+                        person.isScared = true;
+                        person.scaredTimer = 180;
+                        person.emoji = '😱';
+                        person.scaredVx = (person.x > snake.x ? 1 : -1) * (2 + Math.random() * 1);
+                        snake.timer = 0;
+                        showMessage('msgSnakeSummon'); // Reusing message key for snake interaction
+                    }
+                });
+            });
+
+            // Fire-Person interaction
+            fires.forEach(fire => {
+                people.forEach(person => {
+                    // Only interact if person is alive, not immune, AND NOT IN SHELTER
+                    if (person.isAlive && !person.isImmune && !person.isInShelter && checkCollision(fire, person, 0.7)) {
+                        person.isAlive = false;
+                        fire.timer = 0;
+                        showMessage('msgFireSummon'); // Reusing message key for fire interaction
+                    }
+                });
+            });
+
+            // Fire-Tree interaction
+            fires.forEach(fire => {
+                trees.forEach(tree => {
+                    if (!tree.isBurned && checkCollision(fire, tree, 0.7)) {
+                        tree.isBurned = true;
+                        fire.timer = 0;
+                        showMessage('msgTreePlant'); // Reusing message key for tree interaction
+                    }
+                });
+            });
+
+
+            // Filter out dead people and expired entities
+            people = people.filter(person => person.isAlive);
+            snakes = snakes.filter(snake => {
+                snake.update();
+                snake.draw();
+                return snake.timer > 0;
+            });
+            fires = fires.filter(fire => {
+                fire.update();
+                fire.draw();
+                return fire.timer > 0;
+            });
+            trees = trees.filter(tree => !tree.isBurned);
+
+
+            // Update dance frame for animation
+            if (isDancing) {
+                danceFrame++;
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // Adjust canvas size on window load and resize
+        function resizeCanvas() {
+            // Set canvas display size to match its CSS size
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+
+            // Recalculate GROUND_Y based on new canvas height
+            GROUND_Y = canvas.height - 50;
+
+            // Dynamically adjust PERSON_SIZE: 5 people should fit in about 1/5 of the canvas width, with min/max limits
+            PERSON_SIZE = Math.max(25, Math.min(80, canvas.width / 5));
+        }
+
+        // Language selection event listeners
+        koreanLangBtn.addEventListener('click', () => {
+            currentLanguage = 'ko';
+            selectedCountryName = translations[currentLanguage].koreaCountryName;
+            applyTranslations();
+            languageSelectionScreen.style.display = 'none';
+            gameScreen.style.display = 'flex';
+            resizeCanvas(); // Ensure canvas is correctly sized after display change
+        });
+
+        japaneseLangBtn.addEventListener('click', () => {
+            currentLanguage = 'ja';
+            selectedCountryName = translations[currentLanguage].japanCountryName;
+            applyTranslations();
+            languageSelectionScreen.style.display = 'none';
+            gameScreen.style.display = 'flex';
+            resizeCanvas(); // Ensure canvas is correctly sized after display change
+        });
+
+        englishLangBtn.addEventListener('click', () => {
+            currentLanguage = 'en';
+            selectedCountryName = translations[currentLanguage].usaCountryName; // Assuming USA for English
+            applyTranslations();
+            languageSelectionScreen.style.display = 'none';
+            gameScreen.style.display = 'flex';
+            resizeCanvas(); // Ensure canvas is correctly sized after display change
+        });
+
+
+        window.addEventListener('load', () => {
+            resizeCanvas(); // Initial resize
+            gameScreen.style.display = 'none'; // Hide game initially
+            languageSelectionScreen.style.display = 'flex'; // Show language selection
+            applyTranslations(); // Apply initial language to selection screen
+            animate(); // Start the animation loop once
+        });
+        window.addEventListener('resize', resizeCanvas); // Resize on window resize
+    </script>
+</body>
