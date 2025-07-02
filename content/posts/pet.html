@@ -1,0 +1,749 @@
+---
+title: "펫키우기"
+date: "2025-07-02"
+author: "chei"
+---
+
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+/* 기본 글꼴을 설정합니다. */
+body {
+    font-family: "Inter", sans-serif;
+    background-color: #f0f4f8; /* 부드러운 배경색 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh; /* 화면 전체 높이를 사용합니다. */
+    margin: 0;
+    padding: 20px; /* 여백을 추가하여 내용이 가장자리에 붙지 않도록 합니다. */
+    box-sizing: border-box; /* 패딩이 너비에 포함되도록 합니다. */
+}
+/* 게임 컨테이너의 최대 너비를 설정하여 너무 넓어지지 않도록 합니다. */
+.game-container {
+    max-width: 600px;
+    width: 100%;
+    background-color: #ffffff; /* 흰색 배경 */
+    border-radius: 20px; /* 둥근 모서리 */
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1); /* 그림자 효과 */
+    padding: 30px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* 요소들 사이의 간격 */
+}
+/* 동물 이미지 컨테이너 스타일 */
+.pet-display {
+    font-size: 8rem; /* 동물 이모지 크기 */
+    margin-bottom: 20px;
+    transition: transform 0.2s ease-in-out; /* 동물 움직임 효과 */
+}
+/* 동물 상태 바 스타일 */
+.progress-bar-container {
+    width: 100%;
+    background-color: #e2e8f0; /* 회색 배경 */
+    border-radius: 10px;
+    height: 25px;
+    overflow: hidden; /* 내용이 넘치지 않도록 숨깁니다. */
+    margin-bottom: 10px;
+}
+.progress-bar {
+    height: 100%;
+    border-radius: 10px;
+    text-align: center;
+    color: white;
+    font-weight: bold;
+    line-height: 25px;
+    transition: width 0.5s ease-in-out, background-color 0.5s ease-in-out; /* 너비와 색상 변화 효과 */
+}
+/* 버튼 스타일 */
+.action-button, .pet-select-button, .buy-pet-button, .premium-button {
+    padding: 12px 25px;
+    border-radius: 15px; /* 둥근 모서리 */
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease; /* 호버 및 클릭 효과 */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 버튼 그림자 */
+    flex-grow: 1; /* 버튼이 공간을 채우도록 합니다. */
+    white-space: nowrap; /* 텍스트가 줄바꿈되지 않도록 */
+}
+.action-button:hover, .pet-select-button:hover, .buy-pet-button:hover, .premium-button:hover {
+    transform: translateY(-2px); /* 살짝 위로 올라가는 효과 */
+}
+.action-button:active, .pet-select-button:active, .buy-pet-button:active, .premium-button:active {
+    transform: translateY(0); /* 클릭 시 원래대로 돌아오는 효과 */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 클릭 시 그림자 작아지는 효과 */
+}
+/* 메시지 상자 스타일 */
+.message-box {
+    background-color: #e0f2f7; /* 밝은 파란색 배경 */
+    color: #2c5282; /* 진한 파란색 글씨 */
+    padding: 15px;
+    border-radius: 10px;
+    margin-top: 20px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    text-align: center;
+}
+/* 게임 오버/승리 메시지 스타일 */
+.game-over-message {
+    background-color: #fee2e2; /* 밝은 빨간색 배경 */
+    color: #991b1b; /* 진한 빨간색 글씨 */
+    padding: 20px;
+    border-radius: 15px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-top: 20px;
+}
+.game-win-message {
+    background-color: #d1fae5; /* 밝은 초록색 배경 */
+    color: #065f46; /* 진한 초록색 글씨 */
+    padding: 20px;
+    border-radius: 15px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-top: 20px;
+}
+/* 반응형 디자인을 위한 미디어 쿼리 */
+@media (max-width: 480px) {
+    .action-buttons-container, .pet-selection-container, .adopt-pet-buttons, .premium-section {
+        flex-direction: column; /* 작은 화면에서는 버튼을 세로로 정렬 */
+    }
+    .action-button, .pet-select-button, .buy-pet-button, .premium-button {
+        width: 100%; /* 버튼이 전체 너비를 차지하도록 */
+    }
+}
+</style>
+<body>
+    <div class="game-container">
+        <h1 class="text-4xl font-extrabold text-gray-800 mb-4">🐾 힘들지만 즐거운 동물 친구들 🐾</h1>
+        <div class="text-2xl font-semibold text-purple-700 mb-4">
+            <span id="current-pet-name"></span>
+        </div>
+
+        <!-- 돈 표시 -->
+        <div class="text-xl font-bold text-gray-800 mb-4">
+            💰 돈: <span id="money-value">0</span>원
+        </div>
+
+        <!-- 현재 동물 이미지와 상태를 보여주는 부분 -->
+        <div class="pet-display" id="pet-emoji">
+            🐾
+        </div>
+
+        <!-- 동물 상태 바들 -->
+        <div class="text-left text-gray-700 font-medium">배고픔: <span id="hunger-value"></span></div>
+        <div class="progress-bar-container">
+            <div id="hunger-bar" class="progress-bar bg-red-500"></div>
+        </div>
+
+        <div class="text-left text-gray-700 font-medium">행복: <span id="happiness-value"></span></div>
+        <div class="progress-bar-container">
+            <div id="happiness-bar" class="progress-bar bg-green-500"></div>
+        </div>
+
+        <div class="text-left text-gray-700 font-medium">에너지: <span id="energy-value"></span></div>
+        <div class="progress-bar-container">
+            <div id="energy-bar" class="progress-bar bg-blue-500"></div>
+        </div>
+
+        <!-- 동물 레벨과 경험치 -->
+        <div class="text-xl font-bold text-gray-800 mt-4">
+            레벨: <span id="pet-level">1</span> (경험치: <span id="pet-exp">0</span> / <span id="pet-exp-needed">100</span>)
+        </div>
+
+        <!-- 동물과 상호작용하는 버튼들 -->
+        <div class="action-buttons-container flex flex-wrap justify-center gap-4 mt-6">
+            <button id="feed-button" class="action-button bg-yellow-400 text-white hover:bg-yellow-500">
+                밥 주기 🍚
+            </button>
+            <button id="play-button" class="action-button bg-pink-400 text-white hover:bg-pink-500">
+                놀아주기 🧶
+            </button>
+            <button id="sleep-button" class="action-button bg-purple-400 text-white hover:bg-purple-500">
+                재우기 😴
+            </button>
+        </div>
+
+        <!-- 내 동물들 선택 섹션 -->
+        <div class="mt-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">내 동물들</h2>
+            <div id="my-pets-container" class="pet-selection-container flex flex-wrap justify-center gap-3">
+                <!-- 여기에 소유한 동물 버튼들이 동적으로 추가됩니다. -->
+            </div>
+        </div>
+
+        <!-- 새 동물 입양하기 섹션 -->
+        <div class="mt-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">새 동물 입양하기</h2>
+            <div id="adopt-pet-container" class="adopt-pet-buttons flex flex-wrap justify-center gap-3">
+                <!-- 여기에 입양 가능한 동물 버튼들이 동적으로 추가됩니다. -->
+            </div>
+        </div>
+
+        <!-- 프리미엄 기능 섹션 -->
+        <div class="mt-8 premium-section">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">✨ 프리미엄 기능 ✨</h2>
+            <button id="unlock-premium-button" class="premium-button bg-gradient-to-r from-green-400 to-blue-500 text-white hover:from-green-500 hover:to-blue-600">
+                프리미엄 잠금 해제 (구미호님만!)
+            </button>
+            <div id="premium-status" class="text-lg font-semibold text-green-700 mt-2 hidden">
+                프리미엄 기능이 활성화되었어요! 모든 동물을 무료로 입양할 수 있어요!
+            </div>
+        </div>
+
+
+        <!-- 게임 메시지를 보여주는 곳 -->
+        <div id="message-box" class="message-box hidden"></div>
+
+        <!-- 게임 오버 또는 승리 메시지 -->
+        <div id="game-status-message" class="hidden"></div>
+    </div>
+
+    <script>
+        // 이 부분은 게임의 모든 로직이 들어가는 곳이에요!
+
+        // 다양한 동물 이모지 목록
+        const animalEmojis = [
+            '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵',
+            '🐔', '🐧', '🐦', '🐥', '🦆', '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋',
+            '🐌', '🐞', '🐜', '🦟', '🦗', '🕷️', '🦂', '🐢', '🐍', '🦎', '🦖', '🦕', '🐙', '🦑', '🦐',
+            '🦀', '🐡', '🐠', '🐟', '🐬', '🐳', '🐋', '🦈', '🐊', '🐅', '🐆', '🦓', '🦍', '🐘', '🦛',
+            '🦏', '🐪', '🦒', '🐃', '🐄', '🐖', '🐏', '🐐', '🦌', '🐕', '🐩', '🐈', '🐓', '🦃', '🕊️',
+            '🐇', '🐁', '🐀', '🐿️', '🦔', '🐾', '🐉', '🐲', '🌵', '🎄', '🌳', '🌲', '🌿', '☘️', '🍀',
+            '🎋', '🍂', '🍁', '🍄', '🐚', '🕸️', '🌎', '🌍', '🌏', '🌕', '🌖', '🌗', '🌘', '🌑', '🌒',
+            '🌓', '🌔', '🌙', '💫', '⭐', '🌟', '✨', '⚡', '🔥', '💥', '☄️', '☀️', '☁️', '🌧️', '⛈️',
+            '🌨️', '🌩️', '💨', '💧', '🌊', '💦', '💧', '🌊', '💦', '💧', '🌊', '💦', '💧', '🌊', '💦'
+        ];
+
+        // 게임의 모든 데이터를 저장하는 객체입니다.
+        let gameData = {
+            money: 100, // 초기 돈 100원
+            pets: [
+                // 게임 시작 시 기본으로 고양이 한 마리를 가지고 시작합니다.
+                {
+                    type: 'cat',
+                    name: "야옹이",
+                    emoji: '🐱',
+                    hunger: 50,
+                    happiness: 50,
+                    energy: 50,
+                    level: 1,
+                    exp: 0,
+                    expNeeded: 100
+                }
+            ],
+            currentPetIndex: 0, // 현재 돌보고 있는 동물의 인덱스 (pets 배열에서)
+            petCosts: { // 각 동물의 입양 비용
+                'cat': 0 // 고양이는 기본으로 주어지므로 0원
+            },
+            availablePets: [], // 입양 가능한 동물 목록 (여기에 200마리까지 채울 거예요)
+            isPremium: false // 프리미엄 기능 활성화 여부
+        };
+
+        // --------------------------------------------------------------------
+        // 1. 초기 입양 가능한 동물 200마리를 생성하는 함수
+        // --------------------------------------------------------------------
+        function generateAvailablePets(totalPets = 200) {
+            // 기본 동물 추가
+            gameData.availablePets.push(
+                { type: 'cat', name: '야옹이', emoji: '🐱', initialStats: { hunger: 50, happiness: 50, energy: 50, level: 1, exp: 0, expNeeded: 100 } }
+            );
+            // 기본 고양이는 이미 pets 배열에 있으므로, availablePets에는 추가하지만 비용을 0으로 설정합니다.
+            gameData.petCosts['cat'] = 0;
+
+            // 멍멍이와 돌고래를 먼저 추가 (고정된 비용)
+            gameData.availablePets.push(
+                { type: 'dog', name: '멍멍이', emoji: '🐶', initialStats: { hunger: 50, happiness: 50, energy: 50, level: 1, exp: 0, expNeeded: 100 } },
+                { type: 'dolphin', name: '돌고래', emoji: '🐬', initialStats: { hunger: 50, happiness: 50, energy: 50, level: 1, exp: 0, expNeeded: 100 } }
+            );
+            gameData.petCosts['dog'] = 140;
+            gameData.petCosts['dolphin'] = 200;
+
+            // 나머지 동물들을 무작위로 생성하여 200마리를 채웁니다.
+            for (let i = gameData.availablePets.length; i < totalPets; i++) {
+                const petType = `pet${i}`;
+                const randomEmoji = animalEmojis[Math.floor(Math.random() * animalEmojis.length)];
+                const randomCost = Math.floor(Math.random() * (500 - 50 + 1)) + 50; // 50원에서 500원 사이
+
+                gameData.availablePets.push({
+                    type: petType,
+                    name: `새로운 동물 ${i}`,
+                    emoji: randomEmoji,
+                    initialStats: { hunger: 50, happiness: 50, energy: 50, level: 1, exp: 0, expNeeded: 100 }
+                });
+                gameData.petCosts[petType] = randomCost;
+            }
+        }
+
+
+        // HTML 요소들을 가져옵니다. 이 요소들에 게임 상태를 보여줄 거예요.
+        const currentPetNameElement = document.getElementById('current-pet-name');
+        const moneyValueElement = document.getElementById('money-value');
+        const petEmojiElement = document.getElementById('pet-emoji');
+        const hungerValueElement = document.getElementById('hunger-value');
+        const happinessValueElement = document.getElementById('happiness-value');
+        const energyValueElement = document.getElementById('energy-value');
+        const hungerBarElement = document.getElementById('hunger-bar');
+        const happinessBarElement = document.getElementById('happiness-bar');
+        const energyBarElement = document.getElementById('energy-bar');
+        const petLevelElement = document.getElementById('pet-level');
+        const petExpElement = document.getElementById('pet-exp');
+        const petExpNeededElement = document.getElementById('pet-exp-needed');
+        const feedButton = document.getElementById('feed-button');
+        const playButton = document.getElementById('play-button');
+        const sleepButton = document.getElementById('sleep-button');
+        const messageBox = document.getElementById('message-box');
+        const gameStatusMessage = document.getElementById('game-status-message');
+        const myPetsContainer = document.getElementById('my-pets-container');
+        const adoptPetContainer = document.getElementById('adopt-pet-container');
+        const unlockPremiumButton = document.getElementById('unlock-premium-button');
+        const premiumStatusDisplay = document.getElementById('premium-status');
+
+
+        let gameInterval; // 게임이 계속 돌아가도록 하는 타이머를 저장할 변수
+        let isGameOver = false; // 게임 오버 상태인지 확인하는 변수
+
+        // --------------------------------------------------------------------
+        // 2. 게임 상태를 화면에 보여주는 함수 (업데이트 UI)
+        // --------------------------------------------------------------------
+        function updateUI() {
+            const currentPet = gameData.pets[gameData.currentPetIndex]; // 현재 돌보는 동물
+
+            // 돈 표시
+            moneyValueElement.textContent = gameData.money;
+
+            // 현재 동물 이름 표시
+            currentPetNameElement.textContent = currentPet.name;
+
+            // 동물 상태 값과 막대 그래프 업데이트
+            hungerValueElement.textContent = currentPet.hunger;
+            happinessValueElement.textContent = currentPet.happiness;
+            energyValueElement.textContent = currentPet.energy;
+
+            // 막대 그래프 너비 계산 (상태 값에 따라 달라져요)
+            hungerBarElement.style.width = `${100 - currentPet.hunger}%`; // 배고픔은 낮을수록 좋으니 100에서 뺍니다.
+            hungerBarElement.style.backgroundColor = currentPet.hunger > 70 ? '#ef4444' : (currentPet.hunger > 40 ? '#f97316' : '#22c55e'); // 빨강, 주황, 초록
+
+            happinessBarElement.style.width = `${currentPet.happiness}%`;
+            happinessBarElement.style.backgroundColor = currentPet.happiness < 30 ? '#ef4444' : (currentPet.happiness < 60 ? '#f97316' : '#22c55e');
+
+            energyBarElement.style.width = `${currentPet.energy}%`;
+            energyBarElement.style.backgroundColor = currentPet.energy < 30 ? '#ef4444' : (currentPet.energy < 60 ? '#f97316' : '#22c55e');
+
+            // 동물 레벨과 경험치 업데이트
+            petLevelElement.textContent = currentPet.level;
+            petExpElement.textContent = currentPet.exp;
+            petExpNeededElement.textContent = currentPet.expNeeded;
+
+            // 동물 이모지 변경 (행복도에 따라 표정이 달라져요)
+            if (currentPet.happiness >= 80) {
+                petEmojiElement.textContent = currentPet.emoji; // 아주 행복
+            } else if (currentPet.happiness >= 50) {
+                petEmojiElement.textContent = currentPet.emoji; // 보통 행복
+            } else if (currentPet.happiness >= 20) {
+                petEmojiElement.textContent = currentPet.emoji; // 불만족
+            } else {
+                petEmojiElement.textContent = currentPet.emoji; // 슬픔
+            }
+
+            // 내 동물들 버튼 업데이트
+            updateMyPetsButtons();
+            // 입양 가능한 동물 버튼 업데이트
+            updateAdoptPetButtons();
+
+            // 프리미엄 상태 업데이트
+            if (gameData.isPremium) {
+                unlockPremiumButton.classList.add('hidden'); // 버튼 숨기기
+                premiumStatusDisplay.classList.remove('hidden'); // 프리미엄 활성화 메시지 보이기
+            } else {
+                unlockPremiumButton.classList.remove('hidden'); // 버튼 보이기
+                premiumStatusDisplay.classList.add('hidden'); // 프리미엄 활성화 메시지 숨기기
+            }
+
+            // 게임 오버 또는 승리 상태 확인
+            checkGameStatus();
+        }
+
+        // --------------------------------------------------------------------
+        // 3. 메시지를 보여주는 함수
+        // --------------------------------------------------------------------
+        function showMessage(message, type = 'info') {
+            messageBox.textContent = message;
+            messageBox.classList.remove('hidden', 'bg-red-100', 'text-red-800', 'bg-green-100', 'text-green-800', 'bg-blue-100', 'text-blue-800');
+            messageBox.classList.add('block'); // 메시지 상자를 보이게 합니다.
+
+            // 메시지 타입에 따라 색상을 변경합니다.
+            if (type === 'error') {
+                messageBox.classList.add('bg-red-100', 'text-red-800');
+            } else if (type === 'success') {
+                messageBox.classList.add('bg-green-100', 'text-green-800');
+            } else { // info
+                messageBox.classList.add('bg-blue-100', 'text-blue-800');
+            }
+
+            // 3초 후에 메시지를 숨깁니다.
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 3000);
+        }
+
+        // --------------------------------------------------------------------
+        // 4. 동물 레벨업 함수
+        // --------------------------------------------------------------------
+        function checkLevelUp() {
+            const currentPet = gameData.pets[gameData.currentPetIndex];
+            if (currentPet.exp >= currentPet.expNeeded) {
+                currentPet.level++; // 레벨업!
+                currentPet.exp = 0; // 경험치 초기화
+                currentPet.expNeeded = Math.floor(currentPet.expNeeded * 1.5); // 다음 레벨업에 필요한 경험치 증가
+                showMessage(`🎉 축하해요! ${currentPet.name}이(가) 레벨 ${currentPet.level}이 되었어요!`, 'success');
+            }
+        }
+
+        // --------------------------------------------------------------------
+        // 5. 동물 상태를 조절하는 함수들 (밥 주기, 놀아주기, 재우기)
+        // --------------------------------------------------------------------
+
+        // 밥 주기
+        feedButton.addEventListener('click', () => {
+            if (isGameOver) return; // 게임 오버 상태면 아무것도 하지 않습니다.
+            const currentPet = gameData.pets[gameData.currentPetIndex];
+
+            if (currentPet.hunger <= 10) {
+                showMessage(`${currentPet.name}은(는) 아직 배고프지 않아요!`, 'error');
+                return;
+            }
+            currentPet.hunger = Math.max(0, currentPet.hunger - 20); // 배고픔 감소 (최소 0)
+            currentPet.happiness = Math.min(100, currentPet.happiness + 10); // 행복 증가 (최대 100)
+            currentPet.exp = Math.min(currentPet.expNeeded, currentPet.exp + 10); // 경험치 증가 (최대 경험치 필요량)
+            gameData.money += 5; // 돈 획득
+            showMessage(`${currentPet.name}에게 밥을 줬어요! 냠냠! (+5원)`, 'success');
+            updateUI();
+            checkLevelUp();
+            saveGame(); // 게임 상태 저장
+        });
+
+        // 놀아주기
+        playButton.addEventListener('click', () => {
+            if (isGameOver) return;
+            const currentPet = gameData.pets[gameData.currentPetIndex];
+
+            if (currentPet.energy <= 10) {
+                showMessage(`${currentPet.name}은(는) 너무 피곤해서 놀 수 없어요. 재워주세요!`, 'error');
+                return;
+            }
+            currentPet.happiness = Math.min(100, currentPet.happiness + 20); // 행복 증가
+            currentPet.energy = Math.max(0, currentPet.energy - 15); // 에너지 감소
+            currentPet.hunger = Math.min(100, currentPet.hunger + 5); // 놀면 배고파져요.
+            currentPet.exp = Math.min(currentPet.expNeeded, currentPet.exp + 15); // 경험치 증가
+            gameData.money += 10; // 돈 획득
+            showMessage(`${currentPet.name}과(와) 신나게 놀았어요! 룰루랄라! (+10원)`, 'success');
+            updateUI();
+            checkLevelUp();
+            saveGame();
+        });
+
+        // 재우기
+        sleepButton.addEventListener('click', () => {
+            if (isGameOver) return;
+            const currentPet = gameData.pets[gameData.currentPetIndex];
+
+            if (currentPet.energy >= 90) {
+                showMessage(`${currentPet.name}은(는) 이미 에너지가 넘쳐요!`, 'error');
+                return;
+            }
+            currentPet.energy = Math.min(100, currentPet.energy + 30); // 에너지 증가
+            currentPet.happiness = Math.min(100, currentPet.happiness + 5); // 행복 약간 증가
+            currentPet.hunger = Math.min(100, currentPet.hunger + 10); // 자면 배고파져요.
+            currentPet.exp = Math.min(currentPet.expNeeded, currentPet.exp + 5); // 경험치 약간 증가
+            gameData.money += 3; // 돈 획득
+            showMessage(`${currentPet.name}이(가) 쿨쿨 잠들었어요. (+3원)`, 'success');
+            updateUI();
+            checkLevelUp();
+            saveGame();
+        });
+
+        // --------------------------------------------------------------------
+        // 6. 시간 흐름에 따라 동물 상태가 변하는 함수 (게임 루프)
+        // --------------------------------------------------------------------
+        function gameTick() {
+            if (isGameOver) {
+                clearInterval(gameInterval); // 게임 오버면 타이머를 멈춥니다.
+                return;
+            }
+
+            const currentPet = gameData.pets[gameData.currentPetIndex];
+            // 동물 상태가 시간이 지남에 따라 변합니다.
+            currentPet.hunger = Math.min(100, currentPet.hunger + 2);    // 배고픔 증가
+            currentPet.happiness = Math.max(0, currentPet.happiness - 1); // 행복 감소
+            currentPet.energy = Math.max(0, currentPet.energy - 1);      // 에너지 감소
+
+            updateUI(); // 화면을 업데이트합니다.
+            saveGame(); // 매 틱마다 게임 상태를 저장합니다.
+        }
+
+        // --------------------------------------------------------------------
+        // 7. 게임 오버 또는 승리 조건 확인 함수
+        // --------------------------------------------------------------------
+        function checkGameStatus() {
+            const currentPet = gameData.pets[gameData.currentPetIndex];
+            // 게임 오버 조건: 배고픔이 너무 높거나, 행복이 너무 낮거나, 에너지가 너무 낮을 때
+            if (currentPet.hunger >= 100 || currentPet.happiness <= 0 || currentPet.energy <= 0) {
+                isGameOver = true;
+                clearInterval(gameInterval); // 게임 루프를 멈춥니다.
+                gameStatusMessage.classList.remove('hidden');
+                gameStatusMessage.classList.add('game-over-message');
+                gameStatusMessage.innerHTML = `
+                    <p>😭 게임 오버! ${currentPet.name}이(가) 너무 힘들어해요.</p>
+                    <p>다음에 더 잘 돌봐주세요!</p>
+                    <button onclick="resetGame()" class="mt-4 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-bold">다시 시작</button>
+                `;
+                disableButtons(); // 버튼 비활성화
+                showMessage('게임 오버!', 'error');
+            }
+            // 게임 승리 조건: 현재 동물이 레벨 5 달성 (예시)
+            else if (currentPet.level >= 5) {
+                isGameOver = true;
+                clearInterval(gameInterval); // 게임 루프를 멈춥니다.
+                gameStatusMessage.classList.remove('hidden');
+                gameStatusMessage.classList.add('game-win-message');
+                gameStatusMessage.innerHTML = `
+                    <p>🎉 축하해요! ${currentPet.name}이(가) 레벨 ${currentPet.level}을 달성했어요!</p>
+                    <p>최고의 집사님이세요!</p>
+                    <button onclick="resetGame()" class="mt-4 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-bold">다시 플레이</button>
+                `;
+                disableButtons(); // 버튼 비활성화
+                showMessage('게임 승리!', 'success');
+            } else {
+                enableButtons(); // 게임 중이면 버튼 활성화
+                gameStatusMessage.classList.add('hidden'); // 메시지 숨기기
+            }
+        }
+
+        // --------------------------------------------------------------------
+        // 8. 게임 버튼 활성화/비활성화 함수
+        // --------------------------------------------------------------------
+        function disableButtons() {
+            feedButton.disabled = true;
+            playButton.disabled = true;
+            sleepButton.disabled = true;
+            feedButton.classList.add('opacity-50', 'cursor-not-allowed');
+            playButton.classList.add('opacity-50', 'cursor-not-allowed');
+            sleepButton.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+
+        function enableButtons() {
+            feedButton.disabled = false;
+            playButton.disabled = false;
+            sleepButton.disabled = false;
+            feedButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            playButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            sleepButton.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        // --------------------------------------------------------------------
+        // 9. 내 동물들 버튼 업데이트 함수
+        // --------------------------------------------------------------------
+        function updateMyPetsButtons() {
+            myPetsContainer.innerHTML = ''; // 기존 버튼 삭제
+            gameData.pets.forEach((pet, index) => {
+                const button = document.createElement('button');
+                button.textContent = `${pet.emoji} ${pet.name}`;
+                button.classList.add('pet-select-button', 'bg-indigo-500', 'text-white', 'hover:bg-indigo-600');
+                if (index === gameData.currentPetIndex) {
+                    button.classList.add('bg-indigo-700'); // 현재 선택된 동물은 더 진한 색으로
+                }
+                button.addEventListener('click', () => switchPet(index));
+                myPetsContainer.appendChild(button);
+            });
+        }
+
+        // --------------------------------------------------------------------
+        // 10. 입양 가능한 동물 버튼 업데이트 함수
+        // --------------------------------------------------------------------
+        function updateAdoptPetButtons() {
+            adoptPetContainer.innerHTML = ''; // 기존 버튼 삭제
+            gameData.availablePets.forEach(availablePet => {
+                // 이미 소유한 동물인지 확인
+                const isOwned = gameData.pets.some(p => p.type === availablePet.type);
+                if (!isOwned) {
+                    const button = document.createElement('button');
+                    // 프리미엄이면 비용을 0으로 표시, 아니면 원래 비용 표시
+                    const displayCost = gameData.isPremium ? '무료' : `${gameData.petCosts[availablePet.type]}원`;
+                    button.textContent = `${availablePet.emoji} ${availablePet.name} (${displayCost})`;
+                    button.classList.add('buy-pet-button', 'bg-teal-500', 'text-white', 'hover:bg-teal-600');
+                    button.addEventListener('click', () => buyPet(availablePet.type));
+                    adoptPetContainer.appendChild(button);
+                }
+            });
+        }
+
+        // --------------------------------------------------------------------
+        // 11. 동물 전환 함수
+        // --------------------------------------------------------------------
+        function switchPet(index) {
+            if (isGameOver) return;
+            gameData.currentPetIndex = index;
+            showMessage(`${gameData.pets[index].name}을(를) 돌보고 있어요!`, 'info');
+            updateUI();
+            saveGame();
+        }
+
+        // --------------------------------------------------------------------
+        // 12. 동물 입양 함수
+        // --------------------------------------------------------------------
+        function buyPet(petType) {
+            if (isGameOver) return;
+            let cost = gameData.petCosts[petType];
+            const petToAdopt = gameData.availablePets.find(p => p.type === petType);
+
+            if (!petToAdopt) {
+                showMessage('입양할 수 없는 동물이에요.', 'error');
+                return;
+            }
+
+            // 프리미엄 기능이 활성화되어 있으면 비용을 0으로 만듭니다.
+            if (gameData.isPremium) {
+                cost = 0;
+            }
+
+            if (gameData.money >= cost) {
+                gameData.money -= cost;
+                const newPet = {
+                    type: petToAdopt.type,
+                    name: petToAdopt.name,
+                    emoji: petToAdopt.emoji,
+                    ...petToAdopt.initialStats // 초기 스탯 복사
+                };
+                gameData.pets.push(newPet);
+                showMessage(`${newPet.name}을(를) ${cost === 0 ? '무료로' : cost + '원에'} 입양했어요!`, 'success');
+                updateUI();
+                saveGame();
+            } else {
+                showMessage(`돈이 부족해요! ${cost - gameData.money}원이 더 필요해요.`, 'error');
+            }
+        }
+
+        // --------------------------------------------------------------------
+        // 13. 프리미엄 잠금 해제 함수
+        // --------------------------------------------------------------------
+        unlockPremiumButton.addEventListener('click', () => {
+            if (gameData.isPremium) {
+                showMessage('이미 프리미엄 기능이 활성화되어 있어요!', 'info');
+                return;
+            }
+            gameData.isPremium = true;
+            showMessage('✨ 프리미엄 기능이 활성화되었어요! 이제 모든 동물을 무료로 입양할 수 있어요! ✨', 'success');
+            updateUI();
+            saveGame();
+        });
+
+        // --------------------------------------------------------------------
+        // 14. 게임 저장 및 불러오기 (localStorage 사용)
+        // --------------------------------------------------------------------
+        function saveGame() {
+            try {
+                // gameData 객체를 JSON 문자열로 변환하여 localStorage에 저장합니다.
+                localStorage.setItem('animalRaisingGame', JSON.stringify(gameData));
+                // console.log('게임 저장됨!');
+            } catch (e) {
+                console.error('게임 저장 실패:', e);
+                // showMessage('게임 저장에 실패했어요.', 'error');
+            }
+        }
+
+        function loadGame() {
+            try {
+                // localStorage에서 게임 데이터를 가져옵니다.
+                const savedGame = localStorage.getItem('animalRaisingGame');
+                if (savedGame) {
+                    // JSON 문자열을 다시 객체로 변환합니다.
+                    const loadedData = JSON.parse(savedGame);
+
+                    // availablePets와 petCosts는 매번 새로 생성하므로, 불러온 데이터에서 제외합니다.
+                    // 대신, pets 배열에 있는 동물들의 emoji가 없을 경우를 대비하여 처리합니다.
+                    gameData.money = loadedData.money !== undefined ? loadedData.money : 100;
+                    gameData.pets = loadedData.pets || [];
+                    gameData.currentPetIndex = loadedData.currentPetIndex !== undefined ? loadedData.currentPetIndex : 0;
+                    gameData.isPremium = loadedData.isPremium !== undefined ? loadedData.isPremium : false;
+
+                    // pets 배열에 emoji 속성이 없을 경우 기본값 설정 (이전 버전 호환성)
+                    gameData.pets.forEach(pet => {
+                        if (!pet.emoji) {
+                            // availablePets에서 해당 동물의 이모지를 찾습니다.
+                            const foundPet = gameData.availablePets.find(ap => ap.type === pet.type);
+                            if (foundPet) {
+                                pet.emoji = foundPet.emoji;
+                            } else {
+                                // 새로운 동물 생성 로직이 실행되기 전에 불러오면 이모지가 없을 수 있습니다.
+                                // 이 경우 임시로 '❓'를 사용하고, generateAvailablePets가 실행된 후 다시 업데이트됩니다.
+                                pet.emoji = '❓';
+                            }
+                        }
+                    });
+
+                    // console.log('게임 불러옴!');
+                    showMessage('이전 게임을 불러왔어요!', 'info');
+                } else {
+                    // 저장된 게임이 없으면 초기 상태로 시작합니다.
+                    showMessage('새로운 게임을 시작해요!', 'info');
+                }
+            } catch (e) {
+                console.error('게임 불러오기 실패:', e);
+                showMessage('게임 불러오기에 실패했어요. 새 게임을 시작합니다.', 'error');
+                resetGameData(); // 데이터가 손상되었을 경우 초기화
+            }
+        }
+
+        // --------------------------------------------------------------------
+        // 15. 게임 초기화 함수
+        // --------------------------------------------------------------------
+        function resetGameData() {
+            gameData = {
+                money: 100,
+                pets: [
+                    {
+                        type: 'cat',
+                        name: "야옹이",
+                        emoji: '🐱',
+                        hunger: 50,
+                        happiness: 50,
+                        energy: 50,
+                        level: 1,
+                        exp: 0,
+                        expNeeded: 100
+                    }
+                ],
+                currentPetIndex: 0,
+                petCosts: {
+                    'cat': 0
+                },
+                availablePets: [], // 초기화 시 빈 배열로 시작
+                isPremium: false
+            };
+            generateAvailablePets(); // 초기화 후 다시 200마리 생성
+            isGameOver = false;
+            localStorage.removeItem('animalRaisingGame'); // 저장된 게임 데이터 삭제
+            showMessage('새로운 게임이 시작되었어요!', 'info');
+        }
+
+        function resetGame() {
+            resetGameData(); // 데이터 초기화
+            updateUI();      // UI 업데이트
+            clearInterval(gameInterval); // 기존 인터벌이 있다면 멈춥니다.
+            gameInterval = setInterval(gameTick, 2000); // 2초마다 gameTick 함수 실행 (게임 루프 시작)
+            gameStatusMessage.classList.add('hidden'); // 게임 오버/승리 메시지 숨기기
+            enableButtons(); // 버튼 활성화
+        }
+
+        // --------------------------------------------------------------------
+        // 16. 게임 시작!
+        // --------------------------------------------------------------------
+        window.onload = function() {
+            generateAvailablePets(); // 게임 시작 시 200마리 동물 생성
+            loadGame(); // 페이지가 로드되면 저장된 게임을 불러옵니다.
+            updateUI(); // 초기 UI를 업데이트합니다.
+            gameInterval = setInterval(gameTick, 2000); // 2초마다 gameTick 함수 실행 (게임 루프 시작)
+        };
+    </script>
+</body>
