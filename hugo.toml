@@ -1,7 +1,15 @@
 baseURL = 'https://chei-l.github.io/'
 languageCode = 'en-us'
-title = 'Chei Site'
-theme = "neopost"
+title = "Chei's blog"
+theme = "hugo-blog-awesome"
 
-[params]
-theme = "light-purple"
+[Languages.en-gb.params]
+sitename = "Chei's blog"
+defaultColor = "light"   # set color mode: dark, light, auto
+
+[Languages.en-gb.params.author]
+avatar = "logo.png" # put the file in assets folder; also ensure that image has same height and width
+# Note: image is not rendered if the resource(avatar image) is not found. No error is displayed.
+intro = "Chei's blog"
+name = "Chei"
+description = "Hiya!"
