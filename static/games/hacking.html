@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>해킹 게임</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+        body {
+            background-color: #0d1117;
+            color: #00ff00;
+            font-family: 'VT323', monospace;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        .code-rain {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            opacity: 0.1;
+            z-index: -1;
+        }
+        .matrix-text {
+            position: absolute;
+            white-space: pre;
+            color: #00cc00;
+        }
+        .game-container {
+            position: relative;
+            z-index: 10;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 2px solid #00ff00;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 0 20px #00ff00;
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+        }
+        .button {
+            background-color: #00ff00;
+            color: #0d1117;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            font-size: 1.25rem;
+            font-weight: bold;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            margin-top: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 255, 0, 0.5);
+        }
+        .button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 8px rgba(0, 255, 0, 0.7);
+        }
+        .input-box {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            width: 100%;
+            margin-top: 1rem;
+            font-size: 1.25rem;
+            text-align: center;
+        }
+        #message-box {
+            background-color: #1a1a1a;
+            border: 1px solid #00ff00;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            min-height: 50px;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        .cursor {
+            animation: blink 1s step-end infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-green-400 flex flex-col items-center justify-center h-screen">
+
+    <!-- Code Rain Effect -->
+    <div class="code-rain"></div>
+
+    <!-- 해킹 성공 시 재생할 소리 (안 보이게 숨겨져 있음) -->
+    <audio id="screamSound" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" preload="auto"></audio>
+
+    <!-- Age Input Screen -->
+    <div id="age-screen" class="game-container flex flex-col items-center justify-center p-8">
+        <h1 class="text-3xl font-bold mb-4">몇 살인지 알려줄래?</h1>
+        <input id="age-input" type="number" class="input-box" placeholder="여기에 나이를 입력해 줘">
+        <button id="start-button" class="button">게임 시작!</button>
+        <p id="saved-money" class="text-xl mt-4 hidden">저장된 돈: $0</p>
+    </div>
+
+    <!-- Game Container -->
+    <div id="game-screen" class="game-container hidden">
+        <h1 class="text-3xl font-bold mb-4">재밌는 해킹 게임</h1>
+        <p id="wallet" class="text-xl mt-4">내 지갑: $0</p>
+        <p id="status" class="text-lg mt-2">상태: 암호 입력 준비!</p>
+        <p id="target-password" class="text-4xl font-bold mt-4">----</p>
+        <input id="user-input" type="text" class="input-box w-20" maxlength="1" placeholder="?" autocomplete="off">
+        <button id="submit-button" class="button">제출</button>
+        <div id="message-box" class="text-sm mt-4"></div>
+        <button id="restart-button" class="button hidden">처음부터 다시 하기</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const codeRainContainer = document.querySelector('.code-rain');
+            const ageScreen = document.getElementById('age-screen');
+            const ageInput = document.getElementById('age-input');
+            const startButton = document.getElementById('start-button');
+            const gameScreen = document.getElementById('game-screen');
+            const walletElement = document.getElementById('wallet');
+            const savedMoneyElement = document.getElementById('saved-money');
+            const targetPasswordElement = document.getElementById('target-password');
+            const userInput = document.getElementById('user-input');
+            const submitButton = document.getElementById('submit-button');
+            const statusElement = document.getElementById('status');
+            const messageBox = document.getElementById('message-box');
+            const screamSound = document.getElementById('screamSound');
+            const restartButton = document.getElementById('restart-button');
+
+            // Game variables
+            let password = '';
+            let currentPassword = '';
+            let passwordLength = 4;
+            let isGameActive = false;
+            let walletBalance = 0;
+            let isEasyMode = false;
+            let hintTimer = null; // 힌트 타이머를 저장할 변수
+
+            // Matrix effect
+            function createCodeRain() {
+                const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>/?";
+                const numDrops = 150;
+
+                for (let i = 0; i < numDrops; i++) {
+                    const drop = document.createElement('div');
+                    drop.className = 'matrix-text';
+                    drop.style.left = Math.random() * 100 + 'vw';
+                    drop.style.top = -100 + 'px';
+                    drop.style.fontSize = Math.random() * 20 + 10 + 'px';
+                    codeRainContainer.appendChild(drop);
+
+                    let text = '';
+                    const len = Math.random() * 20 + 5;
+                    for (let j = 0; j < len; j++) {
+                        text += chars[Math.floor(Math.random() * chars.length)] + '\n';
+                    }
+                    drop.textContent = text;
+
+                    // Animation
+                    let topPos = -Math.random() * 500;
+                    const speed = Math.random() * 2 + 1;
+                    const animateDrop = () => {
+                        topPos += speed;
+                        if (topPos > window.innerHeight) {
+                            topPos = -drop.clientHeight;
+                            drop.style.left = Math.random() * 100 + 'vw';
+                        }
+                        drop.style.top = topPos + 'px';
+                        requestAnimationFrame(animateDrop);
+                    };
+                    animateDrop();
+                }
+            }
+
+            // Save the game's wallet balance and age to local storage
+            function saveGame() {
+                localStorage.setItem('hackingGameWallet', walletBalance);
+            }
+
+            function saveAge(age) {
+                const now = new Date().getTime();
+                localStorage.setItem('hackingGameAge', age);
+                localStorage.setItem('hackingGameAgeTimestamp', now);
+            }
+
+            // Load the game's wallet balance
+            function loadGame() {
+                const savedBalance = localStorage.getItem('hackingGameWallet');
+                if (savedBalance !== null) {
+                    walletBalance = parseInt(savedBalance);
+                }
+                walletElement.textContent = `내 지갑: $${walletBalance}`;
+                if (walletBalance > 0) {
+                    savedMoneyElement.textContent = `저장된 돈: $${walletBalance}`;
+                    savedMoneyElement.classList.remove('hidden');
+                }
+            }
+
+            // Generate a random password of a specific length
+            function generatePassword(length) {
+                const chars = "0123456789";
+                let result = '';
+                for (let i = 0; i < length; i++) {
+                    result += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                return result;
+            }
+
+            // Start the game with difficulty based on age
+            function startGame(age) {
+                if (isGameActive) return;
+                isGameActive = true;
+                messageBox.textContent = '';
+                userInput.value = '';
+                userInput.disabled = false;
+                submitButton.disabled = false;
+                restartButton.classList.add('hidden');
+
+                walletElement.textContent = `내 지갑: $${walletBalance}`;
+
+                // 9살 이하는 암호가 4자리
+                if (age <= 9) {
+                    passwordLength = 4;
+                    isEasyMode = true;
+                } else {
+                    passwordLength = Math.min(age, 12);
+                    isEasyMode = false;
+                }
+
+                password = generatePassword(passwordLength);
+                currentPassword = password;
+
+                // 게임 시작 시 20초 동안 암호 보여주기
+                targetPasswordElement.textContent = password;
+                messageBox.textContent = `암호가 ${passwordLength}개야! 20초 동안 잘 봐!`;
+
+                // 20초 후에 암호 가리기
+                if (hintTimer) clearTimeout(hintTimer);
+                hintTimer = setTimeout(() => {
+                    hideHint();
+                }, 20000);
+
+                userInput.focus();
+            }
+
+            // 힌트 가리기 (타이머가 끝나거나 첫 번째 입력이 성공했을 때)
+            function hideHint() {
+                if (!isGameActive) return;
+                targetPasswordElement.textContent = '-'.repeat(password.length);
+                messageBox.textContent = `암호가 가려졌어! 기억해서 맞춰봐!`;
+                isEasyMode = false; // 쉬운 모드 비활성화
+            }
+
+            // End the game
+            function endGame(result, message) {
+                isGameActive = false;
+                statusElement.textContent = `상태: 게임 종료! - ${result}`;
+                messageBox.textContent = message;
+                userInput.disabled = true;
+                submitButton.disabled = true;
+                restartButton.classList.remove('hidden'); // Show restart button
+
+                // 해킹 성공 시 소리 재생
+                if (result === '성공') {
+                    screamSound.play();
+                }
+
+                saveGame(); // Save the wallet balance when the game ends
+            }
+
+            // Event listener for the submit button
+            submitButton.addEventListener('click', () => {
+                if (!isGameActive) return;
+                const guess = userInput.value.trim();
+                if (guess.length !== 1 || !/^\d$/.test(guess)) {
+                    messageBox.textContent = '숫자 하나만 입력해 줘.';
+                    userInput.value = '';
+                    return;
+                }
+
+                if (guess === currentPassword.charAt(0)) {
+                    // 첫 번째 성공적인 입력 시 힌트 바로 가리기
+                    if (currentPassword.length === password.length) {
+                        if (hintTimer) {
+                            clearTimeout(hintTimer);
+                            hideHint();
+                        }
+                    }
+
+                    // Correct guess
+                    const solvedPart = password.substring(0, password.length - currentPassword.length + 1);
+                    const remainingPart = '-'.repeat(currentPassword.length - 1);
+                    targetPasswordElement.textContent = solvedPart + remainingPart;
+                    messageBox.textContent = '딩동댕! 🎉';
+                    currentPassword = currentPassword.substring(1);
+                    userInput.value = '';
+                    if (currentPassword.length === 0) {
+                        // 더 많은 돈을 벌 수 있게 보너스 금액 증가
+                        const earnedAmount = Math.floor(Math.random() * 150) + 100;
+                        walletBalance += earnedAmount;
+                        endGame('성공', `꺅 꺅! 😱 와! 해킹 성공! $${earnedAmount}를 얻었어! 내 지갑: $${walletBalance} 🎉`);
+                    }
+                } else {
+                    // Wrong guess
+                    messageBox.textContent = '땡! ❌ 다시 시도해 봐!';
+                    userInput.value = '';
+                }
+                userInput.focus();
+            });
+
+            // 키보드 엔터 키로 제출하기
+            userInput.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter') {
+                    submitButton.click();
+                }
+            });
+
+            // "처음부터 다시 하기" 버튼 이벤트 리스너
+            restartButton.addEventListener('click', () => {
+                // 저장된 모든 게임 데이터를 삭제하고 처음 화면으로 돌아가기
+                localStorage.removeItem('hackingGameAge');
+                localStorage.removeItem('hackingGameAgeTimestamp');
+                localStorage.removeItem('hackingGameWallet');
+                walletBalance = 0;
+
+                ageScreen.classList.remove('hidden');
+                gameScreen.classList.add('hidden');
+                ageInput.value = '';
+                loadGame(); // UI를 업데이트하여 돈이 0인 것을 보여줌
+            });
+
+            // 나이 입력 후 게임 시작 버튼
+            startButton.addEventListener('click', () => {
+                const age = parseInt(ageInput.value);
+                if (isNaN(age) || age <= 0) {
+                    messageBox.textContent = '나이를 정확하게 입력해 줘.';
+                    return;
+                }
+
+                saveAge(age);
+                ageScreen.classList.add('hidden');
+                gameScreen.classList.remove('hidden');
+                startGame(age);
+            });
+
+            // 페이지 로드 시 나이 및 게임 상태 확인
+            function initGame() {
+                loadGame();
+                const savedAge = localStorage.getItem('hackingGameAge');
+                const savedTimestamp = localStorage.getItem('hackingGameAgeTimestamp');
+                const now = new Date().getTime();
+                const oneYearInMs = 365 * 24 * 60 * 60 * 1000;
+
+                if (savedAge && savedTimestamp && (now - savedTimestamp < oneYearInMs)) {
+                    // 1년이 지나지 않았으면 저장된 나이와 돈으로 바로 시작
+                    ageScreen.classList.add('hidden');
+                    gameScreen.classList.remove('hidden');
+                    startGame(parseInt(savedAge));
+                } else {
+                    // 1년이 지났거나 나이가 저장되지 않았으면 나이 입력 화면 보여줌
+                    ageScreen.classList.remove('hidden');
+                    gameScreen.classList.add('hidden');
+                }
+            }
+
+            // Start the code rain effect and load the game on page load
+            createCodeRain();
+            initGame();
+        });
+    </script>
+</body>
+</html>

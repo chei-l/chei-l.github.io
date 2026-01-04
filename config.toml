@@ -1,0 +1,25 @@
+# The URL the site will be built for
+base_url = "/"
+
+title = "체리 대마왕"
+description = "체리 대마왕의 게임과 그림을 보실 수 있습니다."
+
+# Whether to automatically compile all Sass files in the sass directory
+compile_sass = true
+
+# Whether to build a search index to be used later on by a JavaScript library
+build_search_index = false
+
+theme = "zola-folio"
+
+[markdown]
+# Whether to do syntax highlighting
+# Theme can be customised by setting the `highlight_theme` variable to a theme supported by Zola
+highlight_code = true
+
+[extra]
+menu_items = [
+    {name = "게임", url = "/pages/games"},
+    {name = "그림", url = "/pages/drawings"},
+    {name = "AI 그림", url = "/pages/ai"},
+]
