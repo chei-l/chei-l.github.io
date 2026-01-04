@@ -1,11 +1,11 @@
 # The URL the site will be built for
 base_url = "/"
 
-title = "체리체리"
-description = "haha"
+title = "체리 대마왕"
+description = "체리 대마왕의 게임과 그림을 보실 수 있습니다."
 
 # Whether to automatically compile all Sass files in the sass directory
-compile_sass = false
+compile_sass = true
 
 # Whether to build a search index to be used later on by a JavaScript library
 build_search_index = false
@@ -21,4 +21,5 @@ highlight_code = true
 menu_items = [
     {name = "게임", url = "/pages/games"},
     {name = "그림", url = "/pages/drawings"},
+    {name = "AI 그림", url = "/pages/ai"},
 ]
