@@ -1,5 +1,5 @@
 # The URL the site will be built for
-base_url = "/"
+base_url = "https://chei-l.github.io"
 
 title = "체리 대마왕"
 description = "체리 대마왕의 게임과 그림을 보실 수 있습니다."
