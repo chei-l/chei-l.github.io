@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>팝잇 만지기 게임</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tone.js CDN for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <style>
+        /* Inter 폰트 추가 */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* 밝은 배경색 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        canvas {
+            background-color: #ffffff; /* 캔버스 배경색 */
+            border-radius: 20px; /* 둥근 모서리 */
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1); /* 그림자 효과 */
+            display: block;
+            max-width: 90vw; /* 화면 너비에 맞춤 */
+            max-height: 80vh; /* 화면 높이에 맞춤 */
+            border: 4px solid #a78bfa; /* 보라색 테두리 */
+        }
+        .button-container {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+        }
+        .game-button {
+            padding: 12px 25px;
+            background-color: #8b5cf6; /* 보라색 버튼 */
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
+        }
+        .game-button:hover {
+            background-color: #7c3aed; /* 호버 시 더 진한 보라색 */
+            transform: translateY(-2px);
+        }
+        .game-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 10px rgba(139, 92, 246, 0.6);
+        }
+        h1 {
+            color: #4c566a; /* 제목 색상 */
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+        p {
+            color: #616e7f; /* 설명 색상 */
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="text-4xl font-bold text-purple-700 mb-4">✨ 팝잇 만지기 게임 ✨</h1>
+    <p class="text-lg text-gray-600 mb-8">팝잇을 눌러보세요! 쏙 들어갔다가 다시 누르면 뿅 나와요!</p>
+
+    <canvas id="popItCanvas"></canvas>
+
+    <div class="button-container">
+        <button id="resetButton" class="game-button">모두 뿅! (리셋)</button>
+    </div>
+
+    <script>
+        // Get canvas element and context
+        const canvas = document.getElementById('popItCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Pop It grid settings
+        const numRows = 5; // Number of horizontal pops
+        const numCols = 5; // Number of vertical pops
+        const popPadding = 15; // Spacing between pops
+        const popRadius = 30; // Radius of each pop
+
+        // Array to store pop states (true: popped in, false: popped out)
+        let pops = [];
+
+        // Initialize Tone.js Synth for sound effects
+        // A simple synth to make a "pop" sound
+        const synth = new Tone.Synth({
+            oscillator: {
+                type: 'sine' // Use a sine wave for a soft sound
+            },
+            envelope: {
+                attack: 0.01,
+                decay: 0.1,
+                sustain: 0.0,
+                release: 0.1
+            }
+        }).toDestination();
+
+        // Function to set canvas size
+        function setCanvasSize() {
+            // Calculate required width for all pops (number of cols * (diameter + padding) - last padding)
+            const requiredWidth = numCols * (popRadius * 2 + popPadding) + popPadding;
+            const requiredHeight = numRows * (popRadius * 2 + popPadding) + popPadding;
+
+            // Set canvas size to fit parent element, with max size limits
+            const maxWidth = window.innerWidth * 0.9;
+            const maxHeight = window.innerHeight * 0.8;
+
+            canvas.width = Math.min(requiredWidth, maxWidth);
+            canvas.height = Math.min(requiredHeight, maxHeight);
+
+            // Calculate offset to center the pops
+            const actualPopWidth = (popRadius * 2 + popPadding);
+            const actualPopHeight = (popRadius * 2 + popPadding);
+            const totalPopsWidth = numCols * actualPopWidth;
+            const totalPopsHeight = numRows * actualPopHeight;
+
+            offsetX = (canvas.width - totalPopsWidth + popPadding) / 2;
+            offsetY = (canvas.height - totalPopsHeight + popPadding) / 2;
+
+            drawPopIt(); // Redraw after size change
+        }
+
+        // Function to initialize pops
+        function initializePops() {
+            pops = [];
+            for (let r = 0; r < numRows; r++) {
+                pops[r] = [];
+                for (let c = 0; c < numCols; c++) {
+                    pops[r][c] = false; // Initially all pops are out (false)
+                }
+            }
+            setCanvasSize(); // Set canvas size and draw after initializing pops
+        }
+
+        let offsetX = 0; // X offset to center the pops
+        let offsetY = 0; // Y offset to center the pops
+
+        // Function to draw Pop It
+        function drawPopIt() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
+
+            for (let r = 0; r < numRows; r++) {
+                for (let c = 0; c < numCols; c++) {
+                    // Calculate center X, Y coordinates for each pop
+                    const x = offsetX + c * (popRadius * 2 + popPadding) + popRadius + popPadding;
+                    const y = offsetY + r * (popRadius * 2 + popPadding) + popRadius + popPadding;
+
+                    ctx.beginPath();
+                    ctx.arc(x, y, popRadius, 0, Math.PI * 2); // Draw circle
+
+                    if (pops[r][c]) {
+                        // Popped in state (true)
+                        ctx.fillStyle = '#c4b5fd'; // Light purple
+                        ctx.strokeStyle = '#a78bfa'; // Purple border
+                        ctx.lineWidth = 3;
+                        ctx.fill();
+                        ctx.stroke();
+
+                        // Shadow effect (to make it look popped in)
+                        ctx.beginPath();
+                        ctx.arc(x, y, popRadius * 0.8, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+                        ctx.fill();
+
+                    } else {
+                        // Popped out state (false)
+                        ctx.fillStyle = '#8b5cf6'; // Dark purple
+                        ctx.strokeStyle = '#6d28d9'; // Even darker purple border
+                        ctx.lineWidth = 3;
+                        ctx.fill();
+                        ctx.stroke();
+
+                        // Light effect (to make it look popped out)
+                        const gradient = ctx.createRadialGradient(x - popRadius * 0.3, y - popRadius * 0.3, 0, x, y, popRadius);
+                        gradient.addColorStop(0, 'rgba(255,255,255,0.4)');
+                        gradient.addColorStop(1, 'rgba(255,255,255,0)');
+                        ctx.fillStyle = gradient;
+                        ctx.fill();
+                    }
+                }
+            }
+        }
+
+        // Click event handler
+        canvas.addEventListener('click', (event) => {
+            // Calculate click coordinates within the canvas
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+
+            for (let r = 0; r < numRows; r++) {
+                for (let c = 0; c < numCols; c++) {
+                    // Calculate center X, Y coordinates for each pop
+                    const x = offsetX + c * (popRadius * 2 + popPadding) + popRadius + popPadding;
+                    const y = offsetY + r * (popRadius * 2 + popPadding) + popRadius + popPadding;
+
+                    // Check if click is inside the pop
+                    const distance = Math.sqrt((mouseX - x) ** 2 + (mouseY - y) ** 2);
+                    if (distance < popRadius) {
+                        // Toggle pop state
+                        pops[r][c] = !pops[r][c];
+                        drawPopIt(); // Redraw pop
+
+                        // Play sound
+                        if (pops[r][c]) {
+                            // Play a higher note when popped in
+                            synth.triggerAttackRelease('C5', '8n');
+                        } else {
+                            // Play a lower note when popped out
+                            synth.triggerAttackRelease('C4', '8n');
+                        }
+                        return; // Process only one pop at a time
+                    }
+                }
+            }
+        });
+
+        // Reset button click event handler
+        document.getElementById('resetButton').addEventListener('click', () => {
+            initializePops(); // Reset all pops to popped out state
+            // Play a sound for reset
+            synth.triggerAttackRelease('G4', '4n');
+        });
+
+        // Adjust canvas size and redraw on window resize
+        window.addEventListener('resize', setCanvasSize);
+
+        // Initialize on page load
+        window.onload = function() {
+            // Start Tone.js audio context (required for sound to play)
+            Tone.start();
+            initializePops();
+        };
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>샌드박스 게임</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        #gameCanvas {
+            border: 2px solid #333;
+            background-color: #ffffff;
+            touch-action: none;
+            cursor: pointer;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .button, .material-btn {
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+            background-color: #4a90e2;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .button:hover, .material-btn:hover {
+            background-color: #357bd8;
+        }
+
+        .button:active, .material-btn:active {
+            transform: scale(0.98);
+        }
+
+        .material-btn.selected {
+            background-color: #2c5f96;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) inset;
+        }
+
+        #tool-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .tool-btn {
+            background-color: #e27a4a;
+        }
+
+        #clearBtn {
+            background-color: #dc3545;
+        }
+
+        #clearBtn:hover {
+            background-color: #c82333;
+        }
+
+        #info-box {
+            margin-top: 10px;
+            background-color: #fff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            font-size: 14px;
+            color: #333;
+            text-align: center;
+        }
+
+        .instructions {
+            margin-bottom: 20px;
+            text-align: center;
+            color: #555;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div class="instructions">
+            <h2>나만의 샌드박스 만들기!</h2>
+            <p>마우스를 클릭하거나 화면을 터치해서 재료를 떨어뜨려 보세요! 🔥💧🪵🌋🌱</p>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+        <div id="controls">
+            <div id="tool-buttons">
+                <button id="addToolBtn" class="button tool-btn selected">재료 놓기</button>
+                <button id="eraseToolBtn" class="button tool-btn">지우기</button>
+                <button id="clearBtn" class="button">모두 지우기</button>
+            </div>
+            <div id="materials">
+                <button class="material-btn selected" data-material="sand">모래</button>
+                <button class="material-btn" data-material="water">물</button>
+                <button class="material-btn" data-material="wood">나무</button>
+                <button class="material-btn" data-material="stone">돌</button>
+                <button class="material-btn" data-material="fire">불</button>
+                <button class="material-btn" data-material="lava">용암</button>
+                <button class="material-btn" data-material="seed">씨앗</button>
+                <button class="material-btn" data-material="oil">기름</button>
+                <button class="material-btn" data-material="acid">산</button>
+                <button class="material-btn" data-material="ice">얼음</button>
+                <button class="material-btn" data-material="plant">식물</button>
+                <button class="material-btn" data-material="poison">독</button>
+                <button class="material-btn" data-material="cold">냉기</button>
+                <button class="material-btn" data-material="dirt">흙</button>
+                <button class="material-btn" data-material="mud">진흙</button>
+                <button class="material-btn" data-material="sponge">스펀지</button>
+                <button class="material-btn" data-material="glass">유리</button>
+            </div>
+        </div>
+        <div id="info-box">재료를 선택하고 화면을 클릭해서 나만의 샌드박스를 만들어 보세요!</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const infoBox = document.getElementById('info-box');
+        const materialsContainer = document.getElementById('materials');
+        const addToolBtn = document.getElementById('addToolBtn');
+        const eraseToolBtn = document.getElementById('eraseToolBtn');
+        const clearBtn = document.getElementById('clearBtn');
+
+        let isPointerDown = false;
+        let lastX = 0;
+        let lastY = 0;
+        let selectedMaterial = 'sand';
+        let currentTool = 'add';
+
+        const pixelSize = 5;
+        let gridWidth, gridHeight;
+        let grid;
+
+        const colors = {
+            'sand': '#f4a460',
+            'wet_sand': '#c18544',
+            'water': '#4a90e2',
+            'wood': '#8b4513',
+            'stone': '#a9a9a9',
+            'fire': '#ff4500',
+            'lava': '#cc3300',
+            'steam': '#e0e0e0',
+            'seed': '#556b2f',
+            'oil': '#4b392a',
+            'acid': '#bada55',
+            'ice': '#aaddff',
+            'smoke': '#969696',
+            'plant': '#008000',
+            'poison': '#8a2be2',
+            'cold': '#e6f7ff',
+            'dirt': '#8B4513',
+            'mud': '#6B4226',
+            'ash': '#5c5c5c',
+            'glass': '#e0ffff',
+            'sponge': '#ffbf00',
+            'wet_sponge': '#b8860b'
+        };
+
+        const materialProperties = {
+            'sand': { density: 1.5, state: 'solid', flammability: 0 },
+            'water': { density: 1.0, state: 'liquid', flammability: 0 },
+            'wood': { density: 2.0, state: 'solid', flammability: 1 },
+            'stone': { density: 3.0, state: 'solid', flammability: 0 },
+            'fire': { density: 0.1, state: 'gas', flammability: 1 },
+            'lava': { density: 2.5, state: 'liquid', flammability: 0 },
+            'steam': { density: 0.05, state: 'gas', flammability: 0 },
+            'seed': { density: 1.2, state: 'solid', flammability: 0 },
+            'oil': { density: 0.8, state: 'liquid', flammability: 1 },
+            'acid': { density: 1.1, state: 'liquid', flammability: 0 },
+            'ice': { density: 0.9, state: 'solid', flammability: 0 },
+            'smoke': { density: 0.01, state: 'gas', flammability: 0 },
+            'plant': { density: 1.0, state: 'solid', flammability: 1 },
+            'poison': { density: 1.0, state: 'liquid', flammability: 0 },
+            'cold': { density: 0.05, state: 'gas', flammability: 0 },
+            'dirt': { density: 1.8, state: 'solid', flammability: 0 },
+            'mud': { density: 1.6, state: 'liquid', flammability: 0 },
+            'ash': { density: 0.5, state: 'solid', flammability: 0 },
+            'glass': { density: 2.8, state: 'solid', flammability: 0 },
+            'sponge': { density: 0.7, state: 'solid', flammability: 0 },
+            'wet_sponge': { density: 1.2, state: 'solid', flammability: 0 }
+        };
+
+        // 그리드 크기를 화면에 맞게 조절
+        function resizeCanvas() {
+            canvas.width = Math.min(window.innerWidth - 40, 600);
+            canvas.height = Math.min(window.innerHeight - 250, 400);
+
+            gridWidth = Math.floor(canvas.width / pixelSize);
+            gridHeight = Math.floor(canvas.height / pixelSize);
+
+            const oldGrid = grid;
+            grid = createGrid(gridWidth, gridHeight);
+            if (oldGrid) {
+                for (let x = 0; x < Math.min(gridWidth, oldGrid[0].length); x++) {
+                    for (let y = 0; y < Math.min(gridHeight, oldGrid.length); y++) {
+                        grid[y][x] = oldGrid[y][x];
+                    }
+                }
+            }
+        }
+
+        // 새로운 빈 그리드를 생성
+        function createGrid(width, height) {
+            const newGrid = new Array(height).fill(null).map(() => new Array(width).fill(null));
+            for(let y = 0; y < height; y++) {
+                for(let x = 0; x < width; x++) {
+                    newGrid[y][x] = { material: null, temp: 20 }; // 모든 픽셀의 초기 온도는 20
+                }
+            }
+            return newGrid;
+        }
+
+        // 현재 그리드를 화면에 그림
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let y = 0; y < gridHeight; y++) {
+                for (let x = 0; x < gridWidth; x++) {
+                    const cell = grid[y][x];
+                    if (cell.material) {
+                        ctx.fillStyle = colors[cell.material];
+                        ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
+                    }
+                }
+            }
+        }
+
+        // 그리드에서 특정 위치의 재료를 가져옴 (경계 확인)
+        function getCellAt(x, y) {
+            if (x >= 0 && x < gridWidth && y >= 0 && y < gridHeight) {
+                return grid[y][x];
+            }
+            return null;
+        }
+
+        // 주된 게임 업데이트 루프
+        function update() {
+            const newGrid = createGrid(gridWidth, gridHeight);
+
+            // 1차 패스: 상호작용 및 온도 변화
+            for (let y = 0; y < gridHeight; y++) {
+                for (let x = 0; x < gridWidth; x++) {
+                    const cell = grid[y][x];
+                    if (!cell.material) {
+                        newGrid[y][x] = cell; // Copy empty cells
+                        continue;
+                    }
+
+                    let finalMaterial = cell.material;
+                    let finalTemp = cell.temp;
+
+                    // 온도 전파
+                    const temps = [];
+                    const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+                    let material_found = false;
+                    for (const [dx, dy] of dirs) {
+                         const neighbor = getCellAt(x + dx, y + dy);
+                         if (neighbor && neighbor.material) {
+                            temps.push(neighbor.temp);
+                            material_found = true;
+                         }
+                    }
+                    if (material_found) {
+                        const avg_temp = temps.reduce((a, b) => a + b) / temps.length;
+                        finalTemp = (finalTemp + avg_temp) / 2;
+                    }
+
+                    // 재료 특수 상호작용 및 상태 변화
+                    if (cell.material === 'fire') {
+                        finalTemp = 1000;
+                        const burnDirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+                         for (const [dx, dy] of burnDirs) {
+                            const neighbor = getCellAt(x + dx, y + dy);
+                            if (neighbor && neighbor.material && (neighbor.material === 'wood' || neighbor.material === 'plant') && Math.random() < 0.3) {
+                                grid[y + dy][x + dx].material = 'fire';
+                            }
+                        }
+                    } else if (cell.material === 'lava') {
+                        finalTemp = 800;
+                        const meltDirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+                        for (const [dx, dy] of meltDirs) {
+                            const neighbor = getCellAt(x + dx, y + dy);
+                            if (neighbor && neighbor.material === 'stone' && Math.random() < 0.1) {
+                                grid[y + dy][x + dx].material = 'lava';
+                            }
+                        }
+                    } else if (cell.material === 'cold') {
+                        finalTemp = -100;
+                    }
+
+                    // 온도에 따른 상태 변화
+                    if (cell.material === 'water' && finalTemp < 0) {
+                        finalMaterial = 'ice';
+                    } else if (cell.material === 'ice' && finalTemp > 0) {
+                        finalMaterial = 'water';
+                    } else if (cell.material === 'water' && finalTemp > 100) {
+                        finalMaterial = 'steam';
+                    } else if (cell.material === 'steam' && finalTemp < 100) {
+                        finalMaterial = 'water';
+                    } else if (cell.material === 'lava' && finalTemp < 500) {
+                        finalMaterial = 'stone';
+                    } else if (cell.material === 'wood' && finalTemp > 200) {
+                        finalMaterial = 'ash';
+                    } else if (cell.material === 'plant' && finalTemp > 150) {
+                         finalMaterial = 'ash';
+                    } else if (cell.material === 'sand' && finalTemp > 600) {
+                        finalMaterial = 'glass';
+                    } else if (cell.material === 'mud' && finalTemp > 100) {
+                        finalMaterial = 'dirt';
+                    } else if (cell.material === 'wet_sponge' && finalTemp > 50) {
+                        finalMaterial = 'sponge';
+                    }
+
+                    // 화학 반응
+                    const neighborDirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+                    for (const [dx, dy] of neighborDirs) {
+                        const neighbor = getCellAt(x+dx, y+dy);
+                        if (neighbor && neighbor.material) {
+                            if ((cell.material === 'water' && neighbor.material === 'dirt') || (cell.material === 'dirt' && neighbor.material === 'water')) {
+                                newGrid[y][x].material = 'mud';
+                                newGrid[y+dy][x+dx].material = 'mud';
+                            }
+                        }
+                    }
+
+                    newGrid[y][x] = { material: finalMaterial, temp: finalTemp };
+                }
+            }
+
+            // 2차 패스: 움직임
+            const finalGrid = createGrid(gridWidth, gridHeight);
+            for (let y = gridHeight - 1; y >= 0; y--) {
+                for (let x = 0; x < gridWidth; x++) {
+                    const cell = newGrid[y][x];
+                    if (!cell.material) continue;
+
+                    let nextX = x;
+                    let nextY = y;
+                    const props = materialProperties[cell.material];
+
+                    // 중력 및 밀도 기반 이동
+                    if (props.state === 'liquid') {
+                         const below = getCellAt(x, y+1);
+                         if (below && !below.material) {
+                            nextY = y + 1;
+                         } else {
+                            let dir = Math.random() < 0.5 ? 1 : -1;
+                            if (getCellAt(x + dir, y) && !getCellAt(x + dir, y).material) {
+                                nextX = x + dir;
+                            } else if (getCellAt(x - dir, y) && !getCellAt(x - dir, y).material) {
+                                nextX = x - dir;
+                            }
+                         }
+                    } else if (props.state === 'gas') {
+                         const above = getCellAt(x, y-1);
+                         if (above && !above.material) {
+                             nextY = y - 1;
+                         } else {
+                            let dir = Math.random() < 0.5 ? 1 : -1;
+                            if (getCellAt(x + dir, y-1) && !getCellAt(x + dir, y-1).material) {
+                                nextX = x + dir;
+                                nextY = y - 1;
+                            } else if (getCellAt(x - dir, y-1) && !getCellAt(x - dir, y-1).material) {
+                                nextX = x - dir;
+                                nextY = y - 1;
+                            }
+                         }
+                    } else if (props.state === 'solid') {
+                        // 모래, 흙, 재 등은 아래로 떨어짐
+                        const below = getCellAt(x, y+1);
+                        if (below && below.material && materialProperties[below.material].state === 'liquid' && props.density > materialProperties[below.material].density) {
+                            finalGrid[y+1][x] = newGrid[y][x];
+                            finalGrid[y][x] = below;
+                            continue;
+                        } else if (below && !below.material) {
+                            nextY = y + 1;
+                        } else {
+                            let dir = Math.random() < 0.5 ? 1 : -1;
+                            if (getCellAt(x + dir, y + 1) && !getCellAt(x + dir, y + 1).material) {
+                                nextX = x + dir;
+                                nextY = y + 1;
+                            } else if (getCellAt(x - dir, y + 1) && !getCellAt(x - dir, y + 1).material) {
+                                nextX = x - dir;
+                                nextY = y + 1;
+                            }
+                        }
+                    }
+
+                    if (finalGrid[nextY][nextX].material === null) {
+                        finalGrid[nextY][nextX] = cell;
+                    } else {
+                        finalGrid[y][x] = cell;
+                    }
+                }
+            }
+            grid = finalGrid;
+        }
+
+        // 마우스/터치 이벤트에 따라 픽셀을 추가/제거
+        function placePixels(x, y, radius = 5, material) {
+            for (let i = -radius; i <= radius; i++) {
+                for (let j = -radius; j <= radius; j++) {
+                    if (i * i + j * j <= radius * radius) {
+                        const gridX = Math.floor((x + i * pixelSize) / pixelSize);
+                        const gridY = Math.floor((y + j * pixelSize) / pixelSize);
+
+                        if (gridX >= 0 && gridX < gridWidth && gridY >= 0 && gridY < gridHeight) {
+                            if (currentTool === 'add') {
+                                grid[gridY][gridX].material = material;
+                                if (material === 'fire') grid[gridY][gridX].temp = 1000;
+                                if (material === 'lava') grid[gridY][gridX].temp = 800;
+                                if (material === 'cold') grid[gridY][gridX].temp = -100;
+                            } else if (currentTool === 'erase') {
+                                grid[gridY][gridX].material = null;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function handlePointerEvent(e) {
+            const rect = canvas.getBoundingClientRect();
+            let x, y;
+            if (e.touches) {
+                x = e.touches[0].clientX - rect.left;
+                y = e.touches[0].clientY - rect.top;
+            } else {
+                x = e.clientX - rect.left;
+                y = e.clientY - rect.top;
+            }
+
+            if (isPointerDown) {
+                const distance = Math.sqrt(Math.pow(x - lastX, 2) + Math.pow(y - lastY, 2));
+                const steps = Math.max(1, Math.floor(distance / pixelSize));
+                for (let i = 0; i < steps; i++) {
+                    const interpolatedX = lastX + (x - lastX) * (i / steps);
+                    const interpolatedY = lastY + (y - lastY) * (i / steps);
+                    placePixels(interpolatedX, interpolatedY, 5, selectedMaterial);
+                }
+                lastX = x;
+                lastY = y;
+                placePixels(x, y, 5, selectedMaterial);
+            }
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            isPointerDown = true;
+            const rect = canvas.getBoundingClientRect();
+            lastX = e.clientX - rect.left;
+            lastY = e.clientY - rect.top;
+            placePixels(lastX, lastY, 5, selectedMaterial);
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isPointerDown = false;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isPointerDown = false;
+        });
+
+        canvas.addEventListener('mousemove', handlePointerEvent);
+        canvas.addEventListener('touchstart', (e) => {
+            isPointerDown = true;
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            lastX = e.touches[0].clientX - rect.left;
+            lastY = e.touches[0].clientY - rect.top;
+            placePixels(lastX, lastY, 5, selectedMaterial);
+        }, { passive: false });
+        canvas.addEventListener('touchend', () => {
+            isPointerDown = false;
+        });
+        canvas.addEventListener('touchmove', handlePointerEvent, { passive: false });
+
+        // 재료 버튼 클릭 이벤트
+        materialsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('material-btn')) {
+                document.querySelectorAll('.material-btn').forEach(btn => btn.classList.remove('selected'));
+                e.target.classList.add('selected');
+                selectedMaterial = e.target.dataset.material;
+                infoBox.textContent = `${e.target.textContent} 재료가 선택되었습니다.`;
+            }
+        });
+
+        // 도구 버튼 클릭 이벤트
+        addToolBtn.addEventListener('click', () => {
+            currentTool = 'add';
+            addToolBtn.classList.add('selected');
+            eraseToolBtn.classList.remove('selected');
+            infoBox.textContent = '재료 놓기 도구가 선택되었습니다.';
+        });
+
+        eraseToolBtn.addEventListener('click', () => {
+            currentTool = 'erase';
+            eraseToolBtn.classList.add('selected');
+            addToolBtn.classList.remove('selected');
+            infoBox.textContent = '지우기 도구가 선택되었습니다.';
+        });
+
+        // 모두 지우기 버튼 클릭 이벤트
+        clearBtn.addEventListener('click', () => {
+            grid = createGrid(gridWidth, gridHeight);
+            infoBox.textContent = '모든 재료가 사라졌어요!';
+        });
+
+        // 게임 루프: 업데이트와 그리기 반복
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        gameLoop();
+    </script>
+</body>
+</html>
