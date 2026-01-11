@@ -1,7 +1,7 @@
 # The URL the site will be built for
 base_url = "https://chei-l.github.io"
 
-title = "체리 대마왕"
+title = "체리 컴퓨터"
 description = "체리 대마왕의 게임과 그림을 보실 수 있습니다."
 
 # Whether to automatically compile all Sass files in the sass directory
