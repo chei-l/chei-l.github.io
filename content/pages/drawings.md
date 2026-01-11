@@ -9,5 +9,9 @@ items = [
     {img = "/img/drawings/4.jpg"},
     {img = "/img/drawings/5.jpg"},
     {img = "/img/drawings/6.jpg"},
+    {img = "/img/drawings/7.jpg"},
+    {img = "/img/drawings/8.jpg"},
+    {img = "/img/drawings/9.jpg"},
+    {img = "/img/drawings/10.jpg"},
 ]
 +++
