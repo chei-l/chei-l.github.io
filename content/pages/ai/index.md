@@ -12,5 +12,6 @@ items = [
     {img = "/img/ai/7.jpeg"},
     {img = "/img/ai/8.jpeg"},
     {img = "/img/ai/9.jpeg"},
+    {img = "/img/ai/10.jpeg"},
 ]
 +++
