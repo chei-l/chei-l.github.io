@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% macro social_links(page) %}
+    {%- if page.extra.socials %}
+    <br/>
+    <hr/>
+    <br/>
+    
+    <span class="contacticon center">
+      {% for social in page.extra.socials %}
+      {% set icon_svg = load_data(path="templates/icons/square-"~social.name~".svg", required=false) %}
+      {%- if not icon_svg -%}
+        {%- set icon_svg = load_data(path="themes/zola-folio/templates/icons/square-"~social.name~".svg", required=false) -%}
+      {%- endif -%}
+      <a href="{{ social.uri }}">{{ icon_svg | safe}}</a>
+      {% endfor %}
+    </span>
+    {% endif -%}
+{% endmacro social_links %}
+
+{% block content %}
+<div class="post-content">
+  {{ page.content | safe }}
+</div>
+{{ self::social_links(page=page) }}
+{% endblock content %}

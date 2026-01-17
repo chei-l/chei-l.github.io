@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="{%- if lang != config.default_language %}{{ lang }}{% else %}{{ config.extra.language_code | default(value=lang) }}{% endif %}">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width initial-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <title>{{ page.title | default(value=config.title) | safe }}</title>
+  <meta name="description" content="{{ page.description | default(value=config.description) | safe }}">
+
+  <meta property="og:site_name" content="{{ config.title }}">
+  <meta property="og:title" content="{{ page.title | default(value=config.title) | safe }}">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="{{ current_url }}">
+  {%- if page.extra.feature_image %}
+  <meta property="og:image" content="{{ page.extra.feature_image }}">
+  {% endif -%}
+  <meta property="og:description" content="{{ page.description | default(value=config.description) | safe }}">
+  <meta property="twitter:card" content="summary">
+  <meta property="twitter:title" content="{{ page.title | default(value=config.title) | safe }}">
+  <meta property="twitter:description" content="{{ page.description | default(value=config.description) | safe }}">
+  {%- if page.extra.feature_image %}
+  <meta property="twitter:image"  content="{{ page.extra.feature_image }}">
+  {% endif -%}
+
+  <link rel="stylesheet" href="/style.css" />
+  {%- if config.extra.theme_color %}
+    <link rel="stylesheet" href="{{ get_url(path="/color/" ~ config.extra.theme_color ~ ".css", trailing_slash=false) | safe }}">
+  {% else %}
+      <link rel="stylesheet" href="{{ get_url(path="/color/red.css", trailing_slash=false) | safe }}">
+  {% endif -%}
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="wrapper">
+      <nav class="title-nav">
+        <div class="trigger">
+          <a class="page-link-title" href="{{ config.base_url }}/">
+            <img src="{{ get_url(path='img/chei-logo.png') }}" alt="{{ config.title }}" style="height: 40px; vertical-align: middle;">
+          </a>
+        </div>
+      </nav>
+
+      {% block header_menu %}
+      <nav class="site-nav">
+        {%- if config.extra.menu_items %}
+        {%- set menu_items = config.extra.menu_items -%}
+        {%- for item in menu_items %}
+        <a class="page-link" href="{{ item.url | safe }}">{{ item.name
+          | safe }}</a>
+        {% endfor -%}
+        {% endif -%}
+        {% block search %}
+        {%- if config.build_search_index %}
+        <div class="site-nav">
+          <input class="search" id="search" type="text" placeholder="Search">
+        </div>
+        <div class="search-results">
+          <div class="search-results__items"></div>
+        </div>
+        {%- endif %}
+        {%- if config.build_search_index -%}
+          {%- if config.search.index_format -%}
+              {%- set search_index_format = config.search.index_format -%}
+          {%- else -%}
+              {%- set search_index_format = "elasticlunr_json" -%}
+          {%- endif -%}
+
+          {%- if search_index_format == "elasticlunr_javascript" -%}
+              <script defer src="{{ get_url(path='search_index.' ~ lang ~ '.js', cachebust=true) | safe }}"></script>
+          {%- endif -%}
+
+          {# Main search scripts #}
+          <script defer src="{{ get_url(path='/elasticlunr.min.js', cachebust=true) | safe }}"></script>
+          <script defer src="{{ get_url(path='/search.js', cachebust=true) | safe }}"></script>
+        {%- endif -%}
+        {% endblock search %}
+      </nav>
+      {% endblock header_menu %}
+    </div>
+  </header>
+  <div class="page-content">
+    <div class="wrapper">
+      {% block content %}
+      {% endblock content %}
+    </div>
+  </div>
+  <footer class="site-footer">
+
+    <div class="wrapper">
+      {%- if config.extra.author %}
+      <span>© {{ now() | date(format="%Y") }} {{ config.extra.author }}. This site uses <a
+          href="https://www.getzola.org/">Zola</a> and the <a href="https://github.com/evjrob/zola-folio"
+          target="_blank">zola-folio</a> theme.</span>
+      {% endif -%}
+    </div>
+
+  </footer>
+  <!-- optional scripts -->
+  {% block scripts %}
+  {% if config.extra.math %}
+  <!-- MathJax script for rendering LaTeX math equations -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [
+          ["$", "$"],
+          ["\\(", "\\)"],
+        ],
+        displayMath: [
+          ["$$", "$$"],
+          ["\\[", "\\]"],
+        ],
+      },
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.min.js" async></script>
+  {% endif %}
+  {% endblock scripts %}
+</body>
+
+</html>

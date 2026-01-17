@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4 class="post-title">{{ page.title }}</h4>
+<p>
+    {{ page.description | safe}}
+</p>
+{% for project in page.extra.items %}
+<div class="project">
+    <div class="thumbnail">
+        {% if project.redirect %}
+        <a href="{{ project.redirect }}" target="_blank">
+        {% else %}
+        <a href="{{ project.img }}" target="_blank">
+        {% endif %}
+        {% if project.img %}
+        {%- if project.img is matching("[.](jpg|png|webp)$") -%}
+        {% set thumbnail_img = resize_image(path=project.img, width=240, height=180, op="fill", format="webp") %}
+        <img class="thumbnail" src="{{ thumbnail_img.url }}" />
+        {% else %}
+        <img class="thumbnail" src="{{ project.img }}" />
+        {% endif %}
+        {% else %}
+        <div class="thumbnail blankbox"></div>
+        {% endif %}
+        {% if project.title or project.description %}
+        <span>
+            <h1>{{ project.title | safe}}</h1>
+            <br />
+            <p>{{ project.description | safe}}</p>
+        </span>
+        {% endif %}
+        </a>
+    </div>
+</div>
+{% endfor %}
+{% endblock content %}
