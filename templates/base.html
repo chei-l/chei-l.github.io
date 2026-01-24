@@ -35,7 +35,9 @@
                 <nav class="nav">
                     <a href="{{ base_url }}/" class="nav-link{% if page_url == "/" %} active{% endif %}">홈</a>
                     <a href="{{ base_url }}/posts/" class="nav-link{% if page_section == "posts" %} active{% endif %}">블로그</a>
-                    <a href="{{ base_url }}/tags/" class="nav-link{% if page_url is startswith("/tags/") %} active{% endif %}">태그</a>
+                    <a href="{{ base_url }}/games/" class="nav-link{% if page_url is startswith("/games/") %} active{% endif %}">게임</a>
+                    <a href="{{ base_url }}/drawings/" class="nav-link{% if page_url is startswith("/drawings/") %} active{% endif %}">그림</a>
+                    <a href="{{ base_url }}/ai_drawings/" class="nav-link{% if page_url is startswith("/ai_drawings/") %} active{% endif %}">AI그림</a>
                     <a href="{{ base_url }}/about/" class="nav-link{% if page_url == "/about/" %} active{% endif %}">소개</a>
                 </nav>
             </div>
