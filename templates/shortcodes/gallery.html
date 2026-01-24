@@ -1,0 +1,28 @@
+<style>
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  margin: 20px 0;
+}
+.gallery img {
+  width: 100%;
+  height: auto;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+</style>
+
+<div class="gallery">
+{% if page_section == "ai_drawing" %}
+  {% set images = ["1.jpeg", "2.jpeg", "3.jpeg", "4.jpeg", "5.jpeg", "6.jpeg", "7.jpeg", "8.jpeg"] %}
+{% elif page_section == "drawing" %}
+  {% set images = ["1.jpg", "2.jpg", "3.jpg", "4.jpg", "5.jpg", "6.jpg", "7.jpg", "8.jpg", "9.jpg", "10.jpg", "11.jpg", "12.jpg", "13.jpg", "14.jpg", "15.jpg"] %}
+{% else %}
+  {% set images = [] %}
+{% endif %}
+
+{% for image in images %}
+  <img src="{{ base_url }}/content/{{ page_section }}/{{ image }}" alt="{{ image }}">
+{% endfor %}
+</div>

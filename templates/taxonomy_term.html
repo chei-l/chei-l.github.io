@@ -1,0 +1,32 @@
+{% extends "base.html" %} {% block title %}{{ taxonomy_term }} - {{
+taxonomy_name }}{% endblock %} {% block content %}
+<div class="container">
+    <div class="taxonomy-header">
+        <h1 class="taxonomy-title">
+            {% if taxonomy_name == "tags" %}🏷️{% elif taxonomy_name ==
+            "categories" %}📁{% else %}📑{% endif %} {{ taxonomy_term }}
+        </h1>
+        <p class="taxonomy-count">{{ taxonomy_name }}의 포스트 목록</p>
+    </div>
+
+    {% if section_list %}
+    <div class="posts-grid">{{ section_list }}</div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-emoji">🔍</div>
+        <h3 class="empty-state-title">포스트를 찾을 수 없어요</h3>
+        <p class="empty-state-description">
+            이 {{ taxonomy_name }}에는 아직 포스트가 없습니다.
+        </p>
+    </div>
+    {% endif %} {% if pagination %}
+    <div class="pagination">{{ pagination }}</div>
+    {% endif %}
+
+    <div class="mt-xl text-center">
+        <a href="{{ base_url }}/{{ taxonomy_name }}/" class="btn btn-secondary"
+            >← 모든 {{ taxonomy_name }} 보기</a
+        >
+    </div>
+</div>
+{% endblock %}

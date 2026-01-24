@@ -1,57 +1,114 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block title %}홈{% endblock %} {% block content %}
+<section class="hero">
+    <div class="container">
+        <div class="hero-emoji animate-float">🌸</div>
+        <h1 class="hero-title">
+            안녕하세요, <span>{{ site_title }}</span>입니다
+        </h1>
+        <p class="hero-description">{{ site_description }}</p>
+    </div>
+</section>
 
-{% block content %}
-<div class="header-bar">
-  <h1>
-      <img src="{{ get_url(path='img/chei-logo.png') }}" alt="{{ config.title }}" style="height: 200px; vertical-align: middle;">
-  </h1>
-  {% if config.description %}
-  <br />
-  <h2>{{ config.description }}</h2>
-  {% endif %}
-  <br />
-  <br />
-  <hr>
-  <br />
-  <br />
+<div class="container">
+    <h2 class="section-title">최근 포스트</h2>
+
+    <div class="posts-grid">
+        <article class="post-card animate-fade-in">
+            <div class="post-card-image">
+                <span class="post-card-placeholder">🌸</span>
+            </div>
+            <div class="post-card-content">
+                <div class="post-card-meta">
+                    <span class="post-card-category">일상</span>
+                    <span class="post-card-date">2024.01.20</span>
+                </div>
+                <h3 class="post-card-title">
+                    <a href="{{ base_url }}/posts/hello-world/"
+                        >안녕하세요, 세상!</a
+                    >
+                </h3>
+                <p class="post-card-excerpt">
+                    드디어 저만의 블로그를 오픈했어요! 이 블로그는 Hwaro라는
+                    정적 사이트 생성기로 만들어졌답니다.
+                </p>
+                <div class="post-card-tags">
+                    <a href="{{ base_url }}/tags/소개/" class="tag tag-pink"
+                        >소개</a
+                    >
+                    <a href="{{ base_url }}/tags/블로그/" class="tag tag-purple"
+                        >블로그</a
+                    >
+                </div>
+            </div>
+        </article>
+
+        <article class="post-card animate-fade-in">
+            <div class="post-card-image">
+                <span class="post-card-placeholder">🚀</span>
+            </div>
+            <div class="post-card-content">
+                <div class="post-card-meta">
+                    <span class="post-card-category">가이드</span>
+                    <span class="post-card-date">2024.01.15</span>
+                </div>
+                <h3 class="post-card-title">
+                    <a href="{{ base_url }}/posts/getting-started/"
+                        >블로그 시작하기</a
+                    >
+                </h3>
+                <p class="post-card-excerpt">
+                    Hwaro로 블로그를 시작하는 방법을 알아볼까요? 설치부터 첫
+                    포스트 작성까지 안내합니다.
+                </p>
+                <div class="post-card-tags">
+                    <a href="{{ base_url }}/tags/튜토리얼/" class="tag tag-blue"
+                        >튜토리얼</a
+                    >
+                    <a
+                        href="{{ base_url }}/tags/시작하기/"
+                        class="tag tag-green"
+                        >시작하기</a
+                    >
+                </div>
+            </div>
+        </article>
+
+        <article class="post-card animate-fade-in">
+            <div class="post-card-image">
+                <span class="post-card-placeholder">📝</span>
+            </div>
+            <div class="post-card-content">
+                <div class="post-card-meta">
+                    <span class="post-card-category">튜토리얼</span>
+                    <span class="post-card-date">2024.01.13</span>
+                </div>
+                <h3 class="post-card-title">
+                    <a href="{{ base_url }}/posts/markdown-guide/"
+                        >마크다운 작성 가이드</a
+                    >
+                </h3>
+                <p class="post-card-excerpt">
+                    블로그에서 사용할 수 있는 마크다운 문법을 알아봅니다. 텍스트
+                    스타일링부터 코드 블록까지!
+                </p>
+                <div class="post-card-tags">
+                    <a
+                        href="{{ base_url }}/tags/마크다운/"
+                        class="tag tag-yellow"
+                        >마크다운</a
+                    >
+                    <a href="{{ base_url }}/tags/가이드/" class="tag tag-orange"
+                        >가이드</a
+                    >
+                </div>
+            </div>
+        </article>
+    </div>
+
+    <div class="mt-xl text-center">
+        <a href="{{ base_url }}/posts/" class="btn btn-primary"
+            >📚 모든 포스트 보기</a
+        >
+    </div>
 </div>
-<div class="posts">
-  {% set is_first_page = true %}
-  {% if paginator is defined %}
-      {% set show_pages = paginator.pages %}
-      {% set is_first_page = paginator.current_index == 1 %}
-  {% elif section is defined %}
-      {% set show_pages = section.pages %}
-  {% endif %}
-  <ul class="post-list">
-    {%- for page in show_pages %}
-    <li class="post on-list">
-      <h3 class="post-title"><a href="{{ page.permalink | safe }}">{{ page.title }}</a></h3>
-      {%- if page.date %}
-      <p class="post-meta">
-        <span class="post-date">
-          {%- if page.date %}
-          {{ page.date | date(format="%B %d, %Y") }}
-          {% endif -%}
-        </span>
-        <span>
-          {%- if page.authors %} — {{ page.authors | join(sep=", ") }}{% endif -%}
-        </span>
-      </p>
-      {% endif -%}
-      <div class="post-content">
-        {{ page.description | safe }}
-      </div>
-      <br>
-      <hr>
-    </li>
-    {% endfor -%}
-  </ul>
-  <footer class="page-footer">
-      <nav>
-          {% if paginator.previous %}<a class="prev" href="{{ paginator.previous }}">← Previous</a>{% else %}<!--Hidden Previous-Button-->{% endif %}
-          {% if paginator.next %}<a class="next" href="{{ paginator.next }}">Next →</a>{% else %}<!--Hidden Next-Button-->{% endif %}
-      </nav>
-  </footer>
-</div>
-{% endblock content %}
+{% endblock %}
