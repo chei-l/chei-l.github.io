@@ -24,6 +24,11 @@ enabled = false
 theme = "github"          # Available: github, monokai, atom-one-dark, vs2015, etc.
 use_cdn = true            # Set to false to use local assets
 
+[content.files]
+allow_extensions = ["jpg", "png", "jpeg"]
+disallow_extensions = [""]
+disallow_paths = [""]
+
 # =============================================================================
 # OpenGraph & Twitter Cards
 # =============================================================================
@@ -86,8 +91,7 @@ priority = 0.5
 enabled = true
 filename = "robots.txt"
 rules = [
-  { user_agent = "*", disallow = ["/admin", "/private"] },
-  { user_agent = "GPTBot", disallow = ["/"] }
+  { user_agent = "*" },
 ]
 
 # =============================================================================
