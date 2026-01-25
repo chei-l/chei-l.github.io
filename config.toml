@@ -130,6 +130,7 @@ safe = false    # If true, raw HTML in markdown will be stripped (replaced by co
 # =============================================================================
 # Run custom shell commands before/after build process
 
-# [build]
+[build]
+output_dir = "public"
 # hooks.pre = ["npm install", "python scripts/preprocess.py"]
 # hooks.post = ["npm run minify", "./scripts/deploy.sh"]

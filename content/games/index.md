@@ -20,6 +20,9 @@ layout = "page"
 </style>
 
 <div class="gallery">
+    <a href="/games/file/dragon.html">
+        <img src="/games/images/dragon.png">
+    </a>
     <a href="/games/file/slime.html">
         <img src="/games/images/slime.png">
     </a>

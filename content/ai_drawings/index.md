@@ -28,4 +28,6 @@ layout = "page"
   <img src="/ai_drawings/images/6.jpeg" alt="6.jpeg">
   <img src="/ai_drawings/images/7.jpeg" alt="7.jpeg">
   <img src="/ai_drawings/images/8.jpeg" alt="8.jpeg">
+  <img src="/ai_drawings/images/9.jpeg" alt="9.jpeg">
+  <img src="/ai_drawings/images/10.jpeg" alt="10.jpeg">
 </div>
