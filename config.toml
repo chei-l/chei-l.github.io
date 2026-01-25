@@ -25,7 +25,7 @@ theme = "github"          # Available: github, monokai, atom-one-dark, vs2015, e
 use_cdn = true            # Set to false to use local assets
 
 [content.files]
-allow_extensions = ["jpg", "png", "jpeg"]
+allow_extensions = ["jpg", "png", "jpeg", "html"]
 disallow_extensions = [""]
 disallow_paths = [""]
 

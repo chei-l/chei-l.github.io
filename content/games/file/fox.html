@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>체이의 초강력 좀비 서바이벌 - 사운드 업데이트</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Gaegu&display=swap');
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Gaegu', cursive;
+            transition: background-color 2s, filter 0.5s;
+            background-color: #000;
+            user-select: none;
+        }
+
+        #start-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: radial-gradient(circle, #1a0a2e, #000);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            padding: 20px;
+        }
+
+        .char-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 12px;
+            margin-bottom: 25px;
+            max-width: 95vw;
+        }
+
+        .char-option {
+            width: 55px; height: 55px;
+            font-size: 32px;
+            display: flex; justify-content: center; align-items: center;
+            background: #1a1a1a;
+            border: 3px solid #444;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .char-option:hover { transform: scale(1.2) rotate(5deg); background: #333; border-color: #fff; }
+        .char-option.selected { border-color: #ffeb3b; box-shadow: 0 0 25px #ffeb3b; background: #3e2723; transform: scale(1.1); }
+
+        .day { background: linear-gradient(to bottom, #87CEEB, #E0F7FA); }
+        .night { background: #050505; }
+        .night #vignette {
+            background: radial-gradient(circle at var(--player-x) var(--player-y), transparent 10%, rgba(0, 0, 0, 0.95) 40%);
+        }
+
+        #game-container {
+            width: 100vw; height: 100vh;
+            display: none;
+            flex-direction: column;
+            position: relative;
+        }
+
+        #vignette {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 200;
+            transition: background 0.3s;
+        }
+
+        #bite-effect {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 400;
+            background: radial-gradient(circle, transparent 20%, rgba(150, 0, 0, 0.8) 100%);
+            display: none;
+            justify-content: center; align-items: center;
+        }
+
+        #toolbar {
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            color: white;
+            padding: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 300;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+        }
+
+        #weapon-bar {
+            position: absolute;
+            bottom: 20px; left: 50%;
+            transform: translateX(-50%);
+            display: flex; gap: 12px;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(15px);
+            padding: 12px;
+            border-radius: 25px;
+            border: 2px solid rgba(255,255,255,0.2);
+            z-index: 350;
+        }
+
+        .weapon-slot {
+            width: 65px; height: 65px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid #666;
+            border-radius: 15px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            cursor: pointer; transition: 0.3s;
+            color: white; position: relative;
+        }
+        .weapon-slot.active { border-color: #ffeb3b; background: rgba(255, 235, 59, 0.2); transform: translateY(-5px); }
+
+        .block { position: absolute; width: 40px; height: 40px; z-index: 10; display: flex; justify-content: center; align-items: center; font-size: 20px; }
+        .blood-splatter { position: absolute; background: #700; border-radius: 50%; pointer-events: none; z-index: 5; opacity: 0.7; filter: blur(3px); }
+
+        .zombie-container { position: absolute; width: 44px; height: 80px; z-index: 20; }
+        .zombie-body-part { position: absolute; background-color: #2d3b20; border: 1px solid #111; }
+        .zombie-head { width: 28px; height: 28px; top: 0; left: 8px; border-radius: 5px; animation: head-bob 0.5s infinite; }
+        .zombie-eye { position: absolute; width: 5px; height: 5px; background: #ff0000; border-radius: 50%; box-shadow: 0 0 5px red; top: 8px; }
+        @keyframes head-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
+
+        #player { position: absolute; width: 44px; height: 80px; z-index: 250; pointer-events: none; transition: transform 0.1s; }
+        #player-head { width: 40px; height: 40px; top: 0; left: 2px; font-size: 38px; display: flex; justify-content: center; align-items: center; position: absolute; }
+        .player-part { position: absolute; background-color: #222; border: 1px solid #444; border-radius: 4px; }
+        #player-torso { width: 24px; height: 32px; top: 35px; left: 10px; }
+        .player-arm { width: 8px; height: 26px; top: 38px; transform-origin: top center; }
+        .player-leg { width: 10px; height: 26px; top: 62px; transform-origin: top center; }
+
+        .walking #player-arm-l { animation: arm-walk 0.3s infinite alternate; }
+        .walking #player-arm-r { animation: arm-walk 0.3s infinite alternate-reverse; }
+        .walking #player-leg-l { animation: leg-walk 0.3s infinite alternate; }
+        .walking #player-leg-r { animation: leg-walk 0.3s infinite alternate-reverse; }
+        @keyframes arm-walk { from { transform: rotate(-40deg); } to { transform: rotate(40deg); } }
+        @keyframes leg-walk { from { transform: rotate(-50deg); } to { transform: rotate(50deg); } }
+
+        .projectile { position: absolute; z-index: 260; pointer-events: none; font-size: 30px; }
+        .slash-effect { position: absolute; border: 5px solid #fff; border-radius: 50%; pointer-events: none; z-index: 265; animation: slash 0.25s ease-out forwards; }
+        @keyframes slash { 0% { transform: scale(0.2); opacity: 1; } 100% { transform: scale(2); opacity: 0; } }
+
+        #status {
+            position: absolute; top: 120px; right: 20px;
+            background: rgba(0, 0, 0, 0.7); border: 2px solid #ffeb3b; color: white;
+            padding: 15px 25px; border-radius: 20px; font-size: 24px; z-index: 300;
+        }
+
+        #reset-btn {
+            position: absolute; bottom: 25px; right: 25px;
+            background: #d32f2f; border: none; color: white;
+            padding: 12px 25px; border-radius: 30px; font-weight: bold;
+            cursor: pointer; z-index: 400; box-shadow: 0 5px 15px rgba(211, 47, 47, 0.4);
+        }
+
+        .scream-text {
+            position: absolute; color: #ffeb3b; font-weight: bold; font-size: 35px;
+            pointer-events: none; z-index: 500; animation: scream 0.8s ease-out forwards;
+            text-shadow: 3px 3px 0 #000;
+        }
+        @keyframes scream { 0% { opacity: 0; transform: translateY(0) scale(0.5); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-120px) scale(1.5); } }
+    </style>
+</head>
+<body class="day">
+
+<div id="start-screen">
+    <h1 class="text-6xl mb-8 font-bold text-yellow-400 drop-shadow-[0_0_20px_rgba(255,235,59,0.7)]">🦊 체이의 구미호 월드</h1>
+
+    <div class="bg-black/80 p-8 rounded-[40px] border-4 border-yellow-600 flex flex-col items-center shadow-2xl max-w-4xl">
+        <p class="text-2xl mb-6 text-gray-300">소리가 들리는 월드로 초대해!</p>
+
+        <div class="char-grid" id="char-selection">
+            <div class="char-option selected" data-skill="🔥 여우불" onclick="pickChar('🦊', this)">🦊</div>
+            <div class="char-option" data-skill="⚔️ 영혼낫" onclick="pickChar('💀', this)">💀</div>
+            <div class="char-option" data-skill="🦇 박쥐떼" onclick="pickChar('🧛', this)">🧛</div>
+            <div class="char-option" data-skill="🏹 천벌" onclick="pickChar('😇', this)">😇</div>
+            <div class="char-option" data-skill="🔱 지옥불" onclick="pickChar('😈', this)">😈</div>
+            <div class="char-option" data-skill="⚡ 레이저" onclick="pickChar('🤖', this)">🤖</div>
+            <div class="char-option" data-skill="Rex" onclick="pickChar('Rex', this)">🦖</div>
+            <div class="char-option" data-skill="🌈 무지개" onclick="pickChar('🦄', this)">🦄</div>
+            <div class="char-option" data-skill="🦴 생선뼈" onclick="pickChar('🐱', this)">🐱</div>
+            <div class="char-option" data-skill="🎯 수리검" onclick="pickChar('🥷', this)">🥷</div>
+            <div class="char-option" data-skill="🕳️ 블랙홀" onclick="pickChar('👩‍🚀', this)">👩‍🚀</div>
+            <div class="char-option" data-skill="✨ 성검" onclick="pickChar('🗡️', this)">🗡️</div>
+            <div class="char-option" data-skill="🪄 변신" onclick="pickChar('🧙', this)">🧙</div>
+            <div class="char-option" data-skill="🧚 요정가루" onclick="pickChar('🧚', this)">🧚</div>
+            <div class="char-option" data-skill="🎋 대나무" onclick="pickChar('🐼', this)">🐼</div>
+            <div class="char-option" data-skill="🧊 얼음성" onclick="pickChar('👸', this)">👸</div>
+            <div class="char-option" data-skill="🍔 음식폭탄" onclick="pickChar('🍔', this)">🍔</div>
+            <div class="char-option" data-skill="🛸 납치" onclick="pickChar('👽', this)">👽</div>
+            <div class="char-option" data-skill="🏀 슬램덩크" onclick="pickChar('🏀', this)">🏀</div>
+            <div class="char-option" data-skill="🎸 록스피릿" onclick="pickChar('🎸', this)">🎸</div>
+            <div class="char-option" data-skill="🎨 페인트" onclick="pickChar('🎨', this)">🎨</div>
+        </div>
+
+        <p id="skill-desc" class="text-3xl text-yellow-400 mb-8 font-bold">스킬: 🔥 여우불 대폭발</p>
+
+        <input type="text" id="nickname" placeholder="체이의 닉네임..." class="bg-gray-900 border-b-4 border-yellow-600 p-4 w-80 text-white text-center text-2xl mb-8 outline-none focus:border-yellow-400">
+
+        <button onclick="startGame()" class="bg-yellow-600 hover:bg-yellow-500 text-white px-16 py-4 rounded-full text-3xl font-bold transition-all transform hover:scale-110 active:scale-95 border-4 border-yellow-300">
+            모험 시작!
+        </button>
+    </div>
+</div>
+
+<div id="vignette"></div>
+<div id="bite-effect">🩸🦷💀</div>
+
+<div id="game-container">
+    <div id="toolbar">
+        <div id="timer-display" class="text-3xl font-bold">☀️ 낮 (1:00)</div>
+        <div class="flex gap-3" id="palette"></div>
+        <div class="flex gap-4">
+            <button onclick="setMode('build')" id="btn-build" class="bg-green-600 px-6 py-2 rounded-full font-bold">짓기</button>
+            <button onclick="setMode('break')" id="btn-break" class="bg-red-600 px-6 py-2 rounded-full font-bold">부수기</button>
+        </div>
+    </div>
+
+    <div id="status">
+        <span id="player-name" class="text-yellow-400">체이</span> 🩸 <span id="hp-display">❤️❤️❤️</span> | ☠️ <span id="kill-count">0</span>
+    </div>
+
+    <button id="reset-btn" onclick="resetGame()">그만하기</button>
+
+    <div id="weapon-bar">
+        <div class="weapon-slot active" id="slot-1" onclick="selectWeapon(1)"><span>1</span><span class="text-2xl">🗡️</span></div>
+        <div class="weapon-slot" id="slot-2" onclick="selectWeapon(2)"><span>2</span><span class="text-2xl">☄️</span></div>
+        <div class="weapon-slot" id="slot-3" onclick="selectWeapon(3)"><span>3</span><span class="text-2xl" id="special-skill-icon">🔥</span></div>
+        <div class="weapon-slot" id="slot-4" onclick="selectWeapon(4)"><span>4</span><span class="text-2xl">❄️</span></div>
+        <div class="weapon-slot" id="slot-5" onclick="selectWeapon(5)"><span>5</span><span class="text-2xl">⚡</span></div>
+    </div>
+
+    <div id="canvas-container" class="relative flex-grow overflow-hidden bg-transparent" onmousedown="handleAction(event)">
+        <div id="player">
+            <div id="player-head">🦊</div>
+            <div id="player-torso" class="player-part"></div>
+            <div id="player-arm-l" class="player-part player-arm" style="left: 2px;"></div>
+            <div id="player-arm-r" class="player-part player-arm" style="left: 34px;"></div>
+            <div id="player-leg-l" class="player-part player-leg" style="left: 10px;"></div>
+            <div id="player-leg-r" class="player-part player-leg" style="left: 24px;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 오디오 엔진 (Web Audio API) ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+
+        switch(type) {
+            case 'slash': // 칼 휘두르는 소리
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(800, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
+                break;
+            case 'shoot': // 투사체 발사 소리
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.15);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now); osc.stop(now + 0.15);
+                break;
+            case 'build': // 블록 설치 소리
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(150, now);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                osc.start(now); osc.stop(now + 0.05);
+                break;
+            case 'break': // 블록 파괴 소리
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(60, now);
+                osc.frequency.linearRampToValueAtTime(20, now + 0.1);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
+                break;
+            case 'hit': // 좀비 죽는 소리
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.linearRampToValueAtTime(50, now + 0.2);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now); osc.stop(now + 0.2);
+                break;
+            case 'bite': // 플레이어 피격 소리
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(100, now);
+                osc.frequency.linearRampToValueAtTime(10, now + 0.3);
+                gain.gain.setValueAtTime(0.5, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+                break;
+            case 'skill': // 필살기 소리
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.exponentialRampToValueAtTime(880, now + 0.2);
+                osc.frequency.exponentialRampToValueAtTime(220, now + 0.4);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                osc.start(now); osc.stop(now + 0.5);
+                break;
+            case 'night': // 밤 알림
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(220, now);
+                osc.frequency.exponentialRampToValueAtTime(110, now + 1);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 1);
+                osc.start(now); osc.stop(now + 1);
+                break;
+        }
+    }
+
+    // --- 게임 로직 ---
+    const canvas = document.getElementById('canvas-container');
+    const timerDisplay = document.getElementById('timer-display');
+    const hpDisplay = document.getElementById('hp-display');
+    const killDisplay = document.getElementById('kill-count');
+    const player = document.getElementById('player');
+    const playerHead = document.getElementById('player-head');
+
+    let selectedEmoji = '🦊';
+    let currentMode = 'attack';
+    let currentWeapon = 1;
+    let currentColor = '#5d4037';
+    let hp = 3;
+    let kills = 0;
+    let isNight = false;
+    let gameTime = 60;
+
+    let playerPos = { x: 200, y: 300 };
+    let playerVel = { x: 0, y: 0 };
+    let isJumping = false;
+    let facingRight = true;
+    let physicsId = null;
+
+    const characterSkills = {
+        '🦊': { icon: '🔥', name: '여우불 대폭발', projectile: '🔥', type: 'burst' },
+        '💀': { icon: '⚔️', name: '영혼 대청소', projectile: '⚔️', type: 'circle' },
+        '🧛': { icon: '🦇', name: '박쥐 습격', projectile: '🦇', type: 'swarm' },
+        '😇': { icon: '🏹', name: '신성한 화살', projectile: '✨', type: 'rain' },
+        '😈': { icon: '🔱', name: '지옥의 창', projectile: '🔥', type: 'line' },
+        '🤖': { icon: '⚡', name: '플라즈마포', projectile: '🔵', type: 'beam' },
+        'Rex': { icon: '📢', name: '공포의 포효', projectile: '💨', type: 'push' },
+        '🦄': { icon: '🌈', name: '무지개빔', projectile: '🌈', type: 'rainbow' },
+        '🐱': { icon: 'Bone', name: '생선가시!', projectile: '🦴', type: 'scatter' },
+        '🥷': { icon: '🎯', name: '그림자 수리검', projectile: '🎯', type: 'rapid' },
+        '👩‍🚀': { icon: '🕳️', name: '블랙홀 생성', projectile: '🕳️', type: 'gravity' },
+        '🗡️': { icon: '✨', name: '엑스칼리버', projectile: '🗡️', type: 'giant' },
+        '🧙': { icon: '🪄', name: '메테오 스트라이크', projectile: '☄️', type: 'meteor' },
+        '🧚': { icon: '✨', name: '요정의 축복', projectile: '✨', type: 'sleep' },
+        '🐼': { icon: '🎋', name: '대나무 돌풍', projectile: '🎋', type: 'spin' },
+        '👸': { icon: '🧊', name: '아이스 킹덤', projectile: '❄️', type: 'freeze_all' },
+        '🍔': { icon: '🍟', name: '패스트푸드 비', projectile: '🍔', type: 'rain' },
+        '👽': { icon: '🛸', name: 'UFO 납치', projectile: '🛸', type: 'lift' },
+        '🏀': { icon: '🔥', name: '불꽃 슬램덩크', projectile: '🏀', type: 'slam' },
+        '🎸': { icon: '🎵', name: '데시벨 폭발', projectile: '🎵', type: 'wave' },
+        '🎨': { icon: '🖌️', name: '페인트 건', projectile: '🎨', type: 'color' }
+    };
+
+    function pickChar(emoji, el) {
+        selectedEmoji = emoji;
+        document.querySelectorAll('.char-option').forEach(opt => opt.classList.remove('selected'));
+        el.classList.add('selected');
+        document.getElementById('skill-desc').innerText = "스킬: " + el.dataset.skill;
+        document.getElementById('special-skill-icon').innerText = characterSkills[emoji].icon;
+        playSound('build');
+    }
+
+    function spawnScream(text, x, y) {
+        const s = document.createElement('div');
+        s.className = 'scream-text'; s.innerText = text;
+        s.style.left = (x - 60) + 'px'; s.style.top = (y - 50) + 'px';
+        canvas.appendChild(s);
+        setTimeout(() => s.remove(), 800);
+    }
+
+    function createBlood(x, y) {
+        for(let i=0; i<8; i++) {
+            const b = document.createElement('div');
+            b.className = 'blood-splatter';
+            const size = Math.random()*20 + 5;
+            b.style.width = size+'px'; b.style.height = size+'px';
+            b.style.left = (x + (Math.random()-0.5)*50) + 'px';
+            b.style.top = (y + (Math.random()-0.5)*50) + 'px';
+            canvas.appendChild(b);
+            setTimeout(() => b.remove(), 2000);
+        }
+    }
+
+    function startGame() {
+        const nick = document.getElementById('nickname').value || '체이';
+        document.getElementById('player-name').innerText = nick;
+        playerHead.innerText = selectedEmoji === 'Rex' ? '🦖' : selectedEmoji;
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('game-container').style.display = 'flex';
+        audioCtx.resume();
+        init();
+    }
+
+    function resetGame() {
+        cancelAnimationFrame(physicsId);
+        location.reload();
+    }
+
+    const mats = [
+        { icon: '🪵', color: '#5d4037' }, { icon: '🪨', color: '#616161' },
+        { icon: '💎', color: '#00bcd4' }, { icon: '🌵', color: '#2e7d32' }
+    ];
+    mats.forEach(m => {
+        const b = document.createElement('button');
+        b.innerHTML = m.icon; b.className = "w-12 h-12 bg-white/20 rounded-xl border-2 border-gray-500 hover:scale-110 transition";
+        b.onclick = (e) => { e.stopPropagation(); currentColor = m.color; setMode('build'); playSound('build'); };
+        document.getElementById('palette').appendChild(b);
+    });
+
+    function setMode(mode) {
+        currentMode = mode;
+        document.getElementById('btn-build').style.boxShadow = mode === 'build' ? '0 0 15px #4caf50' : 'none';
+        document.getElementById('btn-break').style.boxShadow = mode === 'break' ? '0 0 15px #f44336' : 'none';
+    }
+
+    function selectWeapon(n) {
+        currentWeapon = n; currentMode = 'attack';
+        for(let i=1; i<=5; i++) document.getElementById('slot-'+i).classList.toggle('active', i===n);
+        playSound('build');
+    }
+
+    const keys = {};
+    window.addEventListener('keydown', e => {
+        keys[e.key.toLowerCase()] = true;
+        if(['1','2','3','4','5'].includes(e.key)) selectWeapon(parseInt(e.key));
+    });
+    window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+    function updatePhysics() {
+        let isMoving = false;
+        if(keys['a'] || keys['arrowleft']) { playerPos.x -= 8; player.style.transform = 'scaleX(-1)'; facingRight = false; isMoving = true; }
+        if(keys['d'] || keys['arrowright']) { playerPos.x += 8; player.style.transform = 'scaleX(1)'; facingRight = true; isMoving = true; }
+        if((keys['w'] || keys['arrowup'] || keys[' ']) && !isJumping) {
+            playerVel.y = -18; isJumping = true;
+            playSound('build'); // 점프 소리 대용
+        }
+
+        playerVel.y += 1; playerPos.y += playerVel.y;
+
+        const rect = canvas.getBoundingClientRect();
+        const ground = rect.height - 80;
+
+        document.querySelectorAll('.block').forEach(b => {
+            const bx = parseInt(b.style.left); const by = parseInt(b.style.top);
+            if(playerPos.x + 35 > bx && playerPos.x < bx + 40 && playerPos.y + 80 > by && playerPos.y + 70 < by + 10) {
+                playerPos.y = by - 80; playerVel.y = 0; isJumping = false;
+            }
+        });
+
+        if(playerPos.y > ground) { playerPos.y = ground; playerVel.y = 0; isJumping = false; }
+        playerPos.x = Math.max(0, Math.min(rect.width-44, playerPos.x));
+
+        player.style.left = playerPos.x+'px'; player.style.top = playerPos.y+'px';
+        player.classList.toggle('walking', isMoving && !isJumping);
+
+        document.documentElement.style.setProperty('--player-x', (playerPos.x + 22) + 'px');
+        document.documentElement.style.setProperty('--player-y', (playerPos.y + 40) + 'px');
+
+        physicsId = requestAnimationFrame(updatePhysics);
+    }
+
+    function handleAction(e) {
+        if(currentMode === 'attack') useWeapon(); else {
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left)/40)*40;
+            const y = Math.floor((e.clientY - rect.top)/40)*40;
+            if(currentMode === 'build') {
+                const b = document.createElement('div'); b.className = 'block';
+                b.style.left = x+'px'; b.style.top = y+'px'; b.style.backgroundColor = currentColor;
+                b.style.borderRadius = '5px'; canvas.appendChild(b);
+                playSound('build');
+            } else {
+                const target = document.elementFromPoint(e.clientX, e.clientY);
+                if(target?.classList.contains('block')) {
+                    spawnScream("펑!", e.clientX, e.clientY);
+                    target.remove();
+                    playSound('break');
+                }
+            }
+        }
+    }
+
+    function useWeapon() {
+        const skill = characterSkills[selectedEmoji];
+        if(currentWeapon === 1) {
+            playSound('slash');
+            const s = document.createElement('div'); s.className = 'slash-effect';
+            s.style.width = '120px'; s.style.height = '120px';
+            s.style.left = (playerPos.x + (facingRight?40:-80))+'px'; s.style.top = (playerPos.y-20)+'px';
+            canvas.appendChild(s); setTimeout(()=>s.remove(), 250);
+            hitZombies(playerPos.x+(facingRight?60:-60), playerPos.y+40, 100);
+        } else if(currentWeapon === 2) {
+            playSound('shoot');
+            spawnProj(playerPos.x+20, playerPos.y+30, facingRight?15:-15, 0, '☄️');
+        } else if(currentWeapon === 3) {
+            playSound('skill');
+            spawnScream(skill.name, playerPos.x, playerPos.y);
+            executeSpecial(skill);
+        } else if(currentWeapon === 4) {
+            playSound('skill');
+            spawnScream("아이스 타임!", playerPos.x, playerPos.y);
+            document.querySelectorAll('.zombie-container').forEach(z => {
+                z.style.filter = 'freeze(1) brightness(2) drop-shadow(0 0 10px #0ff)';
+                z.dataset.frozen = "true";
+                setTimeout(() => { z.style.filter = ''; delete z.dataset.frozen; }, 4000);
+            });
+        } else if(currentWeapon === 5) {
+            playSound('skill');
+            spawnScream("썬더!!", playerPos.x, playerPos.y);
+            for(let i=0; i<10; i++) {
+                setTimeout(() => {
+                    const tx = playerPos.x + (Math.random()-0.5)*800;
+                    const l = document.createElement('div');
+                    l.style.position = 'absolute'; l.style.width = '10px'; l.style.height = '1000px';
+                    l.style.background = 'white'; l.style.left = tx+'px'; l.style.top = '0px';
+                    l.style.boxShadow = '0 0 30px #00f'; canvas.appendChild(l);
+                    hitZombies(tx, playerPos.y, 100); setTimeout(()=>l.remove(), 200);
+                }, i*100);
+            }
+        }
+    }
+
+    function executeSpecial(s) {
+        const x = playerPos.x; const y = playerPos.y;
+        switch(s.type) {
+            case 'burst': for(let i=0; i<8; i++) spawnProj(x+20, y+30, Math.cos(i)*15, Math.sin(i)*15, s.projectile); break;
+            case 'circle': hitZombies(x+22, y+40, 300); const c = document.createElement('div'); c.className='slash-effect'; c.style.width='500px'; c.style.height='500px'; c.style.left=(x-230)+'px'; c.style.top=(y-210)+'px'; canvas.appendChild(c); setTimeout(()=>c.remove(), 300); break;
+            case 'swarm': for(let i=0; i<15; i++) setTimeout(()=>spawnProj(x+20, y+30, facingRight?12:-12, (Math.random()-0.5)*10, s.projectile), i*50); break;
+            case 'rapid': for(let i=0; i<20; i++) setTimeout(()=>spawnProj(x+20, y+30, facingRight?25:-25, (Math.random()-0.5)*3, s.projectile), i*30); break;
+            case 'gravity': const b = document.createElement('div'); b.innerText = '🕳️'; b.style.position='absolute'; b.style.fontSize='100px'; b.style.left=(x+(facingRight?150:-250))+'px'; b.style.top=(y-20)+'px'; b.style.transition='3s'; canvas.appendChild(b); setTimeout(()=>b.style.transform='scale(5) rotate(720deg)', 10); const gi = setInterval(()=>hitZombies(parseInt(b.style.left)+50, parseInt(b.style.top)+50, 250), 100); setTimeout(()=>{b.remove(); clearInterval(gi);}, 3000); break;
+            case 'freeze_all': document.querySelectorAll('.zombie-container').forEach(z => { z.dataset.frozen = "true"; z.style.filter = 'invert(1)'; setTimeout(()=>{z.remove(); kills++; killDisplay.innerText=kills; playSound('hit');}, 2000); }); break;
+            case 'spin': let deg = 0; const si = setInterval(() => { deg += 30; player.style.transform = `rotate(${deg}deg)`; hitZombies(playerPos.x+22, playerPos.y+40, 150); if(deg>1080) { clearInterval(si); player.style.transform = ''; } }, 30); break;
+            default: for(let i=0; i<5; i++) spawnProj(x+20, y+30, facingRight?15:-15, (i-2)*4, s.projectile);
+        }
+    }
+
+    function spawnProj(x, y, vx, vy, emoji) {
+        const p = document.createElement('div'); p.className = 'projectile'; p.innerText = emoji;
+        p.style.left = x+'px'; p.style.top = y+'px'; canvas.appendChild(p);
+        let cx = x; let cy = y;
+        const pi = setInterval(() => {
+            cx += vx; cy += vy; p.style.left = cx+'px'; p.style.top = cy+'px';
+            document.querySelectorAll('.zombie-container').forEach(z => {
+                const zx = parseInt(z.style.left); const zy = parseInt(z.style.top);
+                if(Math.abs(zx+22-cx)<40 && Math.abs(zy+40-cy)<40) { killZ(z); clearInterval(pi); p.remove(); }
+            });
+            if(cx<0 || cx>window.innerWidth || cy<0 || cy>window.innerHeight) { clearInterval(pi); p.remove(); }
+        }, 20);
+    }
+
+    function hitZombies(x, y, range) {
+        document.querySelectorAll('.zombie-container').forEach(z => {
+            const zx = parseInt(z.style.left)+22; const zy = parseInt(z.style.top)+40;
+            if(Math.abs(zx-x)<range && Math.abs(zy-y)<range) killZ(z);
+        });
+    }
+
+    function killZ(z) {
+        if(z.dataset.dead) return; z.dataset.dead = "true";
+        playSound('hit');
+        createBlood(parseInt(z.style.left)+22, parseInt(z.style.top)+40);
+        kills++; killDisplay.innerText = kills;
+        z.style.transform = 'scale(0) rotate(180deg)'; setTimeout(()=>z.remove(), 300);
+    }
+
+    function spawnZombie() {
+        if(!isNight) return;
+        const z = document.createElement('div'); z.className = 'zombie-container';
+        z.innerHTML = `<div class="zombie-body-part zombie-head"><div class="zombie-eye" style="left:5px"></div><div class="zombie-eye" style="left:18px"></div></div><div class="zombie-body-part zombie-torso" style="width:24px;height:32px;top:28px;left:10px"></div>`;
+        z.style.left = (Math.random()>0.5 ? window.innerWidth+50 : -100)+'px';
+        z.style.top = (canvas.offsetHeight-160)+'px'; canvas.appendChild(z);
+
+        const zi = setInterval(() => {
+            if(z.dataset.dead) { clearInterval(zi); return; }
+            if(z.dataset.frozen) return;
+            const zx = parseInt(z.style.left);
+            const dir = zx > playerPos.x ? -1 : 1;
+            z.style.left = (zx + dir * (2 + kills/100)) + 'px';
+            z.style.transform = dir === 1 ? 'scaleX(-1)' : 'scaleX(1)';
+
+            if(Math.abs(zx - playerPos.x) < 30 && Math.abs(parseInt(z.style.top) - playerPos.y) < 50) {
+                hp--; hpDisplay.innerText = '❤️'.repeat(hp);
+                playSound('bite');
+                document.getElementById('bite-effect').style.display='flex';
+                setTimeout(()=>document.getElementById('bite-effect').style.display='none', 300);
+                z.remove(); clearInterval(zi);
+                if(hp<=0) resetGame();
+            }
+        }, 50);
+    }
+
+    setInterval(() => {
+        gameTime--;
+        if(gameTime<=0) {
+            isNight = !isNight; gameTime = 60;
+            document.body.className = isNight ? 'night' : 'day';
+            playSound('night');
+        }
+        timerDisplay.innerText = `${isNight?'💀 밤':'☀️ 낮'} (${Math.floor(gameTime/60)}:${(gameTime%60).toString().padStart(2,'0')})`;
+    }, 1000);
+
+    setInterval(() => { if(isNight) spawnZombie(); }, 1000);
+
+    function init() {
+        updatePhysics();
+    }
+</script>
+</body>
+</html>
