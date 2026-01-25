@@ -38,4 +38,7 @@ layout = "page"
     <a href="/games/file/fruit.html">
         <img src="/games/images/fruit.png">
     </a>
+    <a href="/games/file/talk.html">
+        <img src="/games/images/talk.png">
+    </a>
 </div>
