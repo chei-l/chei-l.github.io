@@ -4,6 +4,8 @@ description = "블로그와 저에 대해 소개합니다."
 layout = "page"
 +++
 
+<img src="/img/profile.png" style="width: 200px; border-radius: 50%; display: block; margin: auto;">
+
 ## 안녕하세요!
 
 반갑습니다! 이 블로그에 방문해주셔서 감사해요.
