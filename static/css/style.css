@@ -223,6 +223,11 @@ a:hover {
     animation: bounce 2s ease-in-out infinite;
 }
 
+.hero-emoji img {
+    display: block;
+    margin: 0 auto;
+}
+
 @keyframes bounce {
     0%,
     100% {
