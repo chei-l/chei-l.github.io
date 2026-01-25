@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>체리구미호 박사님</title>
+    <link></link>
+    <description>개발, 일상, 그리고 다양한 이야기들을 기록하는 블로그입니다. 🌸</description>
+    <atom:link href="/rss.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>인사하기</title>
+      <link>/posts/hi/</link>
+      <guid>/posts/hi/</guid>
+      <description>&lt;p&gt;안녕하세요.&lt;/p&gt;
+&lt;p&gt;こんにちは。(곤니치와)&lt;/p&gt;
+&lt;p&gt;Hello.&lt;/p&gt;
+</description>
+      <pubDate>Sun, 25 Jan 2026 00:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>빨리 달리기</title>
+      <link>/posts/fast_run/</link>
+      <guid>/posts/fast_run/</guid>
+      <description>&lt;p&gt;일단 공기를 충분히 &apos;ㅅ&apos; 자 모양으로 만드는 게 좋아요!&lt;/p&gt;
+&lt;p&gt;닌자처럼 팔을 뒤로 쭉~ 뻗고 달리는 게 최고예요.&lt;/p&gt;
+&lt;p&gt;그리고 또 다른 방법은&lt;/p&gt;
+&lt;p&gt;팔을 앞뒤로 빠르게 반복해서 흔들어주고,&lt;/p&gt;
+&lt;p&gt;달릴 때 앞에 있는 다리는 살짝 접고&lt;/p&gt;
+&lt;p&gt;뒤에 있는 다리는 쭉 펴세요!&lt;/p&gt;
+&lt;p&gt;빨리리리리리리〜!!!&lt;/p&gt;
+</description>
+      <pubDate>Fri, 16 Jan 2026 00:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>아이들도 할 수 있는 AI</title>
+      <link>/posts/kids_ai/</link>
+      <guid>/posts/kids_ai/</guid>
+      <description>&lt;p&gt;어린이는 AI를 사용할 수 없어요.&lt;/p&gt;
+&lt;p&gt;그렇지만 저는 올바르게 사용할 수 있는 게 더 중요하다고 생각해요.&lt;/p&gt;
+&lt;p&gt;저는 아직 어리지만 AI, 제미나이, 로블록스 스튜디오 같은 걸 해요.&lt;/p&gt;
+&lt;p&gt;처음에는 간단한 질문만 할 수 있었지만 지금은 여러 가지를 만들 수 있어요. 질문하는 방법을 배웠어요.&lt;/p&gt;
+&lt;p&gt;그래서 나이가 안 된다고 아예 못하게 하면 안 돼요. 잘 다룰 수 있어야 나중에도 잘 만들 수 있을 거예요.&lt;/p&gt;
+&lt;p&gt;읽어줘서 감사해요.&lt;/p&gt;
+</description>
+      <pubDate>Sun, 4 Jan 2026 00:00:00 +0000</pubDate>
+    </item>
+  </channel>
+</rss>
