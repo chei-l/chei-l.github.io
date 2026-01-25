@@ -1,17 +1,22 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %} {% block title %}{{ page_title }}{% endblock %} {%
+block content %}
 <div class="container">
     <div class="content-wrapper">
-        <article class="article">
+        <article class="article animate-fade-in">
             <header class="article-header">
                 {% if page_section %}
-                <span class="article-category">{{ page_section }}</span>
+                <a
+                    href="{{ base_url }}/{{ page_section }}/"
+                    class="article-category"
+                    >{{ page_section }}</a
+                >
                 {% endif %}
                 <h1 class="article-title">{{ page_title }}</h1>
-                {% if page_date %}
                 <div class="article-meta">
-                    <span class="article-meta-item">{{ page_date }}</span>
+                    {% if page_date %}
+                    <span class="article-meta-item">📅 {{ page_date }}</span>
+                    {% endif %}
                 </div>
-                {% endif %}
             </header>
 
             {% if toc is present and toc != "" %}
@@ -23,20 +28,24 @@
 
             <div class="article-content">{{ content }}</div>
 
-            {% if page.tags %}
             <footer class="article-footer">
                 <div class="article-tags">
-                    {% for tag in page.tags %}
+                    {% if page.tags %} {% for tag in page.tags %}
                     <a
                         href="{{ base_url }}/tags/{{ tag | slugify }}/"
                         class="tag"
                         >{{ tag }}</a
                     >
-                    {% endfor %}
+                    {% endfor %} {% endif %}
                 </div>
             </footer>
-            {% endif %}
         </article>
+
+        <div class="mt-xl text-center">
+            <a href="{{ base_url }}/posts/" class="btn btn-secondary"
+                >← 목록으로 돌아가기</a
+            >
+        </div>
     </div>
 </div>
 {% endblock %}

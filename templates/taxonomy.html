@@ -1,0 +1,21 @@
+{% extends "base.html" %} {% block title %}{{ taxonomy_name }}{% endblock %} {%
+block content %}
+<div class="container">
+    <div class="taxonomy-header">
+        <h1 class="taxonomy-title">🏷️ {{ taxonomy_name }}</h1>
+        <p class="taxonomy-count">모든 {{ taxonomy_name }} 목록</p>
+    </div>
+
+    {% if section_list %}
+    <div class="taxonomy-cloud">{{ section_list }}</div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-emoji">🏷️</div>
+        <h3 class="empty-state-title">아직 {{ taxonomy_name }}이 없어요</h3>
+        <p class="empty-state-description">
+            포스트에 {{ taxonomy_name }}을 추가해보세요!
+        </p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

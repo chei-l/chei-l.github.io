@@ -1,57 +1,38 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block title %}홈{% endblock %} {% block content %}
+<section class="hero">
+    <div class="container">
+        <div class="hero-emoji animate-float">
+            <img src="/img/landing.png" style="width: 550px; border-radius: 50px;">
+        </div>
+        <h1 class="hero-title">
+            안녕하세요, <span>{{ site_title }}</span>입니다
+        </h1>
+        <p class="hero-description">{{ site_description }}</p>
+    </div>
+</section>
 
-{% block content %}
-<div class="header-bar">
-  <h1>
-      <img src="{{ get_url(path='img/chei-logo.png') }}" alt="{{ config.title }}" style="height: 200px; vertical-align: middle;">
-  </h1>
-  {% if config.description %}
-  <br />
-  <h2>{{ config.description }}</h2>
-  {% endif %}
-  <br />
-  <br />
-  <hr>
-  <br />
-  <br />
+<div class="container">
+    <section class="features">
+        <div class="feature-grid">
+            <div class="feature-card animate-fade-in">
+                <div class="feature-icon">🎨</div>
+                <h3 class="feature-title">작품들</h3>
+                <p class="feature-description">그림과 AI 생성 작품들을 만나보세요.</p>
+                <a href="{{ base_url }}/drawings/" class="btn btn-secondary">그림 보기</a>
+            </div>
+            <div class="feature-card animate-fade-in">
+                <div class="feature-icon">🎮</div>
+                <h3 class="feature-title">게임들</h3>
+                <p class="feature-description">다양한 게임 프로젝트를 탐험해보세요.</p>
+                <a href="{{ base_url }}/games/" class="btn btn-secondary">게임 보기</a>
+            </div>
+            <div class="feature-card animate-fade-in">
+                <div class="feature-icon">📝</div>
+                <h3 class="feature-title">블로그 포스트</h3>
+                <p class="feature-description">생각과 경험을 공유하는 공간입니다.</p>
+                <a href="{{ base_url }}/posts/" class="btn btn-secondary">포스트 보기</a>
+            </div>
+        </div>
+    </section>
 </div>
-<div class="posts">
-  {% set is_first_page = true %}
-  {% if paginator is defined %}
-      {% set show_pages = paginator.pages %}
-      {% set is_first_page = paginator.current_index == 1 %}
-  {% elif section is defined %}
-      {% set show_pages = section.pages %}
-  {% endif %}
-  <ul class="post-list">
-    {%- for page in show_pages %}
-    <li class="post on-list">
-      <h3 class="post-title"><a href="{{ page.permalink | safe }}">{{ page.title }}</a></h3>
-      {%- if page.date %}
-      <p class="post-meta">
-        <span class="post-date">
-          {%- if page.date %}
-          {{ page.date | date(format="%B %d, %Y") }}
-          {% endif -%}
-        </span>
-        <span>
-          {%- if page.authors %} — {{ page.authors | join(sep=", ") }}{% endif -%}
-        </span>
-      </p>
-      {% endif -%}
-      <div class="post-content">
-        {{ page.description | safe }}
-      </div>
-      <br>
-      <hr>
-    </li>
-    {% endfor -%}
-  </ul>
-  <footer class="page-footer">
-      <nav>
-          {% if paginator.previous %}<a class="prev" href="{{ paginator.previous }}">← Previous</a>{% else %}<!--Hidden Previous-Button-->{% endif %}
-          {% if paginator.next %}<a class="next" href="{{ paginator.next }}">Next →</a>{% else %}<!--Hidden Next-Button-->{% endif %}
-      </nav>
-  </footer>
-</div>
-{% endblock content %}
+{% endblock %}

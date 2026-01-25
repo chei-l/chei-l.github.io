@@ -1,0 +1,21 @@
+{% extends "base.html" %} {% block title %}{{ page_title }}{% endblock %} {%
+block content %}
+<div class="container">
+    <div class="taxonomy-header">
+        <h1 class="taxonomy-title">📚 {{ page_title }}</h1>
+        <p class="taxonomy-count">블로그 포스트 목록</p>
+    </div>
+
+    {% if section_list %}
+    <div class="section-list">{{ section_list }}</div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-emoji">📝</div>
+        <h3 class="empty-state-title">아직 포스트가 없어요</h3>
+        <p class="empty-state-description">곧 새로운 글이 올라올 거예요!</p>
+    </div>
+    {% endif %} {% if pagination %}
+    <div class="pagination">{{ pagination }}</div>
+    {% endif %}
+</div>
+{% endblock %}

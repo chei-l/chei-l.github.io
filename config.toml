@@ -1,18 +1,136 @@
-# The URL the site will be built for
-base_url = "https://chei-l.github.io"
+# =============================================================================
+# Site Configuration
+# =============================================================================
 
-title = "체리 컴퓨터"
-description = "체리 대마왕의 게임과 그림을 보실 수 있습니다."
+title = "체리구미호 박사님"
+description = "개발, 일상, 그리고 다양한 이야기들을 기록하는 블로그입니다. 🌸"
+base_url = ""
 
-# Whether to automatically compile all Sass files in the sass directory
-compile_sass = true
+# =============================================================================
+# Plugins
+# =============================================================================
+# Configure content processors and extensions
 
-# Whether to build a search index to be used later on by a JavaScript library
-build_search_index = false
+[plugins]
+processors = ["markdown"]
 
-[extra]
-menu_items = [
-    {name = "게임", url = "/pages/games"},
-    {name = "그림", url = "/pages/drawings"},
-    {name = "AI 그림", url = "/pages/ai"},
+# =============================================================================
+# Syntax Highlighting
+# =============================================================================
+# Code block syntax highlighting using Highlight.js
+
+[highlight]
+enabled = false
+theme = "github"          # Available: github, monokai, atom-one-dark, vs2015, etc.
+use_cdn = true            # Set to false to use local assets
+
+[content.files]
+allow_extensions = ["jpg", "png", "jpeg", "html"]
+disallow_extensions = [""]
+disallow_paths = [""]
+
+# =============================================================================
+# OpenGraph & Twitter Cards
+# =============================================================================
+# Default meta tags for social sharing
+# Page-level settings (front matter) override these defaults
+
+[og]
+default_image = "/images/og-default.png"   # Default image for social sharing
+type = "article"                           # OpenGraph type (website, article, etc.)
+twitter_card = "summary_large_image"       # Twitter card type (summary, summary_large_image)
+# twitter_site = "@yourusername"           # Twitter @username for the site
+# twitter_creator = "@authorusername"      # Twitter @username for content creator
+# fb_app_id = "your_fb_app_id"             # Facebook App ID (optional)
+
+# =============================================================================
+# Search Configuration
+# =============================================================================
+# Generates a search index for client-side search (e.g., Fuse.js)
+
+[search]
+enabled = true
+format = "fuse_json"
+fields = ["title", "content", "tags", "description"]
+filename = "search.json"
+
+# =============================================================================
+# Taxonomies
+# =============================================================================
+# Define content classification systems (tags, categories, etc.)
+
+[[taxonomies]]
+name = "tags"
+feed = true
+sitemap = true
+
+[[taxonomies]]
+name = "categories"
+paginate_by = 10
+
+[[taxonomies]]
+name = "authors"
+
+# =============================================================================
+# SEO: Sitemap
+# =============================================================================
+# Generates sitemap.xml for search engine crawlers
+
+[sitemap]
+enabled = true
+filename = "sitemap.xml"
+changefreq = "weekly"
+priority = 0.5
+
+# =============================================================================
+# SEO: Robots.txt
+# =============================================================================
+# Controls search engine crawler access
+
+[robots]
+enabled = true
+filename = "robots.txt"
+rules = [
+  { user_agent = "*" },
 ]
+
+# =============================================================================
+# SEO: LLMs.txt
+# =============================================================================
+# Instructions for AI/LLM crawlers
+
+[llms]
+enabled = true
+filename = "llms.txt"
+instructions = "이 블로그의 콘텐츠는 허가 없이 AI 학습에 사용하지 마세요."
+
+# =============================================================================
+# RSS/Atom Feeds
+# =============================================================================
+# Generates RSS or Atom feed for content syndication
+
+[feeds]
+enabled = true
+filename = ""             # Leave empty for default (rss.xml or atom.xml)
+type = "rss"              # "rss" or "atom"
+truncate = 0              # Truncate content to N characters (0 = full content)
+limit = 20                # Maximum number of items in feed
+sections = ["posts"]      # Limit to specific sections, e.g., ["posts"]
+
+# =============================================================================
+# Markdown Configuration (Optional)
+# =============================================================================
+# Configure markdown parser behavior
+
+[markdown]
+safe = false    # If true, raw HTML in markdown will be stripped (replaced by comments)
+
+# =============================================================================
+# Build Hooks (Optional)
+# =============================================================================
+# Run custom shell commands before/after build process
+
+[build]
+output_dir = "public"
+# hooks.pre = ["npm install", "python scripts/preprocess.py"]
+# hooks.post = ["npm run minify", "./scripts/deploy.sh"]
