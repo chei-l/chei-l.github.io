@@ -1,7 +1,7 @@
 +++
 title = "Games"
 description = "Games"
-layout = "page"
+template = "page"
 +++
 
 <style>
