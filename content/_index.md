@@ -1,4 +1,4 @@
 +++
 title = "홈"
-layout = "index"
+template = "main"
 +++

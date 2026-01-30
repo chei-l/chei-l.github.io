@@ -1,7 +1,7 @@
 +++
 title = "소개"
 description = "블로그와 저에 대해 소개합니다."
-layout = "page"
+template = "page"
 +++
 
 <img src="/img/profile.png" style="width: 200px; border-radius: 50%; display: block; margin: auto;">

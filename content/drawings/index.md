@@ -1,7 +1,7 @@
 +++
 title = "그림"
 description = "Drawing"
-layout = "page"
+template = "page"
 +++
 
 <style>
