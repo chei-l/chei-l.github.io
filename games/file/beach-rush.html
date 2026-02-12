@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>해변의 질주 Pro (Beach Rush)</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #87CEEB; font-family: 'Noto Sans KR', sans-serif; }
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        #top-ui {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+        #score-board { font-size: 24px; font-weight: bold; }
+        #fuel-container {
+            width: 200px;
+            text-align: right;
+        }
+        #fuel-label { font-size: 18px; margin-bottom: 5px; }
+        #fuel-bar-bg {
+            width: 100%;
+            height: 20px;
+            background-color: rgba(0,0,0,0.5);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid white;
+        }
+        #fuel-bar {
+            width: 100%;
+            height: 100%;
+            background-color: #00ff00;
+            transition: width 0.2s, background-color 0.2s;
+        }
+
+        #item-box {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 20px;
+            color: white;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #item-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #ddd;
+            display: inline-block;
+        }
+
+        /* Screens */
+        .screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            color: white;
+            z-index: 10;
+        }
+        .hidden { display: none !important; }
+        
+        h1 { font-size: 40px; margin-bottom: 20px; color: #fff; text-shadow: 0 0 10px #00bfff; }
+        h2 { margin-bottom: 30px; }
+        
+        .car-select-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+            border: none;
+            padding: 20px 40px;
+            margin: 10px;
+            font-size: 20px;
+            color: white;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            font-weight: bold;
+            width: 250px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        .car-select-btn:hover { transform: scale(1.05); }
+        .car-select-btn.mrbeast { background: linear-gradient(45deg, #2980b9, #e74c3c); } /* Blue & Pink */
+        .car-select-btn.bike { background: linear-gradient(45deg, #27ae60, #f1c40f); } /* Green & Yellow */
+
+        #controls-guide {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.8);
+            text-align: center;
+            font-size: 14px;
+            background: rgba(0,0,0,0.3);
+            padding: 10px 20px;
+            border-radius: 20px;
+        }
+    </style>
+    <!-- Load Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <!-- Game UI -->
+    <div id="ui-layer">
+        <div id="top-ui">
+            <div id="score-board">
+                <div>점수: <span id="score">0</span></div>
+                <div style="font-size: 16px; margin-top:5px;">거리: <span id="distance">0</span>m</div>
+            </div>
+            <div id="fuel-container">
+                <div id="fuel-label">⚡ 배터리/연료</div>
+                <div id="fuel-bar-bg">
+                    <div id="fuel-bar"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="item-box">
+            <div id="item-icon"></div>
+            <span id="item-text">아이템 없음</span>
+        </div>
+
+        <div id="controls-guide">
+            ← → 핸들 | ↓ 브레이크 | 스페이스바: 점프/미사일
+        </div>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="screen">
+        <h1>해변의 질주 Pro</h1>
+        <h2>탈것을 선택하세요!</h2>
+        <button class="car-select-btn mrbeast" onclick="startGame('mrbeast')">🐯 미스터 비스트 카</button>
+        <button class="car-select-btn bike" onclick="startGame('bike')">🚲 어린이 자전거</button>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over" class="screen hidden">
+        <h1>게임 오버!</h1>
+        <p style="font-size: 24px;">최종 점수: <span id="final-score">0</span></p>
+        <p id="game-over-reason" style="color: #ffaaaa; margin-bottom: 20px;">사고 발생!</p>
+        <button class="car-select-btn" onclick="location.reload()">다시 하기</button>
+    </div>
+
+    <script>
+        // --- Game Configuration ---
+        const CONFIG = {
+            laneWidth: 4,
+            baseSpeed: 0.6,
+            maxSpeed: 1.5,
+            spawnRate: 60,
+            fuelConsumption: 0.05,
+            colors: {
+                sky: 0x87CEEB,
+                water: 0x1E90FF,
+                sand: 0xF4A460,
+                road: 0x555555,
+                mrbeast: 0x3498db,
+                mrbeastPink: 0xe74c3c,
+                bike: 0xFFD700
+            }
+        };
+
+        // --- Global Variables ---
+        let scene, camera, renderer;
+        let player, dashboard, steeringWheel;
+        let speedNeedle; // Speedometer needle
+        let selectedVehicleType = 'mrbeast';
+        
+        let road, water;
+        let obstacles = [];
+        let items = [];
+        let particles = [];
+        let missiles = [];
+        let decorations = [];
+        
+        let gameActive = false;
+        let frameCount = 0;
+        let score = 0;
+        let distance = 0;
+        let speed = 0;
+        let targetSpeed = CONFIG.baseSpeed;
+        let fuel = 100;
+        
+        // Player State
+        let currentLane = 0; 
+        let targetX = 0;
+        let isJumping = false;
+        let jumpVelocity = 0;
+        let currentItem = null;
+        let itemTimer = 0;
+        let isBraking = false;
+
+        // UI Elements
+        const scoreEl = document.getElementById('score');
+        const distEl = document.getElementById('distance');
+        const fuelBarEl = document.getElementById('fuel-bar');
+        const itemTextEl = document.getElementById('item-text');
+        const itemIconEl = document.getElementById('item-icon');
+        const gameOverEl = document.getElementById('game-over');
+        const finalScoreEl = document.getElementById('final-score');
+        const startScreenEl = document.getElementById('start-screen');
+        const reasonEl = document.getElementById('game-over-reason');
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(CONFIG.colors.sky);
+            scene.fog = new THREE.Fog(CONFIG.colors.sky, 10, 90);
+
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 200);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.body.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+            dirLight.position.set(20, 40, 20);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
+            scene.add(dirLight);
+
+            createEnvironment();
+
+            window.addEventListener('resize', onWindowResize, false);
+            window.addEventListener('keydown', handleKeyDown, false);
+            window.addEventListener('keyup', handleKeyUp, false);
+            document.addEventListener('touchstart', handleTouchStart, false);
+            document.addEventListener('touchend', handleTouchEnd, false);
+
+            animate();
+        }
+
+        function startGame(vehicleType) {
+            selectedVehicleType = vehicleType;
+            startScreenEl.classList.add('hidden');
+            createPlayerVehicle(vehicleType);
+            
+            score = 0;
+            distance = 0;
+            fuel = 100;
+            gameActive = true;
+            speed = 0;
+        }
+
+        // --- Object Creation ---
+
+        function createEnvironment() {
+            // Road
+            const roadGeo = new THREE.PlaneGeometry(14, 300);
+            const roadMat = new THREE.MeshPhongMaterial({ color: CONFIG.colors.road, roughness: 0.8 });
+            road = new THREE.Mesh(roadGeo, roadMat);
+            road.rotation.x = -Math.PI / 2;
+            road.position.z = -50;
+            road.receiveShadow = true;
+            scene.add(road);
+
+            // Sand
+            const sandGeo = new THREE.PlaneGeometry(150, 300);
+            const sandMat = new THREE.MeshStandardMaterial({ color: CONFIG.colors.sand, roughness: 1 });
+            const sand = new THREE.Mesh(sandGeo, sandMat);
+            sand.rotation.x = -Math.PI / 2;
+            sand.position.set(82, -0.1, -50);
+            sand.receiveShadow = true;
+            scene.add(sand);
+
+            // Water
+            const waterGeo = new THREE.PlaneGeometry(150, 300, 30, 30);
+            const waterMat = new THREE.MeshPhongMaterial({ 
+                color: CONFIG.colors.water, 
+                transparent: true, 
+                opacity: 0.85,
+                shininess: 90,
+                specular: 0x111111
+            });
+            water = new THREE.Mesh(waterGeo, waterMat);
+            water.rotation.x = -Math.PI / 2;
+            water.position.set(-82, -0.5, -50);
+            scene.add(water);
+
+            // Road Markings
+            for(let i=0; i<15; i++) {
+                const markGeo = new THREE.PlaneGeometry(0.5, 6);
+                const markMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+                const m1 = new THREE.Mesh(markGeo, markMat);
+                const m2 = new THREE.Mesh(markGeo, markMat);
+                m1.rotation.x = -Math.PI / 2;
+                m2.rotation.x = -Math.PI / 2;
+                m1.position.set(-2, 0.01, -i * 20);
+                m2.position.set(2, 0.01, -i * 20);
+                scene.add(m1);
+                scene.add(m2);
+                decorations.push(m1, m2);
+            }
+        }
+
+        function createPlayerVehicle(type) {
+            player = new THREE.Group();
+            
+            if (type === 'mrbeast') {
+                // High Quality Car Body (simplified low-poly but styled)
+                const bodyGeo = new THREE.BoxGeometry(2.2, 0.7, 4.5);
+                const bodyMat = new THREE.MeshStandardMaterial({ color: CONFIG.colors.mrbeast, metalness: 0.3, roughness: 0.2 });
+                const body = new THREE.Mesh(bodyGeo, bodyMat);
+                body.position.y = 0.5;
+                body.castShadow = true;
+                player.add(body);
+
+                // Hood details (Pink Stripes)
+                const stripeGeo = new THREE.BoxGeometry(0.3, 0.05, 2);
+                const stripeMat = new THREE.MeshStandardMaterial({ color: CONFIG.colors.mrbeastPink, roughness: 0.5 });
+                const s1 = new THREE.Mesh(stripeGeo, stripeMat); s1.position.set(-0.6, 0.86, -1.2);
+                const s2 = new THREE.Mesh(stripeGeo, stripeMat); s2.position.set(0.6, 0.86, -1.2);
+                player.add(s1); player.add(s2);
+
+                // Wheels
+                const wheelGeo = new THREE.CylinderGeometry(0.45, 0.45, 0.4, 24);
+                const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.9 });
+                const hubMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.8 });
+                
+                [[-1.2, 0.4, 1.4], [1.2, 0.4, 1.4], [-1.2, 0.4, -1.4], [1.2, 0.4, -1.4]].forEach(pos => {
+                    const wGroup = new THREE.Group();
+                    const tire = new THREE.Mesh(wheelGeo, wheelMat);
+                    tire.rotation.z = Math.PI/2;
+                    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.42, 16), hubMat);
+                    hub.rotation.z = Math.PI/2;
+                    wGroup.add(tire); wGroup.add(hub);
+                    wGroup.position.set(...pos);
+                    player.add(wGroup);
+                });
+
+                // Cockpit Position
+                camera.position.set(0, 1.5, 0.3); // 시야 높임 (1.15 -> 1.5)
+                
+                // Realistic Interior
+                createRealisticCarInterior();
+
+            } else {
+                // Bicycle
+                const frameGeo = new THREE.CylinderGeometry(0.08, 0.08, 2.5, 8);
+                const frameMat = new THREE.MeshStandardMaterial({ color: CONFIG.colors.bike, metalness: 0.4 });
+                const frame = new THREE.Mesh(frameGeo, frameMat);
+                frame.rotation.x = Math.PI/2;
+                frame.position.y = 0.8;
+                player.add(frame);
+
+                // Wheels
+                const wheelGeo = new THREE.TorusGeometry(0.5, 0.08, 8, 24);
+                const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+                const w1 = new THREE.Mesh(wheelGeo, wheelMat); w1.position.set(0, 0.5, 1.25); w1.rotation.y = Math.PI/2;
+                const w2 = new THREE.Mesh(wheelGeo, wheelMat); w2.position.set(0, 0.5, -1.25); w2.rotation.y = Math.PI/2;
+                player.add(w1); player.add(w2);
+
+                camera.position.set(0, 1.9, 0.3); // 자전거 시야 높임 (1.7 -> 1.9)
+                createBikeHandlebars();
+            }
+
+            player.add(camera);
+            scene.add(player);
+        }
+
+        function createRealisticCarInterior() {
+            const interiorGroup = new THREE.Group();
+            
+            // 1. Frame Pillars (A-Pillars)
+            const pillarGeo = new THREE.CylinderGeometry(0.06, 0.08, 1.5, 6);
+            const pillarMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.8 });
+            
+            const leftPillar = new THREE.Mesh(pillarGeo, pillarMat);
+            leftPillar.position.set(-1.0, 0.3, -0.6); // 기둥을 옆으로 벌림
+            leftPillar.rotation.set(0.3, 0, -0.2);
+            
+            const rightPillar = new THREE.Mesh(pillarGeo, pillarMat);
+            rightPillar.position.set(1.0, 0.3, -0.6); // 기둥을 옆으로 벌림
+            rightPillar.rotation.set(0.3, 0, 0.2);
+            
+            interiorGroup.add(leftPillar);
+            interiorGroup.add(rightPillar);
+
+            // 2. Dashboard Main Body (Curved)
+            const dashShape = new THREE.Shape();
+            dashShape.moveTo(-1.2, 0);
+            dashShape.lineTo(1.2, 0);
+            dashShape.lineTo(1.2, -0.4);
+            dashShape.quadraticCurveTo(0, -0.5, -1.2, -0.4);
+            dashShape.lineTo(-1.2, 0);
+
+            const extrudeSettings = { depth: 0.8, bevelEnabled: true, bevelSegments: 2, steps: 2, bevelSize: 0.05, bevelThickness: 0.05 };
+            const dashGeo = new THREE.ExtrudeGeometry(dashShape, extrudeSettings);
+            const dashMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.6 });
+            const dashboardMesh = new THREE.Mesh(dashGeo, dashMat);
+            dashboardMesh.rotation.x = Math.PI/2; // Lay flat
+            dashboardMesh.position.set(0, -0.75, -0.5); // 대시보드 위치 낮춤
+            interiorGroup.add(dashboardMesh);
+
+            // 3. Instrument Cluster (Speedometer)
+            const clusterGroup = new THREE.Group();
+            clusterGroup.position.set(0, -0.6, -0.9); // 계기판 위치 낮춤
+            clusterGroup.rotation.x = -0.3;
+
+            // Gauge Backing
+            const gaugeGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.05, 32);
+            const gaugeMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
+            const gauge = new THREE.Mesh(gaugeGeo, gaugeMat);
+            gauge.rotation.x = Math.PI/2;
+            clusterGroup.add(gauge);
+
+            // Rim
+            const rimGeo = new THREE.TorusGeometry(0.25, 0.02, 8, 32);
+            const rimMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.8 });
+            const rim = new THREE.Mesh(rimGeo, rimMat);
+            clusterGroup.add(rim);
+
+            // Needle
+            const needleGeo = new THREE.BoxGeometry(0.02, 0.18, 0.02);
+            const needleMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+            speedNeedle = new THREE.Mesh(needleGeo, needleMat);
+            speedNeedle.position.z = 0.03;
+            speedNeedle.geometry.translate(0, 0.09, 0); // Pivot at bottom
+            speedNeedle.rotation.z = 2; // Start position
+            clusterGroup.add(speedNeedle);
+
+            interiorGroup.add(clusterGroup);
+
+            // 4. Steering Wheel (High Detail)
+            const wheelGroup = new THREE.Group();
+            wheelGroup.position.set(0, -0.6, -0.6); // 핸들 위치 낮춤
+            wheelGroup.rotation.x = -0.2;
+
+            // Rim
+            const wRimGeo = new THREE.TorusGeometry(0.35, 0.04, 12, 32);
+            const wMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.4 });
+            const wRim = new THREE.Mesh(wRimGeo, wMat);
+            wheelGroup.add(wRim);
+
+            // Center
+            const wCenter = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.1, 16), wMat);
+            wCenter.rotation.x = Math.PI/2;
+            wheelGroup.add(wCenter);
+
+            // Spokes
+            const spokeGeo = new THREE.BoxGeometry(0.3, 0.04, 0.02);
+            const spoke1 = new THREE.Mesh(spokeGeo, wMat);
+            const spoke2 = new THREE.Mesh(spokeGeo, wMat);
+            const spoke3 = new THREE.Mesh(spokeGeo, wMat);
+            
+            spoke1.position.x = -0.15;
+            spoke2.position.x = 0.15;
+            spoke3.rotation.z = Math.PI/2;
+            spoke3.position.y = -0.15;
+            spoke3.scale.x = 0.6;
+
+            wheelGroup.add(spoke1);
+            wheelGroup.add(spoke2);
+            wheelGroup.add(spoke3);
+
+            // MrBeast Logo (Pink Dot)
+            const logo = new THREE.Mesh(new THREE.CircleGeometry(0.03, 16), new THREE.MeshBasicMaterial({color: CONFIG.colors.mrbeastPink}));
+            logo.position.z = 0.06;
+            wheelGroup.add(logo);
+
+            steeringWheel = wheelGroup;
+            camera.add(interiorGroup);
+            camera.add(steeringWheel);
+        }
+
+        function createBikeHandlebars() {
+            const handleGroup = new THREE.Group();
+            handleGroup.position.set(0, -0.7, -0.6); // 자전거 핸들 위치 낮춤
+            handleGroup.rotation.x = 0.2;
+
+            // Bar
+            const barGeo = new THREE.CylinderGeometry(0.03, 0.03, 1.4, 12);
+            const barMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.5 });
+            const bar = new THREE.Mesh(barGeo, barMat);
+            bar.rotation.z = Math.PI/2;
+            handleGroup.add(bar);
+
+            // Grips
+            const gripGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.25, 12);
+            const gripMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+            const leftGrip = new THREE.Mesh(gripGeo, gripMat);
+            leftGrip.rotation.z = Math.PI/2;
+            leftGrip.position.x = -0.6;
+            const rightGrip = new THREE.Mesh(gripGeo, gripMat);
+            rightGrip.rotation.z = Math.PI/2;
+            rightGrip.position.x = 0.6;
+            handleGroup.add(leftGrip);
+            handleGroup.add(rightGrip);
+
+            // Stem (center connector)
+            const stem = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.2), new THREE.MeshStandardMaterial({color:0x333333}));
+            stem.position.z = 0.1;
+            handleGroup.add(stem);
+
+            steeringWheel = handleGroup;
+            camera.add(steeringWheel);
+        }
+
+        function createItem(type, x, z) {
+            let color, geo;
+            
+            if (type === 'speed') color = 0xFFFF00;
+            else if (type === 'fuel') color = 0x00FFFF;
+            else if (type === 'missile') color = 0xFF0000;
+            else color = 0x00FF00;
+
+            if (type === 'fuel') {
+                geo = new THREE.CylinderGeometry(0.4, 0.4, 0.8, 8);
+            } else if (type === 'missile') {
+                geo = new THREE.ConeGeometry(0.3, 0.8, 8);
+            } else {
+                geo = new THREE.BoxGeometry(0.6, 0.6, 0.6);
+            }
+
+            const mat = new THREE.MeshPhongMaterial({ color: color, emissive: color, emissiveIntensity: 0.6 });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, 1, z);
+            mesh.castShadow = true;
+            
+            // Add a light to the item
+            const light = new THREE.PointLight(color, 1, 4);
+            mesh.add(light);
+
+            return { mesh, type, active: true };
+        }
+
+        // --- Logic ---
+
+        function spawnObstacle() {
+            const lane = Math.floor(Math.random() * 3) - 1;
+            const x = lane * CONFIG.laneWidth;
+            const z = -150;
+
+            const color = [0x4682B4, 0x2E8B57, 0x800080, 0xDAA520][Math.floor(Math.random()*4)];
+            
+            const group = new THREE.Group();
+            const body = new THREE.Mesh(
+                new THREE.BoxGeometry(1.8, 0.8, 3.5),
+                new THREE.MeshStandardMaterial({ color: color, roughness: 0.3 })
+            );
+            body.position.y = 0.6;
+            body.castShadow = true;
+            group.add(body);
+            
+            const wGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.4, 12);
+            const wMat = new THREE.MeshLambertMaterial({color:0x111111});
+            [[-1,0.4,1],[1,0.4,1],[-1,0.4,-1],[1,0.4,-1]].forEach(p=>{
+                const w = new THREE.Mesh(wGeo, wMat);
+                w.rotation.z=Math.PI/2; w.position.set(...p); group.add(w);
+            });
+
+            group.position.set(x, 0, z);
+            scene.add(group);
+            obstacles.push(group);
+        }
+
+        function spawnItem() {
+            const lane = Math.floor(Math.random() * 3) - 1;
+            const x = lane * CONFIG.laneWidth;
+            const z = -120;
+
+            const rand = Math.random();
+            let type = 'fuel';
+            if (rand < 0.3) type = 'speed';
+            else if (rand < 0.5) type = 'missile';
+            else if (rand < 0.7) type = 'jump';
+
+            if (obstacles.some(o => Math.abs(o.position.z - z) < 10 && Math.abs(o.position.x - x) < 2)) return;
+
+            const item = createItem(type, x, z);
+            scene.add(item.mesh);
+            items.push(item);
+        }
+
+        function spawnDecor() {
+            const x = 25 + Math.random() * 15;
+            const z = -150;
+            const trunk = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.3, 0.6, 5, 6),
+                new THREE.MeshLambertMaterial({color:0x8B4513})
+            );
+            trunk.position.set(x, 2.5, z);
+            const top = new THREE.Mesh(
+                new THREE.ConeGeometry(2.5, 3, 6),
+                new THREE.MeshLambertMaterial({color:0x228B22})
+            );
+            top.position.y = 2.5;
+            trunk.add(top);
+            trunk.castShadow = true;
+            scene.add(trunk);
+            decorations.push(trunk);
+        }
+
+        function shootMissile() {
+            if (currentItem !== 'missile') return;
+            
+            const geometry = new THREE.SphereGeometry(0.3, 8, 8);
+            const material = new THREE.MeshBasicMaterial({ color: 0xFF0000 });
+            const missile = new THREE.Mesh(geometry, material);
+            
+            missile.position.copy(player.position);
+            missile.position.y += 0.5;
+            missile.position.z -= 2;
+            
+            scene.add(missile);
+            missiles.push(missile);
+
+            currentItem = null;
+            updateItemUI();
+        }
+
+        function createEffect(x, y, z, color) {
+            for(let i=0; i<10; i++) {
+                const p = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.3, 0.3, 0.3),
+                    new THREE.MeshBasicMaterial({color: color})
+                );
+                p.position.set(x, y, z);
+                p.userData = {
+                    vel: new THREE.Vector3((Math.random()-0.5)*0.5, Math.random()*0.5, (Math.random()-0.5)*0.5),
+                    life: 50
+                };
+                scene.add(p);
+                particles.push(p);
+            }
+        }
+
+        // --- Main Loop ---
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (!gameActive) {
+                renderer.render(scene, camera);
+                return;
+            }
+
+            frameCount++;
+
+            // Speed & Fuel
+            if (isBraking) targetSpeed = 0.2;
+            else if (currentItem === 'speed') targetSpeed = CONFIG.maxSpeed;
+            else targetSpeed = CONFIG.baseSpeed;
+            
+            speed += (targetSpeed - speed) * 0.05;
+
+            if (speed > 0.1) {
+                fuel -= CONFIG.fuelConsumption;
+                if (fuel <= 0) { fuel = 0; gameOver("연료 부족!"); }
+                updateFuelUI();
+            }
+
+            // Move Environment
+            const moveZ = speed;
+            const removalZ = 20;
+
+            [decorations, obstacles].forEach(arr => {
+                for(let i=arr.length-1; i>=0; i--) {
+                    arr[i].position.z += moveZ;
+                    if(arr[i].position.z > removalZ) {
+                        scene.remove(arr[i]);
+                        arr.splice(i,1);
+                    }
+                }
+            });
+
+            for(let i=items.length-1; i>=0; i--) {
+                items[i].mesh.position.z += moveZ;
+                items[i].mesh.rotation.y += 0.1;
+                if(items[i].mesh.position.z > removalZ) {
+                    scene.remove(items[i].mesh);
+                    items.splice(i,1);
+                }
+            }
+
+            // Missiles
+            for(let i=missiles.length-1; i>=0; i--) {
+                missiles[i].position.z -= 1.5;
+                const mBox = new THREE.Box3().setFromObject(missiles[i]);
+                let hit = false;
+                for(let j=obstacles.length-1; j>=0; j--) {
+                    const oBox = new THREE.Box3().setFromObject(obstacles[j]);
+                    if(mBox.intersectsBox(oBox)) {
+                        createEffect(obstacles[j].position.x, 1, obstacles[j].position.z, 0xff0000);
+                        scene.remove(obstacles[j]);
+                        obstacles.splice(j,1);
+                        hit = true;
+                        score += 50;
+                        break;
+                    }
+                }
+                if(hit || missiles[i].position.z < -200) {
+                    scene.remove(missiles[i]);
+                    missiles.splice(i,1);
+                }
+            }
+
+            // Particles
+            for(let i=particles.length-1; i>=0; i--) {
+                particles[i].position.add(particles[i].userData.vel);
+                particles[i].rotation.x += 0.1;
+                particles[i].userData.life--;
+                if(particles[i].userData.life <= 0) {
+                    scene.remove(particles[i]);
+                    particles.splice(i,1);
+                }
+            }
+
+            // Spawning
+            if(frameCount % Math.floor(CONFIG.spawnRate / Math.max(0.1, speed)) === 0) spawnObstacle();
+            if(frameCount % 100 === 0) spawnItem();
+            if(frameCount % 30 === 0) spawnDecor();
+
+            // Physics & Controls
+            player.position.x += (targetX - player.position.x) * 0.15;
+            
+            // Cockpit Animation
+            if(steeringWheel) {
+                steeringWheel.rotation.z = (player.position.x - targetX) * 0.8;
+                if(selectedVehicleType === 'bike') {
+                     // Bike handle rotation logic (vertical axis mostly, but simplified visual roll)
+                     steeringWheel.rotation.z = 0; 
+                     steeringWheel.rotation.y = (targetX - player.position.x) * 0.5;
+                }
+            }
+            if(speedNeedle && selectedVehicleType === 'mrbeast') {
+                // Map speed (0 ~ 1.5) to rotation (2 ~ -2)
+                const needleRot = 2 - (speed / CONFIG.maxSpeed) * 4;
+                speedNeedle.rotation.z = needleRot;
+            }
+
+            // Jump
+            if(isJumping) {
+                player.position.y += jumpVelocity;
+                jumpVelocity -= 0.03;
+                if(player.position.y <= 0) {
+                    player.position.y = 0;
+                    isJumping = false;
+                }
+            } else {
+                player.position.y = Math.sin(frameCount * 0.5) * 0.02; // Vibration
+            }
+
+            // Collisions
+            checkCollisions();
+
+            // Stats
+            distance += speed * 0.5;
+            score += Math.floor(speed * 2);
+            scoreEl.innerText = score;
+            distEl.innerText = Math.floor(distance);
+
+            // Item Timer
+            if (currentItem === 'speed') {
+                itemTimer--;
+                if(itemTimer <= 0) { currentItem = null; updateItemUI(); }
+            }
+
+            // Water Animation
+            const positions = water.geometry.attributes.position.array;
+            for(let i=0; i<positions.length; i+=3) {
+                positions[i+1] = Math.sin(positions[i+2]*0.2 + frameCount*0.05)*0.5;
+            }
+            water.geometry.attributes.position.needsUpdate = true;
+
+            renderer.render(scene, camera);
+        }
+
+        function checkCollisions() {
+            const pBox = new THREE.Box3().setFromObject(player);
+            pBox.expandByScalar(-0.6); // Slightly forgiving
+
+            for(let obs of obstacles) {
+                const oBox = new THREE.Box3().setFromObject(obs);
+                if(pBox.intersectsBox(oBox)) {
+                    if(player.position.y > 1.2) {
+                        // Jumped over
+                    } else if (currentItem === 'speed') {
+                         createEffect(obs.position.x, 1, obs.position.z, 0xffffff);
+                         scene.remove(obs);
+                         obstacles = obstacles.filter(o => o !== obs);
+                         score += 100;
+                    } else {
+                        gameOver("충돌!");
+                        return;
+                    }
+                }
+            }
+
+            for(let i=items.length-1; i>=0; i--) {
+                const item = items[i];
+                const iBox = new THREE.Box3().setFromObject(item.mesh);
+                if(pBox.intersectsBox(iBox)) {
+                    if(item.type === 'fuel') {
+                        fuel = Math.min(100, fuel + 30);
+                        createEffect(player.position.x, 1, player.position.z, 0x00ffff);
+                    } else if(item.type === 'speed') {
+                        currentItem = 'speed';
+                        itemTimer = 200;
+                    } else if(item.type === 'missile') {
+                        currentItem = 'missile';
+                    } else if(item.type === 'jump') {
+                        currentItem = 'jump';
+                    }
+                    updateItemUI();
+                    scene.remove(item.mesh);
+                    items.splice(i,1);
+                }
+            }
+        }
+
+        function updateFuelUI() {
+            fuelBarEl.style.width = fuel + "%";
+            if(fuel < 20) fuelBarEl.style.backgroundColor = "red";
+            else if(fuel < 50) fuelBarEl.style.backgroundColor = "orange";
+            else fuelBarEl.style.backgroundColor = "#00ff00";
+        }
+
+        function updateItemUI() {
+            let txt = "아이템 없음";
+            let col = "#ddd";
+            if(currentItem === 'speed') { txt = "⚡ 부스터!"; col = "#ff0"; }
+            else if(currentItem === 'missile') { txt = "🚀 미사일 장전"; col = "#f00"; }
+            else if(currentItem === 'jump') { txt = "⬆️ 슈퍼 점프"; col = "#0f0"; }
+            itemTextEl.innerText = txt;
+            itemIconEl.style.backgroundColor = col;
+        }
+
+        function gameOver(reason) {
+            gameActive = false;
+            finalScoreEl.innerText = score;
+            reasonEl.innerText = reason;
+            gameOverEl.classList.remove('hidden');
+        }
+
+        function handleKeyDown(e) {
+            if(!gameActive) return;
+            if(e.key === 'ArrowLeft') {
+                if(currentLane > -1) { currentLane--; targetX = currentLane * CONFIG.laneWidth; }
+            } else if(e.key === 'ArrowRight') {
+                if(currentLane < 1) { currentLane++; targetX = currentLane * CONFIG.laneWidth; }
+            } else if(e.key === 'ArrowDown') isBraking = true;
+            else if(e.code === 'Space') {
+                if(currentItem === 'missile') shootMissile();
+                else if(!isJumping) {
+                    isJumping = true;
+                    jumpVelocity = (currentItem === 'jump' || selectedVehicleType === 'bike') ? 0.6 : 0.45;
+                }
+            }
+        }
+        function handleKeyUp(e) { if(e.key === 'ArrowDown') isBraking = false; }
+
+        function handleTouchStart(e) {
+            if(!gameActive) return;
+            const x = e.touches[0].clientX;
+            const y = e.touches[0].clientY;
+            if(y > window.innerHeight * 0.8) isBraking = true;
+            else {
+                if(x < window.innerWidth/3) { if(currentLane > -1) { currentLane--; targetX = currentLane * CONFIG.laneWidth; }}
+                else if(x > window.innerWidth*2/3) { if(currentLane < 1) { currentLane++; targetX = currentLane * CONFIG.laneWidth; }}
+                else {
+                    if(currentItem === 'missile') shootMissile();
+                    else if(!isJumping) { isJumping = true; jumpVelocity = 0.5; }
+                }
+            }
+        }
+        function handleTouchEnd() { isBraking = false; }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>/drawings/</loc>
+  </url>
+  <url>
+    <loc>/ai_drawings/</loc>
+  </url>
+  <url>
+    <loc>/games/</loc>
+  </url>
+  <url>
+    <loc>/about/</loc>
+  </url>
+  <url>
+    <loc>/posts/kids_ai/</loc>
+    <lastmod>2026-01-04</lastmod>
+  </url>
+  <url>
+    <loc>/posts/hi/</loc>
+    <lastmod>2026-01-25</lastmod>
+  </url>
+  <url>
+    <loc>/posts/fast_run/</loc>
+    <lastmod>2026-01-16</lastmod>
+  </url>
+  <url>
+    <loc>/</loc>
+  </url>
+  <url>
+    <loc>/posts/</loc>
+  </url>
+</urlset>
