@@ -20,6 +20,12 @@ template = "page"
 </style>
 
 <div class="gallery">
+    <a href="/games/file/beach-rush.html">
+        <img src="/games/images/beach-rush.png">
+    </a>
+      <a href="/games/file/animal.html">
+        <img src="/games/images/animal.png">
+    </a>
     <a href="/games/file/dragon.html">
         <img src="/games/images/dragon.png">
     </a>
