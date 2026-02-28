@@ -29,10 +29,8 @@
         <div class="container">
             <div class="header-inner">
                 <a href="{{ base_url }}/" class="logo">
-                    <span class="logo-icon">
-                        <img src="/img/logo.png">
-                    </span>
-                    <span>{{ site_title }}</span>
+                    <span class="logo-icon"><img src="/img/logo.png"></span>
+                    {{ site_title }}
                 </a>
                 <nav class="nav">
                     <a href="{{ base_url }}/" class="nav-link{% if page_url == "/" %} active{% endif %}">홈</a>
@@ -85,6 +83,7 @@
         backToTop.addEventListener('click', () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
+
     </script>
 
     {% block scripts %}{% endblock %}
