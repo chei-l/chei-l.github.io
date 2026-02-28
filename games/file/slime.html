@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>초대형 입체 슬라임 키우기</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #fff0f5;
+            overflow: hidden;
+            touch-action: none;
+            font-family: 'Nanum Gothic', sans-serif;
+            user-select: none;
+            transition: background 0.5s ease;
+        }
+        #game-screen {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #slime-container {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            perspective: 1000px;
+        }
+        .slime {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            filter: blur(1px);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-radius 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 8px solid rgba(255,255,255,0.5);
+            z-index: 50;
+            box-shadow:
+                inset 25px 25px 50px rgba(255, 255, 255, 0.7),
+                inset -25px -25px 60px rgba(0,0,0,0.15),
+                0 50px 80px rgba(0,0,0,0.2);
+            animation: idle-float 4s ease-in-out infinite;
+        }
+
+        @keyframes idle-float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-10px) scale(1.02); }
+        }
+
+        .face {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .eyes {
+            display: flex;
+            gap: 40px;
+        }
+        .eye {
+            width: 25px;
+            height: 35px;
+            background: #333;
+            border-radius: 50%;
+            position: relative;
+            animation: blink 4s infinite;
+        }
+        .eye::after {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+        }
+        @keyframes blink {
+            0%, 90%, 100% { transform: scaleY(1); }
+            95% { transform: scaleY(0.1); }
+        }
+
+        .mouth {
+            width: 30px;
+            height: 15px;
+            border: 3px solid #333;
+            border-top: 0;
+            border-radius: 0 0 15px 15px;
+            transition: all 0.3s ease;
+        }
+        .mouth.happy {
+            width: 40px;
+            height: 20px;
+            border-radius: 0 0 20px 20px;
+            border: 4px solid #333;
+            border-top: 0;
+        }
+        .mouth.eating {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #333;
+            transform: scale(1.2);
+        }
+        .mouth.sleeping {
+            width: 20px;
+            height: 5px;
+            border-radius: 5px;
+            background: #333;
+            border: none;
+        }
+        .mouth.sick {
+            width: 30px;
+            height: 5px;
+            border-radius: 50% 50% 0 0;
+            border: 3px solid #333;
+            border-bottom: 0;
+        }
+
+        /* Animations */
+        .slime.slide-anim { animation: slide-action 1.5s ease-in-out forwards; }
+        @keyframes slide-action {
+            0% { transform: translate(150px, -150px) rotate(-20deg); }
+            100% { transform: translate(-150px, 150px) rotate(-20deg); }
+        }
+        .slime.seesaw-anim { animation: seesaw-action 2s ease-in-out infinite; }
+        @keyframes seesaw-action {
+            0%, 100% { transform: translate(-100px, 20px); }
+            50% { transform: translate(-100px, -50px); }
+        }
+        .slime.swing-anim { animation: swing-action 2s ease-in-out infinite; transform-origin: top center; }
+        @keyframes swing-action {
+            0%, 100% { transform: rotate(-15deg) translateY(50px); }
+            50% { transform: rotate(15deg) translateY(50px); }
+        }
+        .slime.wash-anim { animation: wash-action 1s ease-in-out infinite; }
+        @keyframes wash-action {
+            0%, 100% { transform: rotate(-5deg) scale(1.05); }
+            50% { transform: rotate(5deg) scale(0.95); }
+        }
+
+        .playground-obj {
+            position: absolute;
+            pointer-events: none;
+            z-index: 10;
+            opacity: 0.8;
+            transition: all 0.5s;
+        }
+        .slide-obj { font-size: 150px; transform: translate(50px, 50px); }
+        .seesaw-obj { font-size: 120px; transform: translate(-50px, 100px); }
+        .swing-obj { font-size: 130px; transform: translate(0, -100px); }
+        .kitchen-obj { font-size: 150px; transform: translateY(80px); }
+        .hospital-obj { font-size: 120px; transform: translateY(-120px); opacity: 0.5; }
+        .bath-obj { font-size: 200px; transform: translateY(100px); }
+        .garden-obj { font-size: 180px; transform: translateY(50px); z-index: 1; }
+
+        .highlight {
+            position: absolute;
+            top: 12%;
+            left: 12%;
+            width: 30%;
+            height: 15%;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            transform: rotate(-35deg);
+            pointer-events: none;
+            transition: all 0.3s ease-out;
+            filter: blur(2px);
+        }
+        .panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 30px 30px 0 0;
+            box-shadow: 0 -15px 40px rgba(0,0,0,0.15);
+            padding: 20px;
+            z-index: 200;
+        }
+        .ingredient-btn {
+            background: white;
+            border: 2px solid #ffb6c1;
+            border-radius: 15px;
+            padding: 10px;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 65px;
+        }
+        .ingredient-btn:active { transform: scale(0.9); background: #fff5f8; }
+
+        #growth-bar-container {
+            width: 80%;
+            height: 15px;
+            background: #ffe4e1;
+            border-radius: 10px;
+            margin: 10px auto;
+            overflow: hidden;
+            border: 2px solid #ffb6c1;
+        }
+        #growth-bar-inner {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff69b4, #ffb6c1);
+            transition: width 0.3s ease-out;
+        }
+
+        #msg {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 105, 180, 0.9);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-weight: bold;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 300;
+        }
+
+        .food-item, .tool-item, .bubble-item {
+            position: absolute;
+            font-size: 50px;
+            pointer-events: none;
+            z-index: 200;
+        }
+        .food-anim { animation: fall-to-mouth 1s cubic-bezier(0.5, 0, 0.5, 1) forwards; }
+        @keyframes fall-to-mouth {
+            0% { transform: translateY(-100px) scale(1); opacity: 1; }
+            100% { transform: translateY(0) scale(0); opacity: 0; }
+        }
+
+        @keyframes float-bubble {
+            0% { transform: translate(0, 0); opacity: 1; }
+            100% { transform: translate(var(--tx), -200px); opacity: 0; }
+        }
+
+        .location-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 5px 15px;
+            background: white;
+            border-radius: 20px;
+            font-weight: bold;
+            color: #ff69b4;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        .dark-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 30, 0.7);
+            pointer-events: none;
+            display: none;
+            z-index: 150;
+        }
+
+        .nav-btn {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 12px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .nav-active { background: #ff69b4; color: white; box-shadow: 0 4px 10px rgba(255, 105, 180, 0.4); }
+        .nav-inactive { background: #fdf2f8; color: #ff69b4; }
+
+        .kok-effect {
+            position: absolute;
+            font-weight: bold;
+            color: #ff1493;
+            pointer-events: none;
+            z-index: 210;
+            animation: kok-up 0.8s ease-out forwards;
+        }
+        @keyframes kok-up {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-50px) scale(1.5); opacity: 0; }
+        }
+
+        .glitter {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: sparkle 1.5s infinite;
+        }
+        @keyframes sparkle {
+            0%, 100% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1); opacity: 1; }
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body>
+
+<div id="game-screen">
+    <div id="dark-mode" class="dark-overlay"></div>
+    <div id="msg">메시지</div>
+    <div id="location-name" class="location-badge">거실 🏠</div>
+
+    <div class="p-4 text-center">
+        <h1 class="text-3xl font-extrabold text-pink-500 mb-1 drop-shadow-sm">🧪 체이의 슬라임 키우기 🧪</h1>
+        <div class="text-sm font-bold text-pink-400">레벨: <span id="level-txt">1</span> | 장소를 이동해서 놀아주세요!</div>
+        <div id="growth-bar-container">
+            <div id="growth-bar-inner"></div>
+        </div>
+    </div>
+
+    <div id="slime-container">
+        <div id="playground-elements" class="absolute w-full h-full flex justify-center items-center pointer-events-none"></div>
+
+        <div id="slime" class="slime" style="display:none;"
+             onmousedown="handlePoke(event)"
+             ontouchstart="handlePoke(event)">
+            <div id="glitter-container" class="absolute inset-0 overflow-hidden rounded-full pointer-events-none"></div>
+            <div id="hi-light" class="highlight"></div>
+            <div class="face">
+                <div class="eyes" id="slime-eyes">
+                    <div class="eye"></div>
+                    <div class="eye"></div>
+                </div>
+                <div class="mouth" id="slime-mouth"></div>
+            </div>
+        </div>
+        <div id="empty-pot" class="w-72 h-72 border-4 border-dashed border-pink-200 rounded-full flex items-center justify-center text-pink-300 font-bold text-center text-xl">
+            물풀을 넣어서<br>슬라임을 태어나게 해줘!
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="max-w-xl mx-auto">
+            <div class="flex gap-1 mb-4 justify-start overflow-x-auto pb-2 no-scrollbar">
+                <button onclick="changeLocation('living')" class="nav-btn nav-active" id="btn-living">거실 🏠</button>
+                <button onclick="changeLocation('kitchen')" class="nav-btn nav-inactive" id="btn-kitchen">주방 🍳</button>
+                <button onclick="changeLocation('bath')" class="nav-btn nav-inactive" id="btn-bath">욕실 🛁</button>
+                <button onclick="changeLocation('hospital')" class="nav-btn nav-inactive" id="btn-hospital">병원 🏥</button>
+                <button onclick="changeLocation('play')" class="nav-btn nav-inactive" id="btn-play">놀이터 🎡</button>
+                <button onclick="changeLocation('garden')" class="nav-btn nav-inactive" id="btn-garden">정원 🌳</button>
+                <button onclick="changeLocation('bed')" class="nav-btn nav-inactive" id="btn-bed">침실 😴</button>
+            </div>
+
+            <!-- 거실 도구 -->
+            <div id="items-living" class="flex justify-start mb-4 bg-pink-50 p-4 rounded-2xl gap-2 overflow-x-auto no-scrollbar">
+                <button onclick="addIngredient('glue')" class="ingredient-btn shadow-sm">
+                    <span class="text-3xl">🧴</span>
+                    <span class="text-[10px] font-bold mt-1">물풀</span>
+                </button>
+                <button onclick="addIngredient('glitter')" class="ingredient-btn shadow-sm bg-purple-50 border-purple-200">
+                    <span class="text-3xl">✨</span>
+                    <span class="text-[10px] font-bold mt-1">글리터</span>
+                </button>
+                <button onclick="addIngredient('foam')" class="ingredient-btn shadow-sm bg-blue-50 border-blue-200">
+                    <span class="text-3xl">☁️</span>
+                    <span class="text-[10px] font-bold mt-1">폼</span>
+                </button>
+                <button onclick="giveFood('🍬')" class="ingredient-btn shadow-sm bg-yellow-50 border-yellow-200">
+                    <span class="text-3xl">🍬</span>
+                    <span class="text-[10px] font-bold mt-1">사탕</span>
+                </button>
+            </div>
+
+            <!-- 주방 도구 -->
+            <div id="items-kitchen" class="hidden flex justify-center mb-4 bg-orange-50 p-4 rounded-2xl gap-2 overflow-x-auto no-scrollbar">
+                <button onclick="cookFood('🍳')" class="ingredient-btn shadow-sm bg-orange-100 border-orange-300">
+                    <span class="text-3xl">🍳</span>
+                    <span class="text-[10px] font-bold mt-1">후라이</span>
+                </button>
+                <button onclick="cookFood('🍕')" class="ingredient-btn shadow-sm bg-red-100 border-red-300">
+                    <span class="text-3xl">🍕</span>
+                    <span class="text-[10px] font-bold mt-1">피자</span>
+                </button>
+                <button onclick="cookFood('🥞')" class="ingredient-btn shadow-sm bg-yellow-100 border-yellow-300">
+                    <span class="text-3xl">🥞</span>
+                    <span class="text-[10px] font-bold mt-1">팬케이크</span>
+                </button>
+            </div>
+
+            <!-- 욕실 도구 -->
+            <div id="items-bath" class="hidden flex justify-center mb-4 bg-blue-50 p-4 rounded-2xl gap-2 overflow-x-auto no-scrollbar">
+                <button onclick="washSlime('🧼')" class="ingredient-btn shadow-sm bg-white border-blue-200">
+                    <span class="text-3xl">🧼</span>
+                    <span class="text-[10px] font-bold mt-1">비누</span>
+                </button>
+                <button onclick="washSlime('🛁')" class="ingredient-btn shadow-sm bg-white border-blue-200">
+                    <span class="text-3xl">🛁</span>
+                    <span class="text-[10px] font-bold mt-1">거품</span>
+                </button>
+                <button onclick="washSlime('🚿')" class="ingredient-btn shadow-sm bg-white border-blue-200">
+                    <span class="text-3xl">🚿</span>
+                    <span class="text-[10px] font-bold mt-1">샤워</span>
+                </button>
+            </div>
+
+            <!-- 병원 도구 -->
+            <div id="items-hospital" class="hidden flex justify-center mb-4 bg-red-50 p-4 rounded-2xl gap-2 overflow-x-auto no-scrollbar">
+                <button onclick="treatSlime('💉')" class="ingredient-btn shadow-sm bg-white border-red-300">
+                    <span class="text-3xl">💉</span>
+                    <span class="text-[10px] font-bold mt-1">주사</span>
+                </button>
+                <button onclick="treatSlime('💊')" class="ingredient-btn shadow-sm bg-white border-blue-300">
+                    <span class="text-3xl">💊</span>
+                    <span class="text-[10px] font-bold mt-1">가루약</span>
+                </button>
+                <button onclick="treatSlime('🩹')" class="ingredient-btn shadow-sm bg-white border-yellow-300">
+                    <span class="text-3xl">🩹</span>
+                    <span class="text-[10px] font-bold mt-1">밴드</span>
+                </button>
+            </div>
+
+            <!-- 놀이터 도구 -->
+            <div id="items-play" class="hidden flex justify-center mb-4 bg-green-50 p-4 rounded-2xl gap-2 overflow-x-auto no-scrollbar">
+                <button onclick="playRide('slide')" class="ingredient-btn shadow-sm bg-red-100 border-red-300">
+                    <span class="text-3xl">🛝</span>
+                    <span class="text-[10px] font-bold mt-1">미끄럼틀</span>
+                </button>
+                <button onclick="playRide('seesaw')" class="ingredient-btn shadow-sm bg-yellow-100 border-yellow-300">
+                    <span class="text-3xl">⚖️</span>
+                    <span class="text-[10px] font-bold mt-1">시소</span>
+                </button>
+                <button onclick="playRide('swing')" class="ingredient-btn shadow-sm bg-blue-100 border-blue-300">
+                    <span class="text-3xl">🎡</span>
+                    <span class="text-[10px] font-bold mt-1">그네</span>
+                </button>
+            </div>
+
+            <!-- 정원 도구 -->
+            <div id="items-garden" class="hidden flex justify-center mb-4 bg-emerald-50 p-4 rounded-2xl gap-2 overflow-x-auto no-scrollbar">
+                <button onclick="gardenAction('🦋')" class="ingredient-btn shadow-sm bg-white border-emerald-300">
+                    <span class="text-3xl">🦋</span>
+                    <span class="text-[10px] font-bold mt-1">나비관찰</span>
+                </button>
+                <button onclick="gardenAction('🌸')" class="ingredient-btn shadow-sm bg-white border-emerald-300">
+                    <span class="text-3xl">🌸</span>
+                    <span class="text-[10px] font-bold mt-1">꽃심기</span>
+                </button>
+                <button onclick="gardenAction('⚽')" class="ingredient-btn shadow-sm bg-white border-emerald-300">
+                    <span class="text-3xl">⚽</span>
+                    <span class="text-[10px] font-bold mt-1">공놀이</span>
+                </button>
+            </div>
+
+            <!-- 침실 도구 -->
+            <div id="items-bed" class="hidden flex justify-center mb-4 bg-purple-50 p-4 rounded-2xl gap-4">
+                <button onclick="toggleSleep()" class="ingredient-btn shadow-sm bg-indigo-100 border-indigo-300">
+                    <span class="text-3xl" id="sleep-icon">🌙</span>
+                    <span class="text-[10px] font-bold mt-1" id="sleep-text">재우기</span>
+                </button>
+            </div>
+
+            <!-- 색상 변경 -->
+            <div class="flex justify-center gap-4 flex-wrap mt-2">
+                <div class="flex gap-2 items-center">
+                    <div class="w-8 h-8 rounded-full cursor-pointer border-2 border-white shadow-sm" style="background:#ffb6c1" onclick="updateColor('#ffb6c1')"></div>
+                    <div class="w-8 h-8 rounded-full cursor-pointer border-2 border-white shadow-sm" style="background:#add8e6" onclick="updateColor('#add8e6')"></div>
+                    <div class="w-8 h-8 rounded-full cursor-pointer border-2 border-white shadow-sm" style="background:#b0fb97" onclick="updateColor('#b0fb97')"></div>
+                    <div class="w-8 h-8 rounded-full cursor-pointer border-2 border-white shadow-sm" style="background:#ffd966" onclick="updateColor('#ffd966')"></div>
+                    <div class="w-8 h-8 rounded-full cursor-pointer border-2 border-white shadow-sm" style="background:#d8b4fe" onclick="updateColor('#d8b4fe')"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const slime = document.getElementById('slime');
+    const emptyPot = document.getElementById('empty-pot');
+    const msgBox = document.getElementById('msg');
+    const growthBar = document.getElementById('growth-bar-inner');
+    const levelTxt = document.getElementById('level-txt');
+    const slimeMouth = document.getElementById('slime-mouth');
+    const locName = document.getElementById('location-name');
+    const pgElements = document.getElementById('playground-elements');
+    const darkOverlay = document.getElementById('dark-mode');
+    const glitterContainer = document.getElementById('glitter-container');
+
+    let stats = { glue: 0, glitter: 0, foam: 0 };
+    let experience = 0;
+    let level = 1;
+    let totalEaten = 0;
+    let baseColor = '#ffb6c1';
+    let isSleeping = false;
+    let isSick = false;
+    let currentLocation = 'living';
+
+    function showMsg(text) {
+        msgBox.innerText = text;
+        msgBox.style.opacity = 1;
+        setTimeout(() => msgBox.style.opacity = 0, 1500);
+    }
+
+    function handlePoke(e) {
+        if (isSleeping) return showMsg("슬라임이 자고 있어... 💤");
+
+        e.preventDefault();
+        const rect = slime.getBoundingClientRect();
+        const clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
+        const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+
+        const relX = (clientX - (rect.left + rect.width / 2)) / (rect.width / 2);
+        const relY = (clientY - (rect.top + rect.height / 2)) / (rect.height / 2);
+
+        let tl = 50, tr = 50, bl = 50, br = 50;
+        if (relX < 0 && relY < 0) tl = 20;
+        if (relX > 0 && relY < 0) tr = 20;
+        if (relX < 0 && relY > 0) bl = 20;
+        if (relX > 0 && relY > 0) br = 20;
+
+        slime.style.borderRadius = `${tl}% ${tr}% ${br}% ${bl}%`;
+        slime.style.transform = `scale(0.95) translate(${relX * 10}px, ${relY * 10}px)`;
+
+        const kok = document.createElement('div');
+        kok.className = 'kok-effect';
+        const sounds = ['콕!', '쫀득!', '말랑!', '폭신!', '치덕!'];
+        kok.innerText = sounds[Math.floor(Math.random() * sounds.length)];
+        kok.style.left = (clientX - 20) + 'px';
+        kok.style.top = (clientY - 20) + 'px';
+        document.body.appendChild(kok);
+        setTimeout(() => kok.remove(), 800);
+
+        if(!isSick) slimeMouth.className = 'mouth happy';
+        gainExp(5);
+
+        setTimeout(() => {
+            if (!isSleeping) {
+                slime.style.borderRadius = '50%';
+                slime.style.transform = '';
+                if(!isSick) slimeMouth.className = 'mouth';
+            }
+        }, 300);
+
+        // 확률적으로 배탈 나기
+        if (totalEaten > 5 && Math.random() < 0.05) {
+            makeSick();
+        }
+    }
+
+    function makeSick() {
+        if (isSick) return;
+        isSick = true;
+        slimeMouth.className = 'mouth sick';
+        showMsg("아구구... 슬라임 배가 아픈가봐요! 🏥");
+    }
+
+    function changeLocation(loc) {
+        currentLocation = loc;
+        const sections = ['living', 'kitchen', 'bath', 'hospital', 'play', 'garden', 'bed'];
+        sections.forEach(s => {
+            document.getElementById(`items-${s}`).classList.add('hidden');
+            document.getElementById(`btn-${s}`).className = "nav-btn nav-inactive";
+        });
+        document.getElementById(`items-${loc}`).classList.remove('hidden');
+        document.getElementById(`btn-${loc}`).className = "nav-btn nav-active";
+
+        pgElements.innerHTML = '';
+        stopRide();
+
+        const locData = {
+            living: { color: '#fff0f5', name: "거실 🏠" },
+            kitchen: { color: '#fff7ed', name: "주방 🍳" },
+            bath: { color: '#e0f2fe', name: "욕실 🛁" },
+            hospital: { color: '#f8fafc', name: "병원 🏥" },
+            play: { color: '#f0fff4', name: "놀이터 🎡" },
+            garden: { color: '#ecfdf5', name: "정원 🌳" },
+            bed: { color: '#f5f3ff', name: "침실 😴" }
+        };
+        document.body.style.backgroundColor = locData[loc].color;
+        locName.innerText = locData[loc].name;
+
+        if (loc === 'kitchen') {
+            const obj = document.createElement('div');
+            obj.className = 'kitchen-obj';
+            obj.innerText = '🥘';
+            pgElements.appendChild(obj);
+        } else if (loc === 'hospital') {
+            const obj = document.createElement('div');
+            obj.className = 'hospital-obj';
+            obj.innerText = '➕';
+            pgElements.appendChild(obj);
+        } else if (loc === 'bath') {
+            const obj = document.createElement('div');
+            obj.className = 'bath-obj';
+            obj.innerText = '🛁';
+            pgElements.appendChild(obj);
+        } else if (loc === 'garden') {
+            const obj = document.createElement('div');
+            obj.className = 'garden-obj';
+            obj.innerText = '🌳';
+            pgElements.appendChild(obj);
+        }
+    }
+
+    function washSlime(tool) {
+        if (stats.glue === 0) return showMsg("슬라임을 먼저 만들어줘!");
+        showMsg(`${tool} 로 깨끗하게 씻는 중! ✨`);
+        slime.classList.add('wash-anim');
+
+        for (let i = 0; i < 10; i++) {
+            setTimeout(() => {
+                const b = document.createElement('div');
+                b.className = 'bubble-item';
+                b.innerText = '🫧';
+                const rect = slime.getBoundingClientRect();
+                b.style.left = (rect.left + Math.random() * rect.width) + 'px';
+                b.style.top = (rect.top + rect.height / 2) + 'px';
+                b.style.setProperty('--tx', (Math.random() * 100 - 50) + 'px');
+                b.style.animation = 'float-bubble 1s ease-out forwards';
+                document.body.appendChild(b);
+                setTimeout(() => b.remove(), 1000);
+            }, i * 100);
+        }
+
+        setTimeout(() => {
+            slime.classList.remove('wash-anim');
+            gainExp(30);
+            showMsg("반짝반짝 깨끗해졌어! 🫧");
+        }, 1500);
+    }
+
+    function gardenAction(emoji) {
+        if (stats.glue === 0) return showMsg("슬라임을 먼저 만들어줘!");
+        showMsg(`${emoji} 즐거운 시간!`);
+        gainExp(40);
+        const effect = document.createElement('div');
+        effect.className = 'tool-item';
+        effect.innerText = emoji;
+        effect.style.left = '50%';
+        effect.style.top = '40%';
+        effect.style.animation = 'kok-up 1.5s ease-out forwards';
+        document.body.appendChild(effect);
+        setTimeout(() => effect.remove(), 1500);
+    }
+
+    function addIngredient(type) {
+        if (type === 'glue') stats.glue++;
+        if (type === 'glitter') stats.glitter++;
+        if (type === 'foam') stats.foam++;
+        gainExp(20);
+        calculateSlime();
+        showMsg(`${type === 'glue' ? '물풀' : type === 'glitter' ? '반짝이' : '폼'} 추가! ✨`);
+    }
+
+    function cookFood(emoji) {
+        if (stats.glue === 0) return showMsg("슬라임을 먼저 만들어줘!");
+        showMsg("보글보글... 요리 중! 🍳");
+        setTimeout(() => giveFood(emoji), 1000);
+    }
+
+    function giveFood(emoji) {
+        if (stats.glue === 0) return showMsg("슬라임을 먼저 만들어줘!");
+        if (isSleeping) return showMsg("자고 있을 땐 못 먹어!");
+
+        slimeMouth.className = 'mouth eating';
+        const food = document.createElement('div');
+        food.className = 'food-item food-anim';
+        food.innerText = emoji;
+        food.style.left = '50%';
+        food.style.top = '40%';
+        document.getElementById('slime-container').appendChild(food);
+
+        setTimeout(() => {
+            food.remove();
+            totalEaten++;
+            gainExp(40);
+            showMsg(`${emoji} 냠냠! 맛있다! 😋`);
+            slime.style.transform = `scale(1.2)`;
+            setTimeout(() => {
+                slime.style.transform = "";
+                slimeMouth.className = isSick ? 'mouth sick' : 'mouth';
+            }, 200);
+        }, 800);
+    }
+
+    function treatSlime(tool) {
+        if (stats.glue === 0) return showMsg("슬라임을 먼저 만들어줘!");
+        showMsg(`${tool} 치료 중... 🏥`);
+        gainExp(50);
+        if (isSick && (tool === '💉' || tool === '💊')) {
+            isSick = false;
+            setTimeout(() => {
+                slimeMouth.className = 'mouth happy';
+                showMsg("다 나았어! 고마워! ✨");
+                setTimeout(() => slimeMouth.className = 'mouth', 1500);
+            }, 1000);
+        }
+    }
+
+    function playRide(ride) {
+        if (stats.glue === 0) return showMsg("슬라임을 먼저 만들어줘!");
+        if (isSick) return showMsg("아파서 놀 수가 없어요... 🏥");
+        stopRide();
+        pgElements.innerHTML = '';
+        const obj = document.createElement('div');
+        obj.className = `playground-obj ${ride}-obj`;
+        const rideData = {
+            slide: { icon: '🛝', anim: 'slide-anim', msg: "슝~~ 미끄럼틀! 🛝" },
+            seesaw: { icon: '⚖️', anim: 'seesaw-anim', msg: "기우뚱~ 시소! ⚖️" },
+            swing: { icon: '🎡', anim: 'swing-anim', msg: "왔다갔다 그네! 🎡" }
+        };
+        obj.innerText = rideData[ride].icon;
+        slime.classList.add(rideData[ride].anim);
+        showMsg(rideData[ride].msg);
+        pgElements.appendChild(obj);
+        gainExp(60);
+    }
+
+    function stopRide() {
+        slime.classList.remove('slide-anim', 'seesaw-anim', 'swing-anim', 'wash-anim');
+    }
+
+    function toggleSleep() {
+        if (stats.glue === 0) return showMsg("슬라임을 먼저 만들어줘!");
+        isSleeping = !isSleeping;
+        const icon = document.getElementById('sleep-icon');
+        const text = document.getElementById('sleep-text');
+        if (isSleeping) {
+            darkOverlay.style.display = 'block';
+            slimeMouth.className = 'mouth sleeping';
+            icon.innerText = '☀️';
+            text.innerText = '깨우기';
+            showMsg("코~ 잘 자요... 💤");
+        } else {
+            darkOverlay.style.display = 'none';
+            slimeMouth.className = isSick ? 'mouth sick' : 'mouth';
+            icon.innerText = '🌙';
+            text.innerText = '재우기';
+            showMsg("번쩍! 일어났다! ✨");
+        }
+    }
+
+    function gainExp(amount) {
+        experience += amount;
+        let nextLevelExp = level * 100;
+        if (experience >= nextLevelExp) { experience -= nextLevelExp; level++; showMsg(`Lv.${level}로 쑥쑥 성장! 🎉`); }
+        levelTxt.innerText = level;
+        growthBar.style.width = (experience / nextLevelExp) * 100 + "%";
+    }
+
+    function calculateSlime() {
+        if (stats.glue === 0) {
+            slime.style.display = 'none';
+            emptyPot.style.display = 'flex';
+            return;
+        }
+        slime.style.display = 'flex';
+        emptyPot.style.display = 'none';
+        let baseSize = window.innerWidth < 600 ? 180 : 250;
+        let finalSize = Math.min(baseSize + (level * 10) + (stats.glue * 5), window.innerHeight * 0.5);
+        slime.style.width = finalSize + 'px';
+        slime.style.height = finalSize + 'px';
+        slime.style.filter = `blur(${Math.max(1, 8 - stats.foam)}px)`;
+        glitterContainer.innerHTML = '';
+        for (let i = 0; i < stats.glitter * 5; i++) {
+            const g = document.createElement('div');
+            g.className = 'glitter';
+            g.style.left = Math.random() * 100 + '%';
+            g.style.top = Math.random() * 100 + '%';
+            g.style.animationDelay = Math.random() * 2 + 's';
+            glitterContainer.appendChild(g);
+        }
+        const colorWithAlpha = `${baseColor}${Math.floor(0.85*255).toString(16).padStart(2,'0')}`;
+        slime.style.background = `radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.9) 0%, ${colorWithAlpha} 55%, ${baseColor} 100%)`;
+    }
+
+    function updateColor(color) { baseColor = color; calculateSlime(); }
+
+    window.addEventListener('mousemove', (e) => {
+        if (stats.glue === 0 || isSleeping) return;
+        document.querySelectorAll('.eye').forEach(eye => {
+            const rect = eye.getBoundingClientRect();
+            const angle = Math.atan2(e.clientY - (rect.top + 17), e.clientX - (rect.left + 12));
+            eye.style.transform = `translate(${Math.cos(angle) * 4}px, ${Math.sin(angle) * 4}px)`;
+        });
+    });
+</script>
+
+</body>
+</html>

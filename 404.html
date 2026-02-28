@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>페이지를 찾을 수 없어요 - 체리냥</title>
+    <meta name="description" content="개발, 일상, 그리고 다양한 이야기들을 기록하는 블로그입니다. 🌸">
+
+    <!-- OpenGraph & Twitter Cards -->
+    <meta property="og:title" content="404 Not Found">
+<meta property="og:type" content="article">
+<meta property="og:url" content="">
+<meta property="og:image" content="/images/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="404 Not Found">
+<meta name="twitter:image" content="/images/og-default.png">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌸</text></svg>">
+
+    
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-inner">
+                <a href="/" class="logo">
+                    <span class="logo-icon"><img src="/img/logo.png"></span>
+                    체리냥
+                </a>
+                <nav class="nav">
+                    <a href="/" class="nav-link">홈</a>
+                    <a href="/posts/" class="nav-link">블로그</a>
+                    <a href="/games/" class="nav-link">게임</a>
+                    <a href="/drawings/" class="nav-link">그림</a>
+                    <a href="/ai_drawings/" class="nav-link">AI그림</a>
+                    <a href="/about/" class="nav-link">소개</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        
+<div class="container">
+    <div class="content-wrapper">
+        <div class="empty-state" style="padding: 6rem 1.5rem">
+            <div
+                class="empty-state-emoji"
+                style="font-size: 6rem"
+            >
+                🌸
+            </div>
+            <h1
+                class="empty-state-title"
+                style="font-size: 2rem; margin-bottom: 1rem"
+            >
+                앗, 페이지를 찾을 수 없어요!
+            </h1>
+            <p class="empty-state-description" style="margin-bottom: 2rem">
+                요청하신 페이지가 사라졌거나, 주소가 잘못되었을 수 있어요.
+            </p>
+            <a href="/" class="btn btn-primary">
+                🏠 홈으로 돌아가기
+            </a>
+        </div>
+    </div>
+</div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-inner">
+                <div class="footer-logo">🌸 체리냥</div>
+                <div class="footer-links">
+                    <a href="/rss.xml">RSS</a>
+                    <a href="/sitemap.xml">Sitemap</a>
+                </div>
+                <p class="footer-copyright">© 2026 체리냥. All rights reserved.</p>
+                <p class="footer-powered">Powered by <a href="https://github.com/hahwul/hwaro" target="_blank">Hwaro</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Syntax Highlighting -->
+    
+
+    <!-- Back to Top Button -->
+    <button class="back-to-top" id="backToTop" aria-label="맨 위로">↑</button>
+
+    <script>
+        // Back to top button
+        const backToTop = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                backToTop.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+            }
+        });
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+    </script>
+
+    
+</body>
+</html>
