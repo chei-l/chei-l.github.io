@@ -2,10 +2,7 @@
 taxonomy_name }}{% endblock %} {% block content %}
 <div class="container">
     <div class="taxonomy-header">
-        <h1 class="taxonomy-title">
-            {% if taxonomy_name == "tags" %}🏷️{% elif taxonomy_name ==
-            "categories" %}📁{% else %}📑{% endif %} {{ taxonomy_term }}
-        </h1>
+        <h1 class="taxonomy-title">{{ taxonomy_term }}</h1>
         <p class="taxonomy-count">{{ taxonomy_name }}의 포스트 목록</p>
     </div>
 

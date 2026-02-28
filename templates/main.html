@@ -1,38 +1,64 @@
 {% extends "base.html" %} {% block title %}홈{% endblock %} {% block content %}
-<section class="hero">
+<section class="hero-landing">
+    <div class="hero-glow"></div>
+    <div class="hero-particles" id="heroParticles"></div>
     <div class="container">
-        <div class="hero-emoji animate-float">
-            <img src="/img/landing.png" style="width: 550px; border-radius: 50px;">
+        <div class="hero-center">
+            <div class="hero-image-wrap" data-anim="scale">
+                <div class="hero-image-ring"></div>
+                <img src="/img/landing.png" alt="{{ site_title }}" class="hero-image">
+            </div>
+            <h1 class="hero-name" data-anim="fade-up" data-delay="200">{{ site_title }}</h1>
+            <p class="hero-bio" data-anim="fade-up" data-delay="400">{{ site_description }}</p>
+            <div class="hero-line" data-anim="expand" data-delay="600"></div>
         </div>
-        <h1 class="hero-title">
-            안녕하세요, <span>{{ site_title }}</span>입니다
-        </h1>
-        <p class="hero-description">{{ site_description }}</p>
     </div>
 </section>
+{% endblock %}
 
-<div class="container">
-    <section class="features">
-        <div class="feature-grid">
-            <div class="feature-card animate-fade-in">
-                <div class="feature-icon">🎨</div>
-                <h3 class="feature-title">작품들</h3>
-                <p class="feature-description">그림과 AI 생성 작품들을 만나보세요.</p>
-                <a href="{{ base_url }}/drawings/" class="btn btn-secondary">그림 보기</a>
-            </div>
-            <div class="feature-card animate-fade-in">
-                <div class="feature-icon">🎮</div>
-                <h3 class="feature-title">게임들</h3>
-                <p class="feature-description">다양한 게임 프로젝트를 탐험해보세요.</p>
-                <a href="{{ base_url }}/games/" class="btn btn-secondary">게임 보기</a>
-            </div>
-            <div class="feature-card animate-fade-in">
-                <div class="feature-icon">📝</div>
-                <h3 class="feature-title">블로그 포스트</h3>
-                <p class="feature-description">생각과 경험을 공유하는 공간입니다.</p>
-                <a href="{{ base_url }}/posts/" class="btn btn-secondary">포스트 보기</a>
-            </div>
-        </div>
-    </section>
-</div>
+{% block scripts %}
+<script>
+(function() {
+    // Entrance animations
+    const animEls = document.querySelectorAll('[data-anim]');
+    animEls.forEach(el => {
+        const delay = parseInt(el.dataset.delay || '0', 10);
+        setTimeout(() => el.classList.add('anim-in'), 100 + delay);
+    });
+
+    // Floating particles
+    const canvas = document.getElementById('heroParticles');
+    if (!canvas) return;
+    const container = canvas.parentElement;
+    const COUNT = 30;
+    const particles = [];
+
+    for (let i = 0; i < COUNT; i++) {
+        const p = document.createElement('span');
+        p.className = 'particle';
+        const size = Math.random() * 3 + 1;
+        const x = Math.random() * 100;
+        const dur = Math.random() * 15 + 10;
+        const delay = Math.random() * -20;
+        p.style.cssText = `
+            width:${size}px;height:${size}px;
+            left:${x}%;
+            animation-duration:${dur}s;
+            animation-delay:${delay}s;
+            opacity:${Math.random() * 0.5 + 0.1};
+        `;
+        canvas.appendChild(p);
+    }
+
+    // Mouse-following glow
+    const glow = document.querySelector('.hero-glow');
+    if (!glow) return;
+    document.addEventListener('mousemove', e => {
+        requestAnimationFrame(() => {
+            glow.style.setProperty('--gx', e.clientX + 'px');
+            glow.style.setProperty('--gy', e.clientY + 'px');
+        });
+    });
+})();
+</script>
 {% endblock %}
