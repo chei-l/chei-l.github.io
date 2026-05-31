@@ -4,9 +4,11 @@
     <div class="hero-particles" id="heroParticles"></div>
     <div class="container">
         <div class="hero-center">
-            <div class="hero-image-wrap" data-anim="scale">
+            <div class="hero-image-wrap" id="catHeroWrap" data-anim="scale">
                 <div class="hero-image-ring"></div>
-                <img src="/img/landing.png" alt="{{ site_title }}" class="hero-image">
+                <img src="/img/landing.png" alt="{{ site_title }}" class="hero-image" id="catHeroImg">
+                <!-- 고양이 하악질 말풍선 -->
+                <div class="speech-bubble" id="catSpeech">캬아아악!!</div>
             </div>
             <h1 class="hero-name" data-anim="fade-up" data-delay="200">{{ site_title }}</h1>
             <p class="hero-bio" data-anim="fade-up" data-delay="400">{{ site_description }}</p>
@@ -14,6 +16,382 @@
         </div>
     </div>
 </section>
+
+<!-- Full Screen Explosion Flash & Shockwave -->
+<div id="screenExplosion" class="screen-explosion">
+    <div class="shockwave-ring"></div>
+</div>
+
+<!-- Spooky Characters (Ghost & Bat) -->
+<div class="spooky-char" id="spookyGhost">
+    <svg width="240" height="240" viewBox="0 0 100 100" class="baby-ghost-svg">
+        <!-- 몸통 -->
+        <path d="M 25,50 A 25,25 0 0,1 75,50 C 75,70 80,80 70,85 C 60,89 55,80 50,85 C 45,80 40,89 30,85 C 20,80 25,70 25,50 Z" fill="#ffffff" stroke="#2e1b4e" stroke-width="4"/>
+        <!-- 해맑은 큰 눈 (왼쪽) -->
+        <circle cx="40" cy="45" r="9" fill="#ffffff" stroke="#2e1b4e" stroke-width="3"/>
+        <circle cx="40" cy="45" r="5" fill="#000000"/>
+        <circle cx="38" cy="42" r="2" fill="#ffffff"/>
+        <!-- 해맑은 큰 눈 (오른쪽) -->
+        <circle cx="60" cy="45" r="9" fill="#ffffff" stroke="#2e1b4e" stroke-width="3"/>
+        <circle cx="60" cy="45" r="5" fill="#000000"/>
+        <circle cx="58" cy="42" r="2" fill="#ffffff"/>
+        <!-- 핑크 볼터치 -->
+        <circle cx="32" cy="53" r="3.5" fill="#ff003c" opacity="0.6"/>
+        <circle cx="68" cy="53" r="3.5" fill="#ff003c" opacity="0.6"/>
+        <!-- 활짝 웃는 입 -->
+        <path d="M 46,56 Q 50,64 54,56 Z" fill="#ff003c" stroke="#2e1b4e" stroke-width="2"/>
+        <!-- 흔드는 오른손 -->
+        <g class="ghost-hand-g">
+            <path d="M 72,55 Q 85,50 87,55 Q 89,60 74,65 Z" fill="#ffffff" stroke="#2e1b4e" stroke-width="3"/>
+        </g>
+    </svg>
+    <div class="speech-bubble">술래다 도망쳐!!</div>
+</div>
+<div class="spooky-char" id="spookyBat">
+    <div class="speech-bubble">HELLO!</div>
+    <svg width="240" height="240" viewBox="0 0 100 100" class="baby-bat-svg">
+        <!-- 왼쪽 날개 (현실감 넘치는 뼈대 추가) -->
+        <g class="bat-wing-left-g">
+            <path d="M 33,45 C 10,25 -5,42 12,65 C 20,58 28,52 33,49" fill="#a044ff" stroke="#2e1b4e" stroke-width="3.5"/>
+            <path d="M 12,65 Q 22,48 33,45" fill="none" stroke="#2e1b4e" stroke-width="2"/>
+            <path d="M 5,45 Q 20,47 33,45" fill="none" stroke="#2e1b4e" stroke-width="2"/>
+        </g>
+        <!-- 오른쪽 날개 (현실감 넘치는 뼈대 추가) -->
+        <g class="bat-wing-right-g">
+            <path d="M 67,45 C 90,25 105,42 88,65 C 80,58 72,52 67,49" fill="#a044ff" stroke="#2e1b4e" stroke-width="3.5"/>
+            <path d="M 88,65 Q 78,48 67,45" fill="none" stroke="#2e1b4e" stroke-width="2"/>
+            <path d="M 95,45 Q 80,47 67,45" fill="none" stroke="#2e1b4e" stroke-width="2"/>
+        </g>
+        <!-- 몸통 (뾰족한 털 질감 묘사) -->
+        <path d="M 40,35 C 35,35 30,42 30,50 C 30,62 38,70 50,70 C 62,70 70,62 70,50 C 70,42 65,35 60,35 Z" fill="#231b42" stroke="#2e1b4e" stroke-width="3.5"/>
+        <path d="M 40,55 L 43,62 L 47,58 L 50,65 L 53,58 L 57,62 L 60,55 Z" fill="#ff003c" />
+        <!-- 날카롭고 강인한 귀 -->
+        <path d="M 33,37 L 22,12 L 42,32 Z" fill="#a044ff" stroke="#2e1b4e" stroke-width="3"/>
+        <path d="M 35,32 L 28,18 L 40,28 Z" fill="#ff003c"/>
+        <path d="M 67,37 L 78,12 L 58,32 Z" fill="#a044ff" stroke="#2e1b4e" stroke-width="3"/>
+        <path d="M 65,32 L 72,18 L 60,28 Z" fill="#ff003c"/>
+        <!-- 날카롭고 강렬한 눈매 -->
+        <path d="M 34,42 Q 41,38 46,45 Q 40,48 34,42 Z" fill="#ff003c" stroke="#2e1b4e" stroke-width="2.5"/>
+        <circle cx="41" cy="43" r="2.5" fill="#000000"/>
+        <path d="M 66,42 Q 59,38 54,45 Q 60,48 66,42 Z" fill="#ff003c" stroke="#2e1b4e" stroke-width="2.5"/>
+        <circle cx="59" cy="43" r="2.5" fill="#000000"/>
+        <!-- 핑크 볼터치 -->
+        <circle cx="36" cy="54" r="2.5" fill="#ff003c" opacity="0.6"/>
+        <circle cx="64" cy="54" r="2.5" fill="#ff003c" opacity="0.6"/>
+        <!-- 날카로운 송곳니가 있는 입 -->
+        <path d="M 42,52 Q 50,58 58,52" fill="none" stroke="#2e1b4e" stroke-width="3"/>
+        <polygon points="45,53 47,58 49,54" fill="#ffffff"/>
+        <polygon points="55,53 53,58 51,54" fill="#ffffff"/>
+    </svg>
+</div>
+
+<style>
+/* --- 화면 전체 폭발 섬광 및 충격파 스타일 --- */
+.screen-explosion {
+    position: fixed;
+    inset: 0;
+    z-index: 9998; /* 유령과 박쥐 뒤에 오되 다른 모든 콘텐츠 위에 오도록 */
+    pointer-events: none;
+    background: transparent;
+    opacity: 0;
+}
+.screen-explosion.active {
+    animation: screen-flash-animation 0.6s ease-out forwards;
+}
+@keyframes screen-flash-animation {
+    0% {
+        background-color: rgba(255, 0, 60, 0.45); /* 쨍한 빨간색 순간 플래시 */
+        opacity: 1;
+    }
+    30% {
+        background-color: rgba(160, 68, 255, 0.45); /* 쨍한 보라색 플래시 */
+    }
+    100% {
+        background-color: transparent;
+        opacity: 0;
+    }
+}
+
+.shockwave-ring {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 120px;
+    height: 120px;
+    border: 10px solid #ff003c;
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
+}
+.screen-explosion.active .shockwave-ring {
+    animation: shockwave-expand-animation 0.7s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+@keyframes shockwave-expand-animation {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        border-color: #ff003c;
+        border-width: 25px;
+        opacity: 1;
+    }
+    40% {
+        border-color: #a044ff;
+        border-width: 12px;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(22); /* 화면 전체를 뒤덮을 정도로 커짐 */
+        border-color: transparent;
+        border-width: 3px;
+        opacity: 0;
+    }
+}
+
+/* --- 고양이 프로필 이미지 폭발 및 복구 스타일 --- */
+.hero-image {
+    transition: opacity 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* 고양이 하악질 말풍선 스타일 */
+#catSpeech {
+    position: absolute;
+    bottom: 220px; /* 고양이 이미지 머리 위 */
+    left: 50%;
+    transform: translate(-50%, 10px) scale(0.85);
+    opacity: 0;
+    z-index: 15;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    box-shadow: 4px 4px 0px #030206;
+}
+/* 고양이가 화날 때와 폭발할 때 머리 위에 하악질 대사 등장 */
+#catHeroWrap.angry #catSpeech,
+#catHeroWrap.exploded #catSpeech {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+}
+/* 아래 방향 꼬리 */
+#catSpeech::after {
+    content: "";
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 8px 8px 0;
+    border-style: solid;
+    border-color: #0f0e1a transparent;
+    display: block;
+    width: 0;
+}
+#catSpeech::before {
+    content: "";
+    position: absolute;
+    bottom: -11px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 11px 11px 0;
+    border-style: solid;
+    border-color: #2e1b4e transparent;
+    display: block;
+    width: 0;
+    z-index: -1;
+}
+
+#catHeroWrap.angry {
+    animation: cat-shake-furious 0.8s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px #ff003c);
+}
+@keyframes cat-shake-furious {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    20%, 60% { transform: translate(-5px, 5px) rotate(-4deg); }
+    40%, 80% { transform: translate(5px, -5px) rotate(4deg); }
+}
+
+
+
+/* --- Spooky Characters 기본 스타일 --- */
+.spooky-char {
+    position: fixed;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: none;
+}
+#spookyGhost {
+    left: -250px;
+    top: 55%;
+    flex-direction: row;
+}
+#spookyBat {
+    right: -250px;
+    top: 40%;
+    flex-direction: row-reverse;
+}
+.spooky-char.show {
+    transform: translateX(275px);
+}
+#spookyBat.show {
+    transform: translateX(-275px);
+}
+
+/* 짝수 번째 스핀 애니메이션 */
+.spooky-char.spin-mode .baby-bat-svg {
+    animation: bat-spin-animation 4.0s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes bat-spin-animation {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(720deg); }
+}
+
+/* 왼쪽 방향 대시 돌진 */
+.spooky-char.dash-left {
+    transition: transform 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    transform: translateX(-120vw) !important;
+}
+
+/* 유령 도망가기 */
+.spooky-char.run-away {
+    transition: transform 1.0s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    transform: translateX(-120vw) !important;
+}
+
+/* 폭발 놀람/패닉 대피소 상태 */
+.spooky-char.panic-look {
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    transform: translateX(80px) !important; /* 구석으로 호다닥 숨어 머리만 보임 */
+}
+#spookyBat.panic-look {
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    transform: translateX(-80px) !important;
+}
+
+/* 눈 두리번두리번 굴리기 애니메이션 */
+.baby-ghost-svg circle[fill="#000000"],
+.baby-bat-svg circle[fill="#000000"] {
+    transform-box: fill-box;
+    transform-origin: center;
+}
+.spooky-char.panic-look .baby-ghost-svg circle[fill="#000000"],
+.spooky-char.panic-look .baby-bat-svg circle[fill="#000000"] {
+    animation: eyes-look-around 0.4s ease-in-out infinite alternate;
+}
+@keyframes eyes-look-around {
+    0% { transform: translateX(-3px); }
+    100% { transform: translateX(3px); }
+}
+
+.speech-bubble {
+    background: #0f0e1a;
+    color: #ffffff;
+    border: 3px solid #2e1b4e;
+    padding: 10px 18px;
+    border-radius: var(--radius-md);
+    font-size: 1.1rem;
+    font-weight: 700;
+    position: relative;
+    box-shadow: 4px 4px 0px #030206;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    font-family: "Share Tech Mono", monospace;
+    white-space: nowrap;
+}
+.spooky-char.show .speech-bubble {
+    opacity: 1;
+    transform: scale(1);
+    transition-delay: 0.4s;
+}
+
+/* 유령 말풍선 꼬리 (왼쪽 방향) */
+#spookyGhost .speech-bubble {
+    margin-left: -10px;
+}
+#spookyGhost .speech-bubble::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: -8px;
+    transform: translateY(-50%);
+    border-width: 8px 8px 8px 0;
+    border-style: solid;
+    border-color: transparent #0f0e1a;
+    display: block;
+    width: 0;
+}
+#spookyGhost .speech-bubble::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: -11px;
+    transform: translateY(-50%);
+    border-width: 11px 11px 11px 0;
+    border-style: solid;
+    border-color: transparent #2e1b4e;
+    display: block;
+    width: 0;
+    z-index: -1;
+}
+
+/* 박쥐 말풍선 꼬리 (오른쪽 방향) */
+#spookyBat .speech-bubble {
+    margin-right: -10px;
+}
+#spookyBat .speech-bubble::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: -8px;
+    transform: translateY(-50%);
+    border-width: 8px 0 8px 8px;
+    border-style: solid;
+    border-color: transparent #0f0e1a;
+    display: block;
+    width: 0;
+}
+#spookyBat .speech-bubble::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: -11px;
+    transform: translateY(-50%);
+    border-width: 11px 0 11px 11px;
+    border-style: solid;
+    border-color: transparent #2e1b4e;
+    display: block;
+    width: 0;
+    z-index: -1;
+}
+
+/* --- 흔들기 & 날갯짓 애니메이션 --- */
+.ghost-hand-g {
+    transform-origin: 72px 58px;
+    animation: ghost-hand-wave-diagonal 0.8s ease-in-out infinite;
+}
+@keyframes ghost-hand-wave-diagonal {
+    0%, 100% {
+        transform: translate(0px, 0px) rotate(-15deg);
+    }
+    50% {
+        transform: translate(8px, -12px) rotate(25deg);
+    }
+}
+
+.bat-wing-left-g {
+    transform-origin: 35px 50px;
+    animation: bat-wing-flap-l 0.6s ease-in-out infinite;
+}
+.bat-wing-right-g {
+    transform-origin: 65px 50px;
+    animation: bat-wing-flap-r 0.6s ease-in-out infinite;
+}
+@keyframes bat-wing-flap-l {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(30deg); }
+}
+@keyframes bat-wing-flap-r {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(-30deg); }
+}
+</style>
 {% endblock %}
 
 {% block scripts %}
@@ -59,6 +437,195 @@
             glow.style.setProperty('--gy', e.clientY + 'px');
         });
     });
+
+    // Web Audio API를 활용한 효과음 합성 재생 장치 (Autoplay 해제 핸들러 탑재)
+    let audioCtx = null;
+    const unlockAudio = () => {
+        if (!audioCtx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (AudioContext) {
+                audioCtx = new AudioContext();
+            }
+        }
+        if (audioCtx) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            // 소리 없는 버퍼 생성 후 즉시 재생하여 브라우저 오디오 시스템 활성화
+            const buffer = audioCtx.createBuffer(1, 1, 22050);
+            const source = audioCtx.createBufferSource();
+            source.buffer = buffer;
+            source.connect(audioCtx.destination);
+            source.start(0);
+        }
+    };
+
+    // 사용자가 화면 어디든 클릭하거나 터치하기만 해도 브라우저 사운드 잠금을 완전히 해제해요!
+    document.addEventListener('click', unlockAudio, { once: true });
+    document.addEventListener('touchstart', unlockAudio, { once: true });
+
+    // Web Audio API를 활용한 고양이 하악질 효과음(캬아아악!) 합성 재생
+    const playHissSound = () => {
+        try {
+            unlockAudio(); // 재생 시점에도 강제로 한 번 더 깨우기 시도
+            if (!audioCtx) return;
+            
+            // 1. 화이트 노이즈 (하악질 바람 소리 "쉬이익")
+            const bufferSize = audioCtx.sampleRate * 0.85;
+            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+            const hissNoise = audioCtx.createBufferSource();
+            hissNoise.buffer = noiseBuffer;
+
+            const hissFilter = audioCtx.createBiquadFilter();
+            hissFilter.type = 'bandpass';
+            hissFilter.frequency.setValueAtTime(2500, audioCtx.currentTime);
+            hissFilter.frequency.exponentialRampToValueAtTime(5000, audioCtx.currentTime + 0.35);
+            hissFilter.Q.value = 3.0;
+
+            const hissGain = audioCtx.createGain();
+            hissGain.gain.setValueAtTime(0, audioCtx.currentTime);
+            hissGain.gain.linearRampToValueAtTime(0.9, audioCtx.currentTime + 0.05); // 빠른 어택
+            hissGain.gain.setValueAtTime(0.9, audioCtx.currentTime + 0.8); // 0.8초 동안 최대 볼륨 유지!
+            hissGain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.83);
+
+            // 2. 비명 공명 오실레이터 (캬아아악의 날카로운 비명 성분 "아아악")
+            const osc = audioCtx.createOscillator();
+            const oscGain = audioCtx.createGain();
+            
+            osc.type = 'sawtooth'; // 거친 톱니파로 화난 느낌 강조
+            osc.frequency.setValueAtTime(900, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1600, audioCtx.currentTime + 0.4); // 주파수가 급상승하는 캬악 비명
+            
+            const oscFilter = audioCtx.createBiquadFilter();
+            oscFilter.type = 'lowpass';
+            oscFilter.frequency.setValueAtTime(2200, audioCtx.currentTime); // 너무 쏘지 않게 깎아줌
+            
+            oscGain.gain.setValueAtTime(0, audioCtx.currentTime);
+            oscGain.gain.linearRampToValueAtTime(0.25, audioCtx.currentTime + 0.08); // 약간 섞어주기
+            oscGain.gain.setValueAtTime(0.25, audioCtx.currentTime + 0.5); // 0.5초 동안 동일 볼륨 유지!
+            oscGain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.53);
+
+            // 연결
+            hissNoise.connect(hissFilter);
+            hissFilter.connect(hissGain);
+            hissGain.connect(audioCtx.destination);
+
+            osc.connect(oscFilter);
+            oscFilter.connect(oscGain);
+            oscGain.connect(audioCtx.destination);
+
+            hissNoise.start();
+            osc.start();
+            hissNoise.stop(audioCtx.currentTime + 0.85);
+            osc.stop(audioCtx.currentTime + 0.85);
+            
+        } catch (err) {
+            console.log("효과음 재생 실패:", err);
+        }
+    };
+
+    // Spooky ghost, bat and cat greetings
+    const ghost = document.getElementById('spookyGhost');
+    const bat = document.getElementById('spookyBat');
+    const catWrap = document.getElementById('catHeroWrap');
+    const screenExp = document.getElementById('screenExplosion');
+    
+    if (ghost && bat && catWrap && screenExp) {
+        const greetings = ["HELLO!", "HI THERE!", "BOO!", "WELCOME!", "WELCOME TO THE DARK!"];
+        let triggerCount = 0;
+        
+        const triggerGreeting = () => {
+            triggerCount++;
+            
+            // 모든 상태 클래스 초기화
+            bat.classList.remove('show', 'spin-mode', 'dash-left', 'panic-look');
+            ghost.classList.remove('show', 'run-away', 'panic-look');
+            catWrap.classList.remove('angry', 'exploded');
+            screenExp.classList.remove('active');
+            
+            // 말풍선 기본 상태
+            ghost.querySelector('.speech-bubble').style.display = 'none';
+            bat.querySelector('.speech-bubble').style.display = 'none';
+
+            // --- 1단계: 유령/박쥐 등장 (0.0초 ~ 4.5초) ---
+            if (triggerCount % 2 !== 0) {
+                // [홀수 번째] 원래대로 동작 (유령 빼고 박쥐만 3초간 등장)
+                setTimeout(() => {
+                    const randBat = greetings[Math.floor(Math.random() * greetings.length)];
+                    bat.querySelector('.speech-bubble').innerText = randBat;
+                    bat.querySelector('.speech-bubble').style.display = 'block';
+                    bat.classList.add('show');
+                }, 1500);
+                
+                setTimeout(() => {
+                    bat.classList.remove('show');
+                    bat.querySelector('.speech-bubble').style.display = 'none';
+                }, 4500);
+            } else {
+                // [짝수 번째] 꼬마유령이 "술래다 도망쳐!!"라고 외치고 박쥐는 2바퀴 회전 -> 4.0초 시점에 유령을 잡으러 왼쪽으로 돌진
+                setTimeout(() => {
+                    ghost.querySelector('.speech-bubble').innerText = "술래다 도망쳐!!";
+                    ghost.querySelector('.speech-bubble').style.display = 'block';
+                    ghost.classList.add('show');
+                    
+                    bat.classList.add('show', 'spin-mode');
+                }, 1500);
+                
+                setTimeout(() => {
+                    bat.classList.add('dash-left');
+                    ghost.classList.add('run-away');
+                }, 4000);
+            }
+
+            // --- 2단계: 고양이 화남 돌입 (9.2초 시점) ---
+            setTimeout(() => {
+                catWrap.classList.add('angry');
+            }, 9200);
+
+            // --- 3단계: 고양이 쾅! 폭발 및 화면전체 폭발 효과 & 유령/박쥐 구석 대피 (10.0초 시점) ---
+            setTimeout(() => {
+                catWrap.classList.remove('angry');
+                catWrap.classList.add('exploded');
+                screenExp.classList.add('active'); // 화면 전체 섬광 및 충격파 퍼짐
+                
+                // 고양이 하악질 소리만 캬아악 재생!
+                playHissSound();
+                
+                // 폭발에 깜짝 놀라서 유령과 박쥐는 구석 대피 모드 작동
+                bat.classList.remove('spin-mode', 'dash-left');
+                ghost.classList.remove('run-away');
+                
+                bat.classList.add('show', 'panic-look');
+                ghost.classList.add('show', 'panic-look');
+                
+                // 놀란 대사 외침
+                ghost.querySelector('.speech-bubble').innerText = "엄마야!";
+                ghost.querySelector('.speech-bubble').style.display = 'block';
+                
+                bat.querySelector('.speech-bubble').innerText = "깜짝이야!";
+                bat.querySelector('.speech-bubble').style.display = 'block';
+            }, 10000);
+
+            // --- 4단계: 고양이 재생 복구 및 유령/박쥐 퇴장 (12.0초 시점) ---
+            setTimeout(() => {
+                catWrap.classList.remove('exploded'); // 고양이 서서히 스르륵 재생
+                screenExp.classList.remove('active');
+                
+                bat.classList.remove('show', 'panic-look');
+                ghost.classList.remove('show', 'panic-look');
+            }, 12000);
+        };
+
+        // 거대한 스토리 사이클(14초 주기)을 돌려요!
+        setTimeout(() => {
+            triggerGreeting();
+            setInterval(triggerGreeting, 14000);
+        }, 1500);
+    }
 })();
 </script>
 {% endblock %}

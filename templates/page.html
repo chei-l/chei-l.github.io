@@ -23,7 +23,7 @@
 
             <div class="article-content">{{ content }}</div>
 
-            {% if page.tags %}
+            {% if page is defined and page.tags %}
             <footer class="article-footer">
                 <div class="article-tags">
                     {% for tag in page.tags %}

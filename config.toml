@@ -3,7 +3,7 @@
 # =============================================================================
 
 title = "체리냥"
-description = "개발, 일상, 그리고 다양한 이야기들을 기록하는 블로그입니다. 🌸"
+description = "개발, 일상, 그리고 다양한 이야기들을 기록하는 블로그입니다."
 base_url = ""
 
 # =============================================================================
@@ -213,15 +213,15 @@ output_dir = "public"
 # Uses vendored stb libraries — no external tools required.
 # Use resize_image() in templates to generate responsive variants.
 
-# [image_processing]
-# enabled = true
-# widths = [320, 640, 1024, 1280]
-# quality = 85
-#
-# [image_processing.lqip]
-# enabled = true
-# width = 32             # Placeholder width in pixels (8-128)
-# quality = 20           # JPEG quality for placeholder (1-100, lower = smaller)
+[image_processing]
+enabled = true
+widths = [320, 640, 1024, 1280]
+quality = 85
+
+[image_processing.lqip]
+enabled = true
+width = 32             # Placeholder width in pixels (8-128)
+quality = 20           # JPEG quality for placeholder (1-100, lower = smaller)
 
 # =============================================================================
 # Auto OG Images (Optional)
