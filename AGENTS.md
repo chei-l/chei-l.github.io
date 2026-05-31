@@ -329,6 +329,19 @@ Create `templates/shortcodes/alert.html`:
 </div>
 ```
 
+## Design Customization Skill (사이트 디자인 변경 스킬)
+
+이 저장소에는 사이트 레이아웃과 콘텐츠를 유지하면서 디자인만 완전히 다르게 바꾸는 마법 스킬 가이드가 정의되어 있습니다.
+
+### 스킬 실행 안내
+- **스킬 지침서 경로**: [.agents/skills/change-design/SKILL.md](.agents/skills/change-design/SKILL.md)
+- **사용 시점**: 사용자가 블로그의 분위기나 디자인 테마를 바꾸고 싶어 할 때 이 지침서를 불러와서 그대로 실행합니다.
+- **핵심 약속**:
+  1. **쉬운 한글 사용 (초등학생 대상)**: 블로그 주인인 초등학생 친구가 쉽게 이해할 수 있도록 모든 대화와 설명은 친근하고 쉬운 한글을 사용합니다.
+  2. **그라데이션 금지**: 입체적이거나 흐릿하게 변하는 그라데이션 색상 효과(`linear-gradient`, `radial-gradient` 등)는 절대 사용하지 않고, 쨍하고 선명한 **단색(Solid Color)**만 사용합니다.
+  3. **이모지 금지**: 화면 디자인, 소스 코드, AI 비서와의 대화에 이모지 문자(예: 🌸, 🌌 등)를 일절 섞어 쓰지 않습니다.
+  4. **과감한 디자인**: 굵은 검정 테두리, 강한 색상 대비 등 아주 재미있고 개성 넘치는 과감한 연출을 유도합니다.
+
 ## Notes for AI Agents
 
 1. **Always preserve front matter** when editing content files
