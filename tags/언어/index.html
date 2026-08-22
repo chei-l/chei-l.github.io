@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>언어 - tags - 체리냥</title>
+    <meta name="description" content="개발, 일상, 그리고 다양한 이야기들을 기록하는 블로그입니다.">
+
+    <!-- OpenGraph & Twitter Cards -->
+    <meta property="og:title" content="Tags: 언어">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="/tags/%EC%96%B8%EC%96%B4/">
+  <meta property="og:description" content="개발, 일상, 그리고 다양한 이야기들을 기록하는 블로그입니다.">
+  <meta property="og:image" content="/images/og-default.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Tags: 언어">
+  <meta name="twitter:description" content="개발, 일상, 그리고 다양한 이야기들을 기록하는 블로그입니다.">
+  <meta name="twitter:image" content="/images/og-default.png">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Share+Tech+Mono&family=Nanum+Myeongjo:wght@700;800&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%230d0b14%22/><polygon points=%2250,15 85,50 50,85 15,50%22 fill=%22%23ff003c%22 stroke=%22%23a044ff%22 stroke-width=%228%22/></svg>">
+
+    
+    <style>
+        /* 페이지 전환 오버레이 (유령이 박쥐 날개 잡고 횡단) */
+        .page-transition-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            pointer-events: none;
+            background: transparent;
+            display: none;
+            align-items: center;
+            overflow: hidden;
+        }
+        .page-transition-overlay.active {
+            display: flex;
+        }
+        .flying-couple {
+            position: absolute;
+            left: -350px;
+            top: 45%;
+            transform: translateY(-50%);
+        }
+        .page-transition-overlay.fly-right .flying-couple {
+            animation: ghost-bat-fly-right 3.0s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+        @keyframes ghost-bat-fly-right {
+            0% {
+                left: -350px;
+                transform: translateY(-50%) rotate(0deg) scale(0.85);
+            }
+            15% {
+                transform: translateY(-40%) rotate(10deg) scale(1.05);
+            }
+            50% {
+                transform: translateY(-60%) rotate(-12deg) scale(1.20);
+            }
+            85% {
+                transform: translateY(-45%) rotate(8deg) scale(1.00);
+            }
+            100% {
+                left: calc(100vw + 350px);
+                transform: translateY(-50%) rotate(0deg) scale(0.9);
+            }
+        }
+        .page-transition-overlay.fly-left .flying-couple {
+            animation: ghost-bat-fly-left 3.0s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+        @keyframes ghost-bat-fly-left {
+            0% {
+                left: calc(100vw + 350px);
+                transform: translateY(-50%) scaleX(-1) rotate(0deg) scale(0.85);
+            }
+            15% {
+                transform: translateY(-40%) scaleX(-1) rotate(10deg) scale(1.05);
+            }
+            50% {
+                transform: translateY(-60%) scaleX(-1) rotate(-12deg) scale(1.20);
+            }
+            85% {
+                transform: translateY(-45%) scaleX(-1) rotate(8deg) scale(1.00);
+            }
+            100% {
+                left: -350px;
+                transform: translateY(-50%) scaleX(-1) rotate(0deg) scale(0.9);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 페이지 전환 오버레이 (유령이 박쥐 날개 잡고 건너편 날아가기) -->
+    <div id="pageTransitionOverlay" class="page-transition-overlay">
+        <div class="flying-couple">
+            <svg width="300" height="200" viewBox="0 0 150 100" class="flying-svg">
+                <!-- 박쥐 (오른쪽 위) -->
+                <g class="flying-bat" transform="translate(60, 10)">
+                    <!-- 왼쪽 날개 -->
+                    <path d="M 20,25 C 0,10 -10,20 2,35 C 7,30 12,27 15,25" fill="#a044ff" stroke="#2e1b4e" stroke-width="2"/>
+                    <!-- 오른쪽 날개 -->
+                    <path d="M 40,25 C 60,10 70,20 58,35 C 53,30 48,27 45,25" fill="#a044ff" stroke="#2e1b4e" stroke-width="2"/>
+                    <!-- 몸통 -->
+                    <path d="M 25,20 C 20,20 18,25 18,30 C 18,38 23,43 30,43 C 37,43 42,38 42,30 C 42,25 40,20 35,20 Z" fill="#231b42" stroke="#2e1b4e" stroke-width="2"/>
+                    <!-- 귀 -->
+                    <path d="M 20,22 L 13,5 L 25,18 Z" fill="#a044ff" stroke="#2e1b4e" stroke-width="1.5"/>
+                    <path d="M 40,22 L 47,5 L 35,18 Z" fill="#a044ff" stroke="#2e1b4e" stroke-width="1.5"/>
+                    <!-- 빨간 눈 -->
+                    <circle cx="26" cy="27" r="2.5" fill="#ff003c"/>
+                    <circle cx="34" cy="27" r="2.5" fill="#ff003c"/>
+                    <!-- 송곳니 입 -->
+                    <path d="M 27,33 Q 30,37 33,33" fill="none" stroke="#2e1b4e" stroke-width="1.5"/>
+                    <polygon points="28,34 29,37 30,34" fill="#ffffff"/>
+                    <polygon points="32,34 31,37 30,34" fill="#ffffff"/>
+                </g>
+                <!-- 유령 (왼쪽 아래, 오른손 뻗어서 박쥐 날개 잡기) -->
+                <g class="flying-ghost" transform="translate(15, 35)">
+                    <!-- 유령 몸통 -->
+                    <path d="M 15,30 A 15,15 0 0,1 45,30 C 45,45 48,50 42,53 C 36,55 33,50 30,53 C 27,50 24,55 18,53 C 12,50 15,45 15,30 Z" fill="#ffffff" stroke="#2e1b4e" stroke-width="2"/>
+                    <!-- 눈 -->
+                    <circle cx="24" cy="27" r="5.5" fill="#ffffff" stroke="#2e1b4e" stroke-width="2"/>
+                    <circle cx="24" cy="27" r="3" fill="#000000"/>
+                    <circle cx="36" cy="27" r="5.5" fill="#ffffff" stroke="#2e1b4e" stroke-width="2"/>
+                    <circle cx="36" cy="27" r="3" fill="#000000"/>
+                    <!-- 입 -->
+                    <path d="M 28,36 Q 30,42 32,36 Z" fill="#ff003c" stroke="#2e1b4e" stroke-width="1"/>
+                    <!-- 길게 뻗은 오른손 (박쥐 쪽으로) -->
+                    <path d="M 42,34 Q 55,18 53,15 C 50,12 40,28 38,32" fill="#ffffff" stroke="#2e1b4e" stroke-width="2"/>
+                    <!-- 왼손은 아래로 대롱대롱 -->
+                    <path d="M 16,35 Q 5,42 7,45 Q 9,48 18,38 Z" fill="#ffffff" stroke="#2e1b4e" stroke-width="2"/>
+                </g>
+            </svg>
+        </div>
+    </div>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-inner">
+                <a href="/" class="logo">
+                    <span class="logo-icon"><img src="/img/logo.png"></span>
+                    체리냥
+                </a>
+                <nav class="nav">
+                    <a href="/" class="nav-link">홈</a>
+                    <a href="/posts/" class="nav-link">블로그</a>
+                    <a href="/games/" class="nav-link">게임</a>
+                    <a href="/drawings/" class="nav-link">그림</a>
+                    <a href="/ai_drawings/" class="nav-link">AI그림</a>
+                    <a href="/about/" class="nav-link">소개</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        
+<div class="container">
+    <div class="taxonomy-header">
+        <h1 class="taxonomy-title">언어</h1>
+        <p class="taxonomy-count">tags의 포스트 목록</p>
+    </div>
+
+    
+    <div class="empty-state">
+        <div class="empty-state-emoji">🔍</div>
+        <h3 class="empty-state-title">포스트를 찾을 수 없어요</h3>
+        <p class="empty-state-description">
+            이 tags에는 아직 포스트가 없습니다.
+        </p>
+    </div>
+     
+
+    <div class="mt-xl text-center">
+        <a href="/tags/" class="btn btn-secondary"
+            >← 모든 tags 보기</a
+        >
+    </div>
+</div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-inner">
+                <div class="footer-logo">[ 체리냥 ]</div>
+                <div class="footer-links">
+                    <a href="/rss.xml">RSS</a>
+                    <a href="/sitemap.xml">Sitemap</a>
+                </div>
+                <p class="footer-copyright">© 2026 체리냥. All rights reserved.</p>
+                <p class="footer-powered">Powered by <a href="https://github.com/hahwul/hwaro" target="_blank">Hwaro</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Syntax Highlighting -->
+    
+
+    <!-- Back to Top Button -->
+    <button class="back-to-top" id="backToTop" aria-label="맨 위로">↑</button>
+
+    <script>
+        // Back to top button
+        const backToTop = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                backToTop.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+            }
+        });
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // 페이지 전환시 슝슝(Whoosh) 효과음 재생
+        (function() {
+            let audioCtx = null;
+            const playWhoosh = () => {
+                return new Promise((resolve) => {
+                    try {
+                        const AudioContext = window.AudioContext || window.webkitAudioContext;
+                        if (!AudioContext) {
+                            resolve();
+                            return;
+                        }
+                        if (!audioCtx) {
+                            audioCtx = new AudioContext();
+                        }
+                        if (audioCtx.state === 'suspended') {
+                            audioCtx.resume();
+                        }
+
+                        // 슝슝 바람을 가르는 Whoosh 효과음 합성 (3.0초 분량)
+                        const bufferSize = audioCtx.sampleRate * 3.0;
+                        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                        const output = noiseBuffer.getChannelData(0);
+                        for (let i = 0; i < bufferSize; i++) {
+                            output[i] = Math.random() * 2 - 1;
+                        }
+                        const noise = audioCtx.createBufferSource();
+                        noise.buffer = noiseBuffer;
+
+                        const filter = audioCtx.createBiquadFilter();
+                        filter.type = 'bandpass';
+                        // 3초에 맞추어 주파수 변화를 완만하고 길게 연장
+                        filter.frequency.setValueAtTime(200, audioCtx.currentTime);
+                        filter.frequency.exponentialRampToValueAtTime(2000, audioCtx.currentTime + 1.2);
+                        filter.frequency.exponentialRampToValueAtTime(250, audioCtx.currentTime + 2.8);
+                        filter.Q.setValueAtTime(3.5, audioCtx.currentTime);
+
+                        const gain = audioCtx.createGain();
+                        gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                        gain.gain.linearRampToValueAtTime(0.85, audioCtx.currentTime + 0.1);
+                        gain.gain.setValueAtTime(0.85, audioCtx.currentTime + 2.9); // 소리가 끝날 때까지 똑같은 볼륨 유지!
+                        gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 3.0);
+
+                        noise.connect(filter);
+                        filter.connect(gain);
+                        gain.connect(audioCtx.destination);
+
+                        noise.start();
+                        noise.stop(audioCtx.currentTime + 3.0);
+
+                        // 소리가 3초 동안 충분히 재생되도록 2.8초 대기 후 이동 약속(resolve) 수행
+                        setTimeout(resolve, 2800);
+                    } catch (e) {
+                        console.log("Whoosh 재생 실패:", e);
+                        resolve();
+                    }
+                });
+            };
+
+            // 내부 모든 페이지 이동 링크 클릭을 낚아채어 슝슝 소리 출력 및 유령+박쥐 이동 애니메이션
+            document.addEventListener('click', function(e) {
+                const link = e.target.closest('a');
+                if (!link) return;
+
+                const href = link.getAttribute('href');
+                if (!href || href.startsWith('#') || href.startsWith('javascript:') || link.getAttribute('target') === '_blank') {
+                    return;
+                }
+
+                // 외부 사이트 이동이 아닌 동일 사이트 내 메뉴 이동 시에만 작동
+                const isInternal = href.startsWith('/') || href.startsWith(window.location.origin) || !href.includes('://');
+                if (isInternal) {
+                    e.preventDefault();
+                    
+                    // 메뉴 인덱스 매핑: 홈=0, 블로그=1, 게임=2, 그림=3, AI그림=4, 소개=5
+                    const menuPaths = [
+                        '/',
+                        '/posts/',
+                        '/games/',
+                        '/drawings/',
+                        '/ai_drawings/',
+                        '/about/'
+                    ];
+                    
+                    // 현재 활성화된 메뉴 찾기
+                    const activeLink = document.querySelector('.nav-link.active');
+                    let currentIndex = 0;
+                    if (activeLink) {
+                        const activeHref = activeLink.getAttribute('href');
+                        currentIndex = menuPaths.findIndex(p => activeHref.includes(p) || (activeHref === '/' && p === '/'));
+                        if (currentIndex === -1) currentIndex = 0;
+                    }
+                    
+                    // 클릭한 메뉴의 인덱스 알아내기
+                    let targetIndex = 0;
+                    const tempA = document.createElement('a');
+                    tempA.href = href;
+                    const targetPath = tempA.pathname;
+                    
+                    targetIndex = menuPaths.findIndex(p => targetPath === p || targetPath.startsWith(p));
+                    if (targetIndex === -1) targetIndex = 0;
+                    
+                    // 애니메이션 오버레이 켜기 및 방향 클래스 지정 (가는 방향으로 유령과 박쥐가 날아감)
+                    const overlay = document.getElementById('pageTransitionOverlay');
+                    if (overlay) {
+                        overlay.classList.remove('fly-right', 'fly-left', 'active');
+                        
+                        // 현재 메뉴보다 대상 메뉴가 오른쪽에 있으면 오른쪽으로 날아가고, 왼쪽에 있으면 왼쪽으로 날아감
+                        if (targetIndex >= currentIndex) {
+                            overlay.classList.add('fly-right');
+                        } else {
+                            overlay.classList.add('fly-left');
+                        }
+                        
+                        // 강제 리플로우로 애니메이션 리셋 트리거
+                        void overlay.offsetWidth;
+                        overlay.classList.add('active');
+                    }
+                    
+                    playWhoosh().then(() => {
+                        window.location.href = href;
+                    });
+                }
+            });
+        })();
+    </script>
+
+    
+</body>
+</html>

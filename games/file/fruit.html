@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Fruit Collecting Game</title>
+    <style>
+        body { margin: 0; overflow: hidden; } /* 스크롤바 제거 */
+        canvas { display: block; }
+        #ui { position: absolute; top: 10px; left: 10px; color: white; font-family: 'Inter', sans-serif; font-size: 1.2em; text-shadow: 2px 2px 4px rgba(0,0,0,0.7); }
+        #game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8); /* 배경을 더 어둡게 */
+            color: white;
+            font-family: 'Inter', sans-serif;
+            text-align: center;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100; /* UI보다 위에 오도록 */
+        }
+        #game-over h1 { font-size: 5em; margin: 0; text-shadow: 3px 3px 6px rgba(0,0,0,0.9); }
+        #game-over p { font-size: 1.5em; margin-top: 10px; }
+        #game-over button {
+            font-size: 1.5em;
+            padding: 15px 30px;
+            margin-top: 30px;
+            cursor: pointer;
+            background-color: #4CAF50; /* 멋진 초록색 버튼 */
+            color: white;
+            border: none;
+            border-radius: 15px; /* 둥근 모서리 */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); /* 그림자 */
+            transition: all 0.3s ease; /* 부드러운 전환 효과 */
+        }
+        #game-over button:hover {
+            background-color: #45a049;
+            transform: translateY(-3px); /* 호버 시 살짝 위로 */
+            box-shadow: 0 8px 20px rgba(0,0,0,0.7);
+        }
+        #skills {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.1em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+            display: flex;
+            flex-direction: column;
+            gap: 5px; /* 스킬 항목 간 간격 */
+        }
+        .skill-item {
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-width: 200px; /* 최소 너비 설정 */
+        }
+        .skill-name {
+            font-weight: bold;
+        }
+        .skill-count {
+            color: #ffeb3b; /* 노란색으로 강조 */
+        }
+        .skill-timer {
+            font-size: 0.9em;
+            color: #8bc34a; /* 연두색으로 타이머 표시 */
+            margin-left: 10px;
+        }
+        #house-build-ui {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: yellow;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+            display: none; /* 초기에는 숨김 */
+        }
+        #bed-interact-ui {
+            position: absolute;
+            bottom: 10%; /* 화면 하단 중앙에 가깝게 */
+            left: 50%;
+            transform: translateX(-50%);
+            color: yellow;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+            display: none; /* 초기에는 숨김 */
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+    </style>
+    <!-- Inter 폰트 로드 (Tailwind CSS는 사용하지 않지만, 폰트만 가져옴) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+</head>
+<body>
+    <div id="ui">Score: 0 | Health: 5 | Trees: 0 | Meat: 0</div>
+    <div id="skills">
+        <!-- 스킬 UI는 JavaScript로 동적으로 생성될 예정 -->
+    </div>
+    <div id="game-over">
+        <h1>Game Over!</h1>
+        <p>Your Score: <span id="final-score">0</span></p>
+        <button id="restart">Restart</button>
+    </div>
+    <div id="house-build-ui">
+        나무 10개 모아서 집 짓기! (H 키)
+    </div>
+    <div id="bed-interact-ui">
+        잠자기 (E 키)
+    </div>
+    <script>
+        // Modified PointerLockControls
+        class PointerLockControls extends THREE.EventDispatcher {
+            constructor(object, domElement) {
+                super();
+                this.object = object;
+                this.domElement = domElement;
+                this.isLocked = false;
+                this.minPolarAngle = 0;
+                this.maxPolarAngle = Math.PI;
+                this.pointerSpeed = 1.0;
+                this.euler = new THREE.Euler(0, 0, 0, 'YXZ');
+                this.connect();
+            }
+            connect() {
+                this.domElement.ownerDocument.addEventListener('mousemove', this.onMouseMove.bind(this));
+                this.domElement.ownerDocument.addEventListener('pointerlockchange', this.onPointerlockChange.bind(this));
+                this.domElement.ownerDocument.addEventListener('pointerlockerror', this.onPointerlockError.bind(this));
+            }
+            disconnect() {
+                this.domElement.ownerDocument.removeEventListener('mousemove', this.onMouseMove.bind(this));
+                this.domElement.ownerDocument.removeEventListener('pointerlockchange', this.onPointerlockChange.bind(this));
+                this.domElement.ownerDocument.removeEventListener('pointerlockerror', this.onPointerlockError.bind(this));
+            }
+            dispose() {
+                this.disconnect();
+            }
+            getObject() {
+                return this.object;
+            }
+            getDirection(v) {
+                return v.set(0, 0, -1).applyQuaternion(this.object.quaternion);
+            }
+            moveForward(distance) {
+                const vec = new THREE.Vector3();
+                vec.setFromMatrixColumn(this.object.matrix, 0);
+                vec.crossVectors(this.object.up, vec);
+                this.object.position.addScaledVector(vec, distance);
+            }
+            moveRight(distance) {
+                const vec = new THREE.Vector3();
+                vec.setFromMatrixColumn(this.object.matrix, 0);
+                this.object.position.addScaledVector(vec, distance);
+            }
+            lock() {
+                this.domElement.requestPointerLock();
+            }
+            unlock() {
+                this.domElement.ownerDocument.exitPointerLock();
+            }
+            onMouseMove(event) {
+                if (!this.isLocked) return;
+                const movementX = event.movementX || 0;
+                const movementY = event.movementY || 0;
+                this.euler.setFromQuaternion(this.object.quaternion);
+                this.euler.y -= movementX * 0.002 * this.pointerSpeed;
+                this.euler.x -= movementY * 0.002 * this.pointerSpeed;
+                this.euler.x = Math.max(this.minPolarAngle, Math.min(this.maxPolarAngle, this.euler.x));
+                this.object.quaternion.setFromEuler(this.euler);
+                this.dispatchEvent({ type: 'change' });
+            }
+            onPointerlockChange() {
+                if (this.domElement.ownerDocument.pointerLockElement === this.domElement) {
+                    this.dispatchEvent({ type: 'lock' });
+                    this.isLocked = true;
+                } else {
+                    this.dispatchEvent({ type: 'unlock' });
+                    this.isLocked = false;
+                }
+            }
+            onPointerlockError() {
+                console.error('Unable to use Pointer Lock API');
+            }
+        }
+
+        // Scene 설정
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        // characterCamera 선언 추가
+        const characterCamera = new THREE.PerspectiveCamera(75, 1, 0.1, 100); // 1:1 종횡비, 작은 뷰포트용
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        // 플레이어 객체
+        const player = new THREE.Group();
+        scene.add(player);
+
+        // GLTFLoader로 캐릭터 로드 (인간 모델로 변경)
+        let playerModel; // 캐릭터 모델을 전역 변수로 선언하여 다른 함수에서 접근 가능하도록 함
+        const loader = new THREE.GLTFLoader();
+        let mixer; // AnimationMixer
+        let actions = {}; // 애니메이션 액션
+        let currentAction; // 현재 애니메이션
+        // 인간형 GLTF 모델 URL로 변경 (Three.js 예제 로봇 모델 사용)
+        loader.load('https://cdn.jsdelivr.net/gh/mrdoob/three.js@dev/examples/models/gltf/RobotExpressive/RobotExpressive.glb', (gltf) => {
+            playerModel = gltf.scene; // 전역 변수에 할당
+            playerModel.scale.set(0.5, 0.5, 0.5); // 로봇 모델에 맞게 크기 조정
+            playerModel.position.y = 0; // 위치 조정
+            playerModel.rotation.y = Math.PI; // 뒷모습으로 회전 (필요에 따라 조정)
+            playerModel.traverse((child) => {
+                if (child.isMesh) child.castShadow = true;
+            });
+            player.add(playerModel);
+            console.log('Character model loaded');
+
+            // 애니메이션 설정
+            mixer = new THREE.AnimationMixer(playerModel); // mixer를 playerModel에 연결
+            const clips = gltf.animations;
+            if (clips && clips.length > 0) {
+                clips.forEach((clip) => {
+                    actions[clip.name] = mixer.clipAction(clip);
+                });
+                // 로봇 모델의 애니메이션 이름에 맞춰서 설정
+                currentAction = actions['Idle']; // 기본 Idle 애니메이션
+                if (currentAction) currentAction.play();
+            } else {
+                console.log("Human model has no animations.");
+                mixer = null; // 애니메이션이 없으면 mixer를 null로 설정하여 업데이트 시도 방지
+            }
+        }, undefined, (error) => {
+            console.error('Model load error:', error);
+        });
+
+        // 카메라를 플레이어에 추가 (3인칭 시점, 뒤에서 봄)
+        player.add(camera);
+        camera.position.set(0, 2, 5);
+        camera.lookAt(0, 1, 0);
+
+        // PointerLockControls
+        const controls = new PointerLockControls(player, document.body);
+
+        document.addEventListener('click', () => {
+            controls.lock();
+        });
+
+        // 조명 (기존 directionalLight는 sunLight로 대체됨)
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+
+        // 바닥
+        const textureLoader = new THREE.TextureLoader();
+        const floorTexture = textureLoader.load('https://threejs.org/examples/textures/terrain/grasslight-big.jpg');
+        floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
+        floorTexture.repeat.set(10, 10);
+        const floorGeometry = new THREE.PlaneGeometry(100, 100);
+        const floorMaterial = new THREE.MeshStandardMaterial({ map: floorTexture });
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        // 물리 변수
+        const velocity = new THREE.Vector3();
+        const direction = new THREE.Vector3();
+        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+        const jumpVelocity = 5;
+        let isOnGround = true;
+        const gravity = 9.8;
+        let health = 5;
+        let score = 0;
+        let gameOver = false;
+
+        // 맵 경계 ( -50 ~ 50 )
+        const mapSize = 50;
+
+        // 스킬 관련
+        const skills = Array(9).fill(0); // 1-9 스킬 사용 횟수
+        const skillNames = ["스피드", "점프", "무적", "순간이동", "적 멈춤", "과일 끌어당김", "체력 회복", "점수 2배", "폭탄"];
+        let skillItems = []; // 스킬 아이템 (황색 구)
+        function createSkillItems() {
+            skillItems = [];
+            for (let i = 0; i < 20; i++) { // 20개 아이템
+                const itemGeometry = new THREE.SphereGeometry(0.3, 16, 16);
+                const itemMaterial = new THREE.MeshStandardMaterial({ color: 0xffff00 });
+                const item = new THREE.Mesh(itemGeometry, itemMaterial);
+                item.position.set(Math.random() * 100 - 50, 1, Math.random() * 100 - 50);
+                item.userData.skillType = Math.floor(Math.random() * 9); // 0-8 (1-9 스킬)
+                item.castShadow = true;
+                scene.add(item);
+                skillItems.push(item);
+            }
+        }
+        createSkillItems();
+
+        // 스킬 효과 타이머/상태
+        let speedBoost = 1; // 기본 속도 배율
+        let jumpBoost = 1; // 점프 배율
+        let invincible = false;
+        let freezeEnemies = false;
+        let attractFruits = false;
+        let doubleScore = false;
+        // activeSkills: { skillIndex: { endTime: number, uiElement: HTMLElement } }
+        let activeSkills = {};
+
+        // 입자 시스템으로 스킬 효과 (멋지게)
+        function createParticleEffect(position, color = 0xffffff) {
+            const particles = new THREE.BufferGeometry();
+            const particleCount = 50;
+            const posArray = new Float32Array(particleCount * 3);
+            for (let i = 0; i < particleCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 2;
+            }
+            particles.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+            const material = new THREE.PointsMaterial({ color: color, size: 0.1 });
+            const particleSystem = new THREE.Points(particles, material);
+            particleSystem.position.copy(position);
+            scene.add(particleSystem);
+
+            // 애니메이션: 입자 퍼뜨리기
+            const animateParticles = () => {
+                const positions = particleSystem.geometry.attributes.position.array;
+                for (let i = 0; i < positions.length; i += 3) {
+                    positions[i] += (Math.random() - 0.5) * 0.1;
+                    positions[i + 1] += Math.random() * 0.2;
+                    positions[i + 2] += (Math.random() - 0.5) * 0.1;
+                }
+                particleSystem.geometry.attributes.position.needsUpdate = true;
+            };
+
+            // 2초 후 제거
+            setTimeout(() => {
+                scene.remove(particleSystem);
+            }, 2000);
+
+            // 루프에서 호출할 함수 반환 (애니메이션 루프에서 호출)
+            return animateParticles;
+        }
+
+        let particleAnimators = []; // 입자 애니메이터 배열
+
+        // 키 입력 (이동 + 스킬 1-9)
+        document.addEventListener('keydown', (event) => {
+            if (gameOver) return;
+            switch (event.code) {
+                case 'KeyW': moveForward = true; break;
+                case 'KeyS': moveBackward = true; break;
+                case 'KeyA': moveLeft = true; break;
+                case 'KeyD': moveRight = true; break;
+                case 'Space': if (isOnGround) { velocity.y = jumpVelocity * jumpBoost; isOnGround = false; } break;
+                case 'Digit1': useSkill(0); break; // 스피드
+                case 'Digit2': useSkill(1); break; // 점프
+                case 'Digit3': useSkill(2); break; // 무적
+                case 'Digit4': useSkill(3); break; // 순간이동
+                case 'Digit5': useSkill(4); break; // 적 멈춤
+                case 'Digit6': useSkill(5); break; // 과일 끌어당김
+                case 'Digit7': useSkill(6); break; // 체력 회복
+                case 'Digit8': useSkill(7); break; // 점수 2배
+                case 'Digit9': useSkill(8); break; // 폭탄
+                case 'KeyH': buildHouse(); break; // H 키로 집 짓기
+                case 'KeyE': // E 키로 침대 상호작용
+                    if (isNearBed) {
+                        sleep();
+                    }
+                    break;
+            }
+            updateAnimation(); // 이동 키 입력 시 애니메이션 업데이트
+        });
+        document.addEventListener('keyup', (event) => {
+            switch (event.code) {
+                case 'KeyW': moveForward = false; break;
+                case 'KeyS': moveBackward = false; break;
+                case 'KeyA': moveLeft = false; break;
+                case 'KeyD': moveRight = false; break;
+            }
+            updateAnimation(); // 키 업 시 애니메이션 업데이트
+        });
+
+        // 스킬 사용 함수 (입자 효과 추가)
+        function useSkill(index) {
+            if (skills[index] > 0) {
+                skills[index]--;
+                updateSkillsUI();
+
+                // 스킬 사용 시 입자 효과 (멋지게, 색상 다르게)
+                let effectColor;
+                let duration = 0; // 스킬 지속 시간 (초)
+                switch (index) {
+                    case 0: effectColor = 0x00ff00; speedBoost = 2; duration = 5; break; // 스피드
+                    case 1: effectColor = 0x0000ff; jumpBoost = 2; duration = 5; break; // 점프
+                    case 2: effectColor = 0xffff00; invincible = true; duration = 5; break; // 무적
+                    case 3: effectColor = 0xff00ff; player.position.set(Math.random() * 80 - 40, 0, Math.random() * 80 - 40); break; // 순간이동 (즉시 발동)
+                    case 4: effectColor = 0x00ffff; freezeEnemies = true; duration = 5; break; // 적 멈춤
+                    case 5: effectColor = 0xffa500; attractFruits = true; duration = 3; break; // 과일 끌어당김
+                    case 6: effectColor = 0xff0000; health = Math.min(health + 2, 5); updateUI(); break; // 체력 회복 (즉시 발동)
+                    case 7: effectColor = 0xffffff; doubleScore = true; duration = 10; break; // 점수 2배
+                    case 8: effectColor = 0x808080; // 폭탄 (즉시 발동)
+                        // 폭탄 범위 내의 적들을 찾아서 제거하고 새로 생성
+                        const enemiesToBomb = [];
+                        enemies.forEach((enemy) => {
+                            if (player.position.distanceTo(enemy.position) < 10) {
+                                enemiesToBomb.push(enemy);
+                            }
+                        });
+                        enemiesToBomb.forEach(enemy => {
+                            createMeat(enemy.position); // 폭탄으로 제거된 적은 고기 생성
+                            respawnEnemy(enemy); // 새로운 적을 생성하여 대체
+                        });
+                        break;
+                }
+                const animator = createParticleEffect(player.position, effectColor);
+                particleAnimators.push(animator);
+
+                // 지속 시간이 있는 스킬은 activeSkills에 추가
+                if (duration > 0) {
+                    // 기존 스킬 효과가 있다면 제거 (새로운 효과 적용을 위해)
+                    if (activeSkills[index]) {
+                        clearTimeout(activeSkills[index].timeoutId);
+                        // UI 요소도 제거 (새로 만들 것이므로)
+                        if (activeSkills[index].uiElement) {
+                            activeSkills[index].uiElement.remove();
+                        }
+                    }
+
+                    const skillEndTime = Date.now() + duration * 1000;
+                    const skillTimeoutId = setTimeout(() => {
+                        // 스킬 효과 종료
+                        switch (index) {
+                            case 0: speedBoost = 1; break;
+                            case 1: jumpBoost = 1; break;
+                            case 2: invincible = false; break;
+                            case 4: freezeEnemies = false; break;
+                            case 5: attractFruits = false; break;
+                            case 7: doubleScore = false; break;
+                        }
+                        delete activeSkills[index]; // activeSkills에서 제거
+                        updateSkillsUI(); // UI 업데이트
+                    }, duration * 1000);
+
+                    // activeSkills에 스킬 정보와 UI 요소 저장
+                    activeSkills[index] = {
+                        endTime: skillEndTime,
+                        timeoutId: skillTimeoutId,
+                        uiElement: null // UI 요소는 updateSkillsUI에서 생성
+                    };
+                }
+            }
+        }
+
+        // 과일 종류 정의
+        const fruitTypes = [
+            { name: "빨간 사과", geometry: new THREE.SphereGeometry(0.5, 32, 32), material: new THREE.MeshStandardMaterial({ color: 0xff0000, roughness: 0.5 }) },
+            { name: "바나나", geometry: new THREE.CylinderGeometry(0.2, 0.2, 1.5, 16), material: new THREE.MeshStandardMaterial({ color: 0xffff00, roughness: 0.5 }), rotation: new THREE.Euler(0, 0, Math.PI / 2) },
+            { name: "복숭아", geometry: new THREE.SphereGeometry(0.6, 32, 32), material: new THREE.MeshStandardMaterial({ color: 0xffa07a, roughness: 0.5 }) },
+            { name: "초록 사과", geometry: new THREE.SphereGeometry(0.5, 32, 32), material: new THREE.MeshStandardMaterial({ color: 0x00ff00, roughness: 0.5 }) }
+        ];
+
+        let fruits = [];
+        function createFruits() {
+            fruits = [];
+            for (let i = 0; i < 10; i++) {
+                const fruitDef = fruitTypes[Math.floor(Math.random() * fruitTypes.length)]; // 랜덤으로 과일 종류 선택
+                const fruit = new THREE.Mesh(fruitDef.geometry, fruitDef.material);
+
+                if (fruitDef.rotation) {
+                    fruit.rotation.copy(fruitDef.rotation);
+                }
+
+                fruit.position.set(Math.random() * 100 - 50, 1, Math.random() * 100 - 50);
+                fruit.castShadow = true;
+                fruit.userData.type = fruitDef.name;
+                scene.add(fruit);
+                fruits.push(fruit);
+            }
+        }
+        createFruits();
+
+        // 적
+        let enemies = [];
+        const initialEnemyCount = { box: 5, pyramid: 3 }; // 초기 적 개수 설정
+
+        // 단일 적을 생성하고 추가하는 함수
+        function createSingleEnemy(type) {
+            let enemy;
+            if (type === 'box') {
+                const enemyGeometry = new THREE.BoxGeometry(1, 1, 1);
+                const enemyMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff, roughness: 0.2 });
+                enemy = new THREE.Mesh(enemyGeometry, enemyMaterial);
+                enemy.position.set(Math.random() * 100 - 50, 0.5, Math.random() * 100 - 50);
+                enemy.userData = { type: 'box', velocity: Math.random() > 0.5 ? 1 : -1 };
+            } else { // pyramid
+                const enemyGeometry = new THREE.ConeGeometry(0.7, 1.5, 32);
+                const enemyMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00, roughness: 0.2 });
+                enemy = new THREE.Mesh(enemyGeometry, enemyMaterial);
+                enemy.position.set(Math.random() * 100 - 50, 0.75, Math.random() * 100 - 50);
+                enemy.userData = {
+                    type: 'pyramid',
+                    center: new THREE.Vector3(enemy.position.x, enemy.position.y, enemy.position.z),
+                    radius: 5 + Math.random() * 5,
+                    angle: Math.random() * Math.PI * 2,
+                    speed: 0.5 + Math.random() * 0.5
+                };
+            }
+            enemy.castShadow = true;
+            scene.add(enemy);
+            enemies.push(enemy);
+        }
+
+        // 모든 적을 초기화하고 생성하는 함수
+        function createEnemies() {
+            enemies = []; // 기존 적 모두 제거 (씬에서는 restartGame에서 제거)
+            for (let i = 0; i < initialEnemyCount.box; i++) {
+                createSingleEnemy('box');
+            }
+            for (let i = 0; i < initialEnemyCount.pyramid; i++) {
+                createSingleEnemy('pyramid');
+            }
+        }
+        createEnemies();
+
+        // 적을 제거하고 새로운 적을 생성하는 함수 (충돌 또는 폭탄 사용 시)
+        function respawnEnemy(oldEnemy) {
+            scene.remove(oldEnemy); // 씬에서 제거
+            const index = enemies.indexOf(oldEnemy);
+            if (index > -1) {
+                enemies.splice(index, 1); // 배열에서 제거
+            }
+            // 제거된 적의 타입에 따라 새로운 적 생성
+            createSingleEnemy(oldEnemy.userData.type);
+        }
+
+        // UI
+        const ui = document.getElementById('ui');
+        const skillsUI = document.getElementById('skills');
+        const gameOverScreen = document.getElementById('game-over');
+        const finalScore = document.getElementById('final-score');
+        const restartButton = document.getElementById('restart');
+        const houseBuildUI = document.getElementById('house-build-ui'); // 집 짓기 UI 요소
+        const bedInteractUI = document.getElementById('bed-interact-ui'); // 침대 상호작용 UI 요소
+
+        // --- 나무 개수 및 집 짓기 관련 변수 추가 ---
+        let treeCount = 0;
+        let houseBuilt = false;
+        let houseModel; // 지어진 집 모델
+        let bedModel; // 침대 모델
+
+        // 침대 상호작용 관련 변수
+        let isNearBed = false;
+
+        // --- 고기 개수 변수 추가 ---
+        let meatCount = 0;
+        let meats = []; // 고기 아이템들을 저장할 배열
+
+        function updateUI() {
+            ui.innerText = `Score: ${score} | Health: ${health} | Trees: ${treeCount} | Meat: ${meatCount} | Season: ${currentSeason} | Weather: ${weatherEffect}`;
+
+            // 집 짓기 UI 표시/숨김
+            if (treeCount >= 10 && !houseBuilt) {
+                houseBuildUI.style.display = 'block';
+            } else {
+                houseBuildUI.style.display = 'none';
+            }
+
+            // 침대 상호작용 UI 표시/숨김
+            if (isNearBed) {
+                bedInteractUI.style.display = 'block';
+            } else {
+                bedInteractUI.style.display = 'none';
+            }
+
+            if (health <= 0 && !gameOver) {
+                gameOver = true;
+                finalScore.innerText = score;
+                gameOverScreen.style.display = 'flex';
+                controls.unlock();
+            }
+        }
+
+        // 스킬 UI 업데이트 함수 (남은 시간 표시)
+        function updateSkillsUI() {
+            skillsUI.innerHTML = ''; // 기존 스킬 UI 초기화
+
+            // 보유 스킬 표시
+            skillNames.forEach((name, index) => {
+                const skillItemDiv = document.createElement('div');
+                skillItemDiv.className = 'skill-item';
+                skillItemDiv.innerHTML = `
+                    <span class="skill-name">[${index + 1}] ${name}:</span>
+                    <span class="skill-count">${skills[index]}</span>
+                `;
+                skillsUI.appendChild(skillItemDiv);
+            });
+
+            // 활성화된 스킬 타이머 표시
+            for (const index in activeSkills) {
+                const skill = activeSkills[index];
+                const remainingTime = Math.max(0, Math.ceil((skill.endTime - Date.now()) / 1000));
+
+                // 기존 UI 요소가 없거나 DOM에 없으면 새로 생성
+                if (!skill.uiElement || !document.body.contains(skill.uiElement)) {
+                    const activeSkillDiv = document.createElement('div');
+                    activeSkillDiv.className = 'skill-item active-skill'; // 활성화된 스킬을 위한 클래스 추가
+                    activeSkillDiv.innerHTML = `
+                        <span class="skill-name">${skillNames[index]}</span>
+                        <span class="skill-timer">${remainingTime}s</span>
+                    `;
+                    skillsUI.appendChild(activeSkillDiv);
+                    skill.uiElement = activeSkillDiv; // UI 요소 참조 저장
+                } else {
+                    // 기존 UI 요소가 있으면 업데이트
+                    skill.uiElement.querySelector('.skill-timer').innerText = `${remainingTime}s`;
+                }
+
+                // 타이머가 0이 되면 UI에서 제거
+                if (remainingTime <= 0) {
+                    if (skill.uiElement) {
+                        skill.uiElement.remove();
+                    }
+                    delete activeSkills[index]; // activeSkills에서 제거
+                }
+            }
+        }
+
+        // --- 집 짓기 함수 ---
+        function buildHouse() {
+            if (treeCount >= 10 && !houseBuilt) {
+                const houseGroup = new THREE.Group();
+                const houseSize = { width: 6, height: 5, depth: 6 };
+
+                // 벽 (Wall)
+                const wallMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 }); // 나무 색깔
+                const wallThickness = 0.2;
+
+                // 앞 벽
+                const frontWall = new THREE.Mesh(new THREE.BoxGeometry(houseSize.width, houseSize.height, wallThickness), wallMaterial);
+                frontWall.position.set(0, houseSize.height / 2, -houseSize.depth / 2 + wallThickness / 2);
+                houseGroup.add(frontWall);
+
+                // 뒷 벽
+                const backWall = new THREE.Mesh(new THREE.BoxGeometry(houseSize.width, houseSize.height, wallThickness), wallMaterial);
+                backWall.position.set(0, houseSize.height / 2, houseSize.depth / 2 - wallThickness / 2);
+                houseGroup.add(backWall);
+
+                // 왼쪽 벽
+                const leftWall = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, houseSize.height, houseSize.depth), wallMaterial);
+                leftWall.position.set(-houseSize.width / 2 + wallThickness / 2, houseSize.height / 2, 0);
+                houseGroup.add(leftWall);
+
+                // 오른쪽 벽
+                const rightWall = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, houseSize.height, houseSize.depth), wallMaterial);
+                rightWall.position.set(houseSize.width / 2 - wallThickness / 2, houseSize.height / 2, 0);
+                houseGroup.add(rightWall);
+
+                // 지붕 (Roof) - 피라미드 모양
+                const roofMaterial = new THREE.MeshStandardMaterial({ color: 0xA0522D }); // 어두운 갈색
+                const roof = new THREE.Mesh(new THREE.ConeGeometry(houseSize.width / 1.5, houseSize.height / 2, 4), roofMaterial);
+                roof.rotation.y = Math.PI / 4; // 네모 모양 지붕처럼 보이게 회전
+                roof.position.y = houseSize.height + houseSize.height / 4; // 벽 위에 위치
+                houseGroup.add(roof);
+
+                // 문 (Door)
+                const doorMaterial = new THREE.MeshStandardMaterial({ color: 0x5C4033 }); // 더 어두운 갈색
+                const door = new THREE.Mesh(new THREE.BoxGeometry(1.5, 3, wallThickness + 0.01), doorMaterial);
+                door.position.set(0, 1.5, -houseSize.depth / 2 + wallThickness / 2 + 0.01); // 앞 벽 중앙에 위치
+                houseGroup.add(door);
+
+                // 창문 (Window)
+                const windowMaterial = new THREE.MeshStandardMaterial({ color: 0x87CEEB, transparent: true, opacity: 0.7 }); // 하늘색 유리
+                const window = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), windowMaterial);
+                window.position.set(houseSize.width / 2 - wallThickness / 2 - 0.1, houseSize.height / 2 + 0.5, 0); // 오른쪽 벽에 위치
+                window.rotation.y = -Math.PI / 2; // 벽에 평행하게 회전
+                houseGroup.add(window);
+
+                houseModel = houseGroup;
+                houseModel.position.copy(player.position); // 플레이어 현재 위치에 집 짓기
+                houseModel.position.y = 0; // 바닥에 맞게
+                scene.add(houseModel);
+
+                // 집을 지으면 침대도 같이 생성
+                createBed(houseModel.position.x, houseModel.position.z);
+
+                houseBuilt = true;
+                treeCount = 0; // 나무 개수 초기화
+                updateUI();
+                console.log('집을 지었습니다!');
+            } else if (houseBuilt) {
+                console.log('이미 집을 지었습니다!');
+            } else {
+                console.log('나무가 부족합니다. (현재: ' + treeCount + '개)');
+            }
+        }
+
+        // --- 침대 생성 함수 ---
+        function createBed(x, z) {
+            const bedGroup = new THREE.Group();
+
+            // 매트리스 (Mattress)
+            const mattressGeometry = new THREE.BoxGeometry(2, 0.3, 3);
+            const mattressMaterial = new THREE.MeshStandardMaterial({ color: 0xADD8E6 }); // 연한 파랑색
+            const mattress = new THREE.Mesh(mattressGeometry, mattressMaterial);
+            mattress.position.y = 0.15; // 바닥 위로 살짝 띄움
+            bedGroup.add(mattress);
+
+            // 다리 (Legs)
+            const legMaterial = new THREE.MeshStandardMaterial({ color: 0x5C4033 }); // 갈색
+            const legGeometry = new THREE.BoxGeometry(0.2, 0.5, 0.2);
+
+            const leg1 = new THREE.Mesh(legGeometry, legMaterial);
+            leg1.position.set(-0.8, -0.25, -1.3);
+            bedGroup.add(leg1);
+
+            const leg2 = new THREE.Mesh(legGeometry, legMaterial);
+            leg2.position.set(0.8, -0.25, -1.3);
+            bedGroup.add(leg2);
+
+            const leg3 = new THREE.Mesh(legGeometry, legMaterial);
+            leg3.position.set(-0.8, -0.25, 1.3);
+            bedGroup.add(leg3);
+
+            const leg4 = new THREE.Mesh(legGeometry, legMaterial);
+            leg4.position.set(0.8, -0.25, 1.3);
+            bedGroup.add(leg4);
+
+            bedModel = bedGroup;
+            // 집 안에 침대 배치 (집 위치 기준)
+            bedModel.position.set(x, 0, z + 1); // 집 중앙에서 조금 안쪽으로
+            scene.add(bedModel);
+            console.log('침대가 지어졌습니다!');
+        }
+
+        // --- 잠자기 함수 ---
+        function sleep() {
+            if (isNearBed) {
+                health = 5; // 체력 모두 회복
+                updateUI();
+                console.log('잠을 자서 체력이 회복되었습니다!');
+
+                // 시간을 낮으로 변경
+                dayTime = Math.PI / 2; // 정오 (낮 12시)
+                updateDayNightCycle(0); // 즉시 업데이트
+
+                // 침대 상호작용 UI 숨김
+                bedInteractUI.style.display = 'none';
+            }
+        }
+
+        // --- 고기 생성 함수 ---
+        function createMeat(position) {
+            const meatGeometry = new THREE.BoxGeometry(0.5, 0.3, 0.7); // 납작한 고기 모양
+            const meatMaterial = new THREE.MeshStandardMaterial({ color: 0x8B0000 }); // 짙은 빨간색
+            const meat = new THREE.Mesh(meatGeometry, meatMaterial);
+            meat.position.copy(position);
+            meat.position.y = 0.2; // 땅 위에 살짝 띄움
+            meat.castShadow = true;
+            scene.add(meat);
+            meats.push(meat); // 고기 배열에 추가
+            console.log('고기가 생성되었습니다!');
+        }
+
+
+        // 재시작 함수
+        function restartGame() {
+            gameOver = false;
+            health = 5;
+            score = 0;
+            velocity.set(0, 0, 0);
+            isOnGround = true;
+            player.position.set(0, 0, 0);
+            skills.fill(0);
+            treeCount = 0; // 나무 개수 초기화
+            meatCount = 0; // 고기 개수 초기화
+            houseBuilt = false; // 집 지음 상태 초기화
+            isNearBed = false; // 침대 근처 상태 초기화
+
+            // 모든 스킬 효과 초기화
+            speedBoost = 1;
+            jumpBoost = 1;
+            invincible = false;
+            freezeEnemies = false;
+            attractFruits = false;
+            doubleScore = false;
+
+            // 활성화된 스킬 타이머 모두 제거
+            for (const index in activeSkills) {
+                clearTimeout(activeSkills[index].timeoutId);
+                if (activeSkills[index].uiElement) {
+                    activeSkills[index].uiElement.remove();
+                }
+            }
+            activeSkills = {}; // activeSkills 객체 초기화
+
+            // 날씨 효과 초기화
+            stopWeather();
+
+            updateUI();
+            updateSkillsUI();
+            gameOverScreen.style.display = 'none';
+
+            // 아이템, 과일, 적, 나무, 집, 침대, 고기 재생성/제거
+            skillItems.forEach(item => scene.remove(item));
+            fruits.forEach(fruit => scene.remove(fruit));
+            enemies.forEach(enemy => scene.remove(enemy)); // 기존 적 모두 씬에서 제거
+            trees.forEach(tree => scene.remove(tree)); // 기존 나무 모두 씬에서 제거
+            meats.forEach(meat => scene.remove(meat)); // 기존 고기 모두 씬에서 제거
+            if (houseModel) { // 지어진 집이 있다면 제거
+                scene.remove(houseModel);
+                houseModel = null;
+            }
+            if (bedModel) { // 지어진 침대가 있다면 제거
+                scene.remove(bedModel);
+                bedModel = null;
+            }
+
+            // 배열 초기화
+            skillItems = [];
+            fruits = [];
+            enemies = [];
+            trees = []; // 나무 배열 초기화
+            meats = []; // 고기 배열 초기화
+
+            createSkillItems();
+            createFruits();
+            createEnemies(); // 모든 적을 새로 생성
+            createTrees(); // 모든 나무를 새로 생성
+
+            controls.lock();
+        }
+
+        restartButton.addEventListener('click', restartGame);
+
+        // 애니메이션 업데이트 함수
+        function updateAnimation() {
+            if (mixer) {
+                // 로봇 모델의 애니메이션 이름에 맞춰서 설정
+                if (moveForward || moveBackward || moveLeft || moveRight) {
+                    if (currentAction !== actions['Walking']) { // 'Walking' 애니메이션 사용
+                        if (currentAction) currentAction.fadeOut(0.2);
+                        currentAction = actions['Walking'];
+                        if (currentAction) {
+                            currentAction.reset().fadeIn(0.2).play();
+                        }
+                    }
+                } else {
+                    if (currentAction !== actions['Idle']) { // 'Idle' 애니메이션 사용
+                        if (currentAction) currentAction.fadeOut(0.2);
+                        currentAction = actions['Idle'];
+                        if (currentAction) {
+                            currentAction.reset().fadeIn(0.2).play();
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- 계절 및 날씨 관련 전역 변수 추가 ---
+        let currentSeason = '봄'; // 시작 계절
+        let seasonIndex = 0;
+        const seasons = ['봄', '여름', '가을', '겨울'];
+        const seasonColors = { // 계절별 하늘 색깔
+            '봄': 0x87CEEB, // 연한 파랑
+            '여름': 0xADD8E6, // 더 연한 파랑
+            '가을': 0xFFA07A, // 연한 주황
+            '겨울': 0xB0E0E6  // 아주 연한 파랑
+        };
+        const seasonAmbientColors = { // 계절별 주변 조명 색깔
+            '봄': 0xbbbbbb,
+            '여름': 0xcccccc,
+            '가을': 0xaaaaaa,
+            '겨울': 0xdddddd
+        };
+        let seasonChangeTimer = 0;
+        const seasonChangeDuration = 30; // 계절 바뀌는 시간 (초)
+
+        let sunLight; // 해님 조명
+        let sunSphere; // 해님 모양
+        let dayTime = 0; // 낮밤 주기 (0에서 2*Math.PI)
+        const dayCycleSpeed = 0.05; // 낮밤 바뀌는 속도
+
+        let weatherEffect = '없음'; // 현재 날씨 효과 ('없음', '비', '눈')
+        let weatherParticles = null; // 날씨 입자 (비나 눈)
+        let weatherParticleAnimator = null; // 날씨 입자 움직이는 함수
+        let weatherChangeTimer = 0;
+        const weatherChangeInterval = 20; // 날씨 바뀔지 확인하는 시간 (초)
+        const weatherDuration = 10; // 날씨 효과 지속 시간 (초)
+
+        // --- 해님과 하늘 설정 함수 ---
+        function setupSkyAndSun() {
+            // 해님 조명 (Directional Light)
+            sunLight = new THREE.DirectionalLight(0xffffff, 1);
+            sunLight.position.set(0, 50, 0); // 초기 위치 (정오)
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 1024;
+            sunLight.shadow.mapSize.height = 1024;
+            sunLight.shadow.camera.near = 0.5;
+            sunLight.shadow.camera.far = 100;
+            sunLight.shadow.camera.left = -50;
+            sunLight.shadow.camera.right = 50;
+            sunLight.shadow.camera.top = 50;
+            sunLight.shadow.camera.bottom = -50;
+            scene.add(sunLight);
+
+            // 해님 모양 (Sphere)
+            const sunGeometry = new THREE.SphereGeometry(3, 32, 32);
+            const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xffddaa }); // 밝은 주황색
+            sunSphere = new THREE.Mesh(sunGeometry, sunMaterial);
+            scene.add(sunSphere);
+
+            // 초기 하늘 색깔 및 주변 조명 설정
+            scene.background = new THREE.Color(seasonColors[currentSeason]);
+            ambientLight.color.setHex(seasonAmbientColors[currentSeason]);
+        }
+
+        // --- 낮밤 주기 업데이트 함수 ---
+        function updateDayNightCycle(delta) {
+            dayTime += dayCycleSpeed * delta;
+            if (dayTime > Math.PI * 2) {
+                dayTime -= Math.PI * 2;
+            }
+
+            const sunX = Math.sin(dayTime) * 60;
+            const sunY = Math.cos(dayTime) * 60;
+            const sunZ = 0; // Z축은 고정 (간단한 원형 움직임)
+
+            sunLight.position.set(sunX, sunY, sunZ);
+            sunSphere.position.copy(sunLight.position);
+
+            // 낮밤에 따라 조명 밝기와 하늘 색깔 조절
+            if (sunY < 0) { // 해님이 지평선 아래로 내려가면 밤
+                const nightFactor = Math.abs(sunY) / 60; // 0에서 1 사이 값
+                sunLight.intensity = Math.max(0.1, 1 - nightFactor * 0.9); // 해님 조명 어둡게
+                ambientLight.intensity = Math.max(0.1, 0.5 - nightFactor * 0.4); // 주변 조명 어둡게
+                scene.background.setHex(0x000033); // 밤하늘 색깔 (어두운 파랑)
+            } else { // 낮
+                sunLight.intensity = 1; // 해님 조명 밝게
+                ambientLight.intensity = 0.5; // 주변 조명 보통
+                scene.background.setHex(seasonColors[currentSeason]); // 계절에 맞는 하늘 색깔
+            }
+        }
+
+        // --- 계절 변경 함수 ---
+        function changeSeason() {
+            seasonIndex = (seasonIndex + 1) % seasons.length; // 다음 계절로
+            currentSeason = seasons[seasonIndex];
+            scene.background = new THREE.Color(seasonColors[currentSeason]); // 하늘 색깔 변경
+            ambientLight.color.setHex(seasonAmbientColors[currentSeason]); // 주변 조명 색깔 변경
+            console.log(`계절이 ${currentSeason}으로 바뀌었습니다!`);
+            updateUI(); // UI 업데이트
+        }
+
+        // --- 나무 관련 전역 변수 추가 ---
+        let trees = []; // 나무들을 저장할 배열
+
+        // --- 나무 생성 함수 ---
+        function createTrees() {
+            trees = []; // 기존 나무 초기화
+            const treeCountToGenerate = 50; // 나무 개수
+            for (let i = 0; i < treeCountToGenerate; i++) {
+                // 나무 몸통 (기둥)
+                const trunkGeometry = new THREE.CylinderGeometry(0.5, 0.5, 5, 8);
+                const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 }); // 갈색
+                const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+                trunk.castShadow = true;
+                trunk.receiveShadow = true;
+
+                // 나뭇잎 (원뿔)
+                const leavesGeometry = new THREE.ConeGeometry(2, 4, 8);
+                const leavesMaterial = new THREE.MeshStandardMaterial({ color: 0x228B22 }); // 초록색
+                const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
+                leaves.castShadow = true;
+                leaves.receiveShadow = true;
+                leaves.position.y = 3.5; // 몸통 위에 위치
+
+                const tree = new THREE.Group(); // 몸통과 나뭇잎을 하나로 묶음
+                tree.add(trunk);
+                tree.add(leaves);
+
+                // 랜덤 위치에 나무 배치 (플레이어 시작 지점과 너무 가깝지 않게)
+                let x, z;
+                do {
+                    x = Math.random() * (mapSize * 2 - 10) - (mapSize - 5);
+                    z = Math.random() * (mapSize * 2 - 10) - (mapSize - 5);
+                } while (player.position.distanceTo(new THREE.Vector3(x, 0, z)) < 15); // 플레이어에게서 15유닛 이상 떨어지게
+
+                tree.position.set(x, 2.5, z); // 바닥에 맞게 Y축 조정
+                scene.add(tree);
+                trees.push(tree); // 생성된 나무를 배열에 추가
+            }
+        }
+
+        // --- 비 입자 생성 함수 ---
+        function createRainParticles() {
+            const particleCount = 2000;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            const velocities = new Float32Array(particleCount * 3);
+
+            for (let i = 0; i < particleCount; i++) {
+                positions[i * 3 + 0] = Math.random() * mapSize * 2 - mapSize; // X 위치
+                positions[i * 3 + 1] = Math.random() * 50 + 20; // Y 위치 (높은 곳에서 시작)
+                positions[i * 3 + 2] = Math.random() * mapSize * 2 - mapSize; // Z 위치
+
+                velocities[i * 3 + 0] = 0;
+                velocities[i * 3 + 1] = -10 - Math.random() * 10; // 아래로 떨어지는 속도
+                velocities[i * 3 + 2] = 0;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+
+            const material = new THREE.PointsMaterial({
+                color: 0xADD8E6, // 연한 파랑 (빗방울 색)
+                size: 0.2, // 빗방울 크기
+                transparent: true,
+                opacity: 0.7
+            });
+
+            weatherParticles = new THREE.Points(geometry, material);
+            scene.add(weatherParticles);
+
+            weatherParticleAnimator = (delta) => { // delta 값을 받도록 수정
+                const positions = weatherParticles.geometry.attributes.position.array;
+                const velocities = weatherParticles.geometry.attributes.velocity.array;
+
+                for (let i = 0; i < particleCount; i++) {
+                    positions[i * 3 + 0] += velocities[i * 3 + 0] * delta;
+                    positions[i * 3 + 1] += velocities[i * 3 + 1] * delta;
+                    positions[i * 3 + 2] += velocities[i * 3 + 2] * delta;
+
+                    // 바닥 아래로 떨어지면 다시 위로 보내기
+                    if (positions[i * 3 + 1] < 0) {
+                        positions[i * 3 + 0] = Math.random() * mapSize * 2 - mapSize;
+                        positions[i * 3 + 1] = Math.random() * 50 + 20;
+                        positions[i * 3 + 2] = Math.random() * mapSize * 2 - mapSize;
+                    }
+                }
+                weatherParticles.geometry.attributes.position.needsUpdate = true;
+            };
+        }
+
+        // --- 눈 입자 생성 함수 ---
+        function createSnowParticles() {
+            const particleCount = 1500;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            const velocities = new Float32Array(particleCount * 3);
+
+            for (let i = 0; i < particleCount; i++) {
+                positions[i * 3 + 0] = Math.random() * mapSize * 2 - mapSize; // X 위치
+                positions[i * 3 + 1] = Math.random() * 50 + 20; // Y 위치 (높은 곳에서 시작)
+                positions[i * 3 + 2] = Math.random() * mapSize * 2 - mapSize; // Z 위치
+
+                velocities[i * 3 + 0] = (Math.random() - 0.5) * 2; // 옆으로 살짝 움직이게
+                velocities[i * 3 + 1] = -2 - Math.random() * 3; // 더 천천히 떨어지는 속도
+                velocities[i * 3 + 2] = (Math.random() - 0.5) * 2; // 옆으로 살짝 움직이게
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+
+            const material = new THREE.PointsMaterial({
+                color: 0xffffff, // 흰색 (눈송이 색)
+                size: 0.5, // 눈송이 크기
+                transparent: true,
+                opacity: 0.8
+            });
+
+            weatherParticles = new THREE.Points(geometry, material);
+            scene.add(weatherParticles);
+
+            weatherParticleAnimator = (delta) => { // delta 값을 받도록 수정
+                const positions = weatherParticles.geometry.attributes.position.array;
+                const velocities = weatherParticles.geometry.attributes.velocity.array;
+
+                for (let i = 0; i < particleCount; i++) {
+                    positions[i * 3 + 0] += velocities[i * 3 + 0] * delta;
+                    positions[i * 3 + 1] += velocities[i * 3 + 1] * delta;
+                    positions[i * 3 + 2] += velocities[i * 3 + 2] * delta;
+
+                    // 바닥 아래로 떨어지면 다시 위로 보내기
+                    if (positions[i * 3 + 1] < 0) {
+                        positions[i * 3 + 0] = Math.random() * mapSize * 2 - mapSize;
+                        positions[i * 3 + 1] = Math.random() * 50 + 20;
+                        positions[i * 3 + 2] = Math.random() * mapSize * 2 - mapSize;
+                    }
+                }
+                weatherParticles.geometry.attributes.position.needsUpdate = true;
+            };
+        }
+
+        // --- 날씨 효과 시작 함수 ---
+        function startWeather(type) {
+            stopWeather(); // 기존 날씨 효과가 있다면 멈춤
+            weatherEffect = type;
+            if (weatherEffect === '비') {
+                createRainParticles();
+                console.log('비가 내리기 시작합니다!');
+            } else if (weatherEffect === '눈') {
+                if (currentSeason === '겨울') { // 겨울에만 눈이 오도록
+                    createSnowParticles();
+                    console.log('눈이 내리기 시작합니다!');
+                } else {
+                    stopWeather(); // 겨울이 아니면 눈 효과 멈춤
+                    console.log('겨울이 아니어서 눈이 오지 않습니다.');
+                }
+            }
+            // 일정 시간 후 날씨 효과 멈추기
+            setTimeout(() => {
+                stopWeather();
+            }, weatherDuration * 1000);
+        }
+
+        // --- 날씨 효과 멈춤 함수 ---
+        function stopWeather() {
+            if (weatherParticles) {
+                scene.remove(weatherParticles);
+                weatherParticles.geometry.dispose();
+                weatherParticles.material.dispose();
+                weatherParticles = null;
+                weatherParticleAnimator = null;
+            }
+            weatherEffect = '없음';
+            console.log('날씨 효과가 종료되었습니다.');
+        }
+
+        // 애니메이션 루프
+        const clock = new THREE.Clock();
+        let prevTime = performance.now();
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (gameOver) return;
+
+            const time = performance.now();
+            const delta = (time - prevTime) / 1000;
+            prevTime = time;
+
+            // AnimationMixer 업데이트
+            if (mixer) mixer.update(clock.getDelta());
+
+            // --- 낮밤 주기 업데이트 ---
+            updateDayNightCycle(delta);
+
+            // --- 계절 변화 타이머 ---
+            seasonChangeTimer += delta;
+            if (seasonChangeTimer >= seasonChangeDuration) {
+                changeSeason();
+                seasonChangeTimer = 0;
+            }
+
+            // --- 날씨 변화 타이머 ---
+            weatherChangeTimer += delta;
+            if (weatherChangeTimer >= weatherChangeInterval) {
+                weatherChangeTimer = 0;
+                // 랜덤으로 날씨 효과 시작 결정 (30% 확률)
+                const randomWeather = Math.random();
+                if (randomWeather < 0.3) {
+                    if (Math.random() < 0.5) { // 50% 확률로 비
+                        startWeather('비');
+                    } else { // 50% 확률로 눈
+                        startWeather('눈');
+                    }
+                } else { // 날씨가 없을 확률
+                    stopWeather();
+                }
+            }
+            // 날씨 입자 애니메이션 업데이트
+            if (weatherParticleAnimator) {
+                weatherParticleAnimator(delta);
+            }
+
+
+            velocity.y -= gravity * delta;
+
+            direction.z = Number(moveForward) - Number(moveBackward);
+            direction.x = Number(moveLeft) - Number(moveRight);
+            direction.normalize();
+
+            let moveSpeed = 10 * speedBoost * delta;
+            if (moveForward || moveBackward) velocity.z = direction.z * moveSpeed;
+            else velocity.z = 0;
+            if (moveLeft || moveRight) velocity.x = direction.x * moveSpeed;
+            else velocity.x = 0;
+
+            controls.moveForward(velocity.z);
+            controls.moveRight(-velocity.x);
+
+            player.position.y += velocity.y * delta;
+
+            if (player.position.y < 0) {
+                velocity.y = 0;
+                player.position.y = 0;
+                isOnGround = true;
+            }
+
+            // 맵 경계 제한
+            player.position.x = Math.max(-mapSize, Math.min(mapSize, player.position.x));
+            player.position.z = Math.max(-mapSize, Math.min(mapSize, player.position.z));
+
+            // 스킬 아이템 수집
+            for (let i = skillItems.length - 1; i >= 0; i--) {
+                const item = skillItems[i];
+                const distance = player.position.distanceTo(item.position);
+                if (distance < 1.5) {
+                    scene.remove(item);
+                    skills[item.userData.skillType]++;
+                    updateSkillsUI();
+                    skillItems.splice(i, 1);
+                }
+            }
+
+            // 과일 수집 (체력 회복 추가)
+            for (let i = fruits.length - 1; i >= 0; i--) {
+                const fruit = fruits[i];
+                let distance = player.position.distanceTo(fruit.position);
+                if (attractFruits) {
+                    const attractDir = new THREE.Vector3().subVectors(player.position, fruit.position).normalize();
+                    fruit.position.add(attractDir.multiplyScalar(10 * delta)); // 끌어당김 속도 증가
+                    distance = player.position.distanceTo(fruit.position); // 업데이트 후 재계산
+                }
+                if (distance < 1.5) {
+                    scene.remove(fruit);
+                    fruits.splice(i, 1);
+                    score += doubleScore ? 2 : 1;
+                    health = Math.min(health + 1, 5); // 과일 먹으면 체력 1 회복 (최대 5)
+                    updateUI();
+                }
+            }
+
+            // --- 나무 충돌 감지 및 파괴 ---
+            for (let i = trees.length - 1; i >= 0; i--) {
+                const tree = trees[i];
+                const distance = player.position.distanceTo(tree.position);
+                if (distance < 2.5) { // 플레이어와 나무 사이의 거리가 2.5 미만이면 충돌로 간주
+                    scene.remove(tree); // 씬에서 나무 제거
+                    trees.splice(i, 1); // 배열에서 나무 제거
+                    treeCount++; // 나무 개수 증가
+                    updateUI(); // UI 업데이트
+                    console.log('나무가 부서졌습니다! 현재 나무: ' + treeCount + '개');
+                    // 나무가 부서질 때 파티클 효과 추가
+                    const animator = createParticleEffect(tree.position, 0x8B4513); // 갈색 파티클 (나무 색깔)
+                    particleAnimators.push(animator);
+                }
+            }
+
+            // 적 이동 및 충돌
+            enemies.forEach((enemy) => {
+                if (!freezeEnemies) {
+                    if (enemy.userData.type === 'box') {
+                        // 기존 네모 적 이동
+                        enemy.position.x += enemy.userData.velocity * delta * 2;
+                        if (Math.abs(enemy.position.x) > mapSize) enemy.userData.velocity *= -1;
+                    } else if (enemy.userData.type === 'pyramid') {
+                        // 새로운 세모 적 (원형 이동)
+                        enemy.userData.angle += enemy.userData.speed * delta;
+                        enemy.position.x = enemy.userData.center.x + Math.cos(enemy.userData.angle) * enemy.userData.radius;
+                        enemy.position.z = enemy.userData.center.z + Math.sin(enemy.userData.angle) * enemy.userData.radius;
+                    }
+                }
+
+                const distance = player.position.distanceTo(enemy.position);
+                if (distance < 1.5 && !invincible) {
+                    health--;
+                    updateUI();
+
+                    // 캐릭터 모델이 로드되었을 때만 시각 효과 적용
+                    if (playerModel) {
+                        playerModel.traverse((child) => {
+                            if (child.isMesh) {
+                                // 맞으면 빨간색으로 잠시 빛나게 함
+                                child.material.emissive.setHex(0xff0000);
+                                child.material.emissiveIntensity = 1;
+                            }
+                        });
+                        // 0.2초 후에 원래 색으로 되돌림
+                        setTimeout(() => {
+                            playerModel.traverse((child) => {
+                                if (child.isMesh) {
+                                    child.material.emissive.setHex(0x000000);
+                                    child.material.emissiveIntensity = 0;
+                                }
+                            });
+                        }, 200);
+                    }
+
+                    // 플레이어 넉백 효과
+                    const knockbackStrength = 3; // 넉백 강도
+                    const knockbackDirection = new THREE.Vector3().subVectors(player.position, enemy.position).normalize();
+                    player.position.addScaledVector(knockbackDirection, knockbackStrength);
+
+                    // 적을 제거하고 새로운 적을 생성하여 대체
+                    createMeat(enemy.position); // 적이 죽으면 고기 생성
+                    respawnEnemy(enemy);
+                }
+            });
+
+            // --- 고기 수집 ---
+            for (let i = meats.length - 1; i >= 0; i--) {
+                const meat = meats[i];
+                const distance = player.position.distanceTo(meat.position);
+                if (distance < 1.0) { // 고기와 플레이어 사이의 거리가 1.0 미만이면 수집으로 간주
+                    scene.remove(meat); // 씬에서 고기 제거
+                    meats.splice(i, 1); // 배열에서 고기 제거
+                    meatCount++; // 고기 개수 증가
+                    health = Math.min(health + 1, 5); // 고기 먹으면 체력 1 회복 (최대 5)
+                    updateUI(); // UI 업데이트
+                    console.log('고기를 주웠습니다! 현재 고기: ' + meatCount + '개');
+                }
+            }
+
+            // --- 침대 충돌 감지 ---
+            if (bedModel) {
+                const bedDistance = player.position.distanceTo(bedModel.position);
+                if (bedDistance < 3) { // 침대 근처에 있다면
+                    isNearBed = true;
+                } else {
+                    isNearBed = false;
+                }
+            } else {
+                isNearBed = false; // 침대가 없으면 항상 false
+            }
+            updateUI(); // 침대 UI 업데이트를 위해 호출
+
+            // 입자 애니메이션 업데이트
+            particleAnimators.forEach(animator => animator());
+
+            // 활성화된 스킬 타이머 UI 업데이트 (매 프레임마다 업데이트)
+            updateSkillsUI();
+
+            // --- 메인 카메라 렌더링 ---
+            renderer.setViewport(0, 0, window.innerWidth, window.innerHeight); // 전체 화면 뷰포트
+            renderer.render(scene, camera);
+
+            // --- 캐릭터 카메라 렌더링 (오른쪽 상단 작은 창) ---
+            const viewSize = Math.min(window.innerWidth, window.innerHeight) / 4; // 화면 크기에 따라 조절
+            const padding = 20; // 가장자리 여백
+            const x = window.innerWidth - viewSize - padding;
+            const y = window.innerHeight - viewSize - padding;
+
+            renderer.setViewport(x, y, viewSize, viewSize); // 오른쪽 상단 뷰포트
+            renderer.setScissor(x, y, viewSize, viewSize); // 뷰포트 밖은 그리지 않음
+            renderer.setScissorTest(true); // Scissor 테스트 활성화
+
+            // 캐릭터 카메라 위치 및 시점 조정
+            if (playerModel) {
+                // 플레이어 모델의 위치를 기준으로 캐릭터 카메라 위치 설정
+                // 모델 앞쪽에서 바라보도록 (모델의 Z축 방향)
+                const offset = new THREE.Vector3(0, 1.5, -3); // 모델보다 살짝 위, 뒤에서 바라보도록
+                offset.applyQuaternion(playerModel.quaternion); // 모델의 회전에 따라 오프셋도 회전
+                characterCamera.position.copy(playerModel.position).add(offset);
+                characterCamera.lookAt(playerModel.position.x, playerModel.position.y + 0.5, playerModel.position.z); // 모델의 중앙을 바라보도록
+            }
+
+            renderer.render(scene, characterCamera);
+
+            renderer.setScissorTest(false); // Scissor 테스트 비활성화 (다음 렌더링에 영향 주지 않도록)
+        }
+
+        // --- 게임 시작 시 초기 설정들 ---
+        setupSkyAndSun(); // 해님과 하늘 설정
+        createTrees(); // 나무 생성
+        animate(); // 애니메이션 루프 시작
+
+        // 창 크기 조정
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

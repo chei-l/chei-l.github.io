@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>두근두근 리얼 동물 탈출 - 파이널 에디션</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Gowun Dodum', sans-serif; background-color: #87CEEB; }
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 5;
+            display: none; 
+        }
+        #crosshair::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            color: white;
+            z-index: 10;
+        }
+        
+        h1 { font-size: 50px; text-shadow: 0 0 10px #00FFFF; margin-bottom: 20px; color: #fff; font-weight: bold; }
+        .char-select { display: flex; gap: 30px; margin-top: 40px; }
+        .char-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            width: 160px;
+        }
+        .char-btn:hover { transform: translateY(-10px); background: rgba(255, 255, 255, 0.2); border-color: #00FFFF; box-shadow: 0 0 15px #00FFFF; }
+        .char-btn h3 { margin: 15px 0 10px 0; color: #fff; font-size: 20px; }
+        .emoji { font-size: 50px; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.3)); }
+
+        .item-guide {
+            margin-top: 30px;
+            background: rgba(0,0,0,0.5);
+            padding: 15px 30px;
+            border-radius: 30px;
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+        }
+
+        #hud {
+            padding: 30px;
+            display: none;
+            pointer-events: none;
+        }
+        .status-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-start;
+        }
+        .status-bar {
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            padding: 8px 20px;
+            border-radius: 50px;
+            color: white;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        #health-bar-container {
+            width: 200px;
+            height: 15px;
+            background: #444;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-left: 15px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+        }
+        #health-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #ff8787);
+            transition: width 0.3s;
+        }
+        
+        #speed-buff-ui {
+            display: none;
+            color: #00FFFF;
+            font-weight: bold;
+            text-shadow: 0 0 10px #00FFFF;
+            margin-left: 10px;
+            animation: pulse 0.5s infinite alternate;
+        }
+        
+        #flashlight-ui {
+            display: none;
+            color: #FFFF00;
+            margin-left: 10px;
+            font-size: 14px;
+        }
+
+        #weather-icon { font-size: 30px; margin-right: 10px; }
+
+        @keyframes pulse { from { opacity: 0.5; } to { opacity: 1; } }
+
+        #message-area {
+            position: absolute;
+            top: 25%;
+            width: 100%;
+            text-align: center;
+            font-size: 40px;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            opacity: 0;
+            transition: opacity 0.5s;
+            transform: translateY(20px);
+        }
+        
+        #click-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            z-index: 15;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            cursor: pointer;
+        }
+        .blink-text { animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
+
+        #end-screen {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 20, 30, 0.9);
+            color: white;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            z-index: 20;
+        }
+        #restart-btn {
+            margin-top: 30px;
+            padding: 15px 50px;
+            font-size: 24px;
+            background: linear-gradient(45deg, #11998e, #38ef7d);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+        }
+        #restart-btn:hover { transform: scale(1.05); }
+        
+        /* 볼륨 안내 */
+        .sound-notice {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #88ccff;
+            background: rgba(0,0,0,0.3);
+            padding: 5px 10px;
+            border-radius: 10px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
+</head>
+<body>
+
+    <div id="game-container"></div>
+    <div id="crosshair"></div>
+
+    <div id="ui-layer">
+        <div id="start-screen">
+            <h1>🎧 리얼 동물 탈출 🎧</h1>
+            <p>기획자: 체이 | Ver 4.0: 사운드 & 조명 효과</p>
+            <div class="sound-notice">🔊 소리가 나와요! 볼륨을 켜주세요.</div>
+            
+            <div class="char-select">
+                <div class="char-btn" onclick="startGame('elephant')">
+                    <div class="emoji">🐘</div>
+                    <h3>코끼리</h3>
+                    <p>체력왕</p>
+                </div>
+                <div class="char-btn" onclick="startGame('fox')">
+                    <div class="emoji">🦊</div>
+                    <h3>여우</h3>
+                    <p>스피드왕</p>
+                </div>
+                <div class="char-btn" onclick="startGame('hippo')">
+                    <div class="emoji">🦛</div>
+                    <h3>하마</h3>
+                    <p>밸런스형</p>
+                </div>
+            </div>
+
+            <div class="item-guide">
+                <div>🍎 체력 회복</div>
+                <div>⚡️ 스피드 업</div>
+            </div>
+            <p style="margin-top: 20px; color: #aaa;">클릭하여 시작 | W A S D 이동</p>
+        </div>
+
+        <div id="click-overlay" onclick="requestPointerLock()">
+            <div style="font-size: 50px;">⏸</div>
+            <div class="blink-text" style="font-size: 24px; margin-top: 20px;">클릭하면 소리와 게임이 다시 시작돼!</div>
+        </div>
+
+        <div id="hud">
+            <div class="status-container">
+                <div class="status-bar">
+                    ❤️ 체력 <div id="health-bar-container"><div id="health-fill"></div></div>
+                </div>
+                <div class="status-bar">
+                    <span id="weather-icon">☀️</span>
+                    <span id="weather-text">맑음</span>
+                    <span id="flashlight-ui">🔦 ON</span>
+                </div>
+                <div class="status-bar">
+                    🏃 상태 <span id="speed-buff-ui">⚡️ 스피드 업!!</span> <span id="normal-status" style="margin-left:10px; color:#ddd; font-size:14px;">(보통)</span>
+                </div>
+                <div class="status-bar" style="background: rgba(255,215,0,0.2); border: 1px solid rgba(255,215,0,0.5);">
+                    🧭 미션: <span id="mission-text" style="margin-left: 10px;">보물 상자를 찾아라!</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="message-area"></div>
+
+        <div id="end-screen">
+            <div id="end-title" style="font-size: 60px; font-weight: bold; margin-bottom: 20px;">게임 종료</div>
+            <div id="end-message" style="font-size: 28px; color: #ddd;"></div>
+            <button id="restart-btn" onclick="location.reload()">다시 도전하기</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 사운드 매니저 (Web Audio API) ---
+        // 외부 파일 없이 코드로 소리를 만듭니다.
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const soundManager = {
+            rainNode: null,
+            rainGain: null,
+            
+            init: function() {
+                // 빗소리 노드 생성 (Pink Noise)
+                const bufferSize = 2 * audioCtx.sampleRate;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    const white = Math.random() * 2 - 1;
+                    data[i] = (lastOut + (0.02 * white)) / 1.02;
+                    lastOut = data[i];
+                    data[i] *= 3.5; 
+                }
+                var lastOut = 0;
+
+                this.rainNode = audioCtx.createBufferSource();
+                this.rainNode.buffer = buffer;
+                this.rainNode.loop = true;
+                
+                // 필터 (먹먹한 소리)
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = 400;
+
+                this.rainGain = audioCtx.createGain();
+                this.rainGain.gain.value = 0; // 처음엔 끔
+
+                this.rainNode.connect(filter);
+                filter.connect(this.rainGain);
+                this.rainGain.connect(audioCtx.destination);
+                this.rainNode.start();
+            },
+
+            setRainVolume: function(val) {
+                if(this.rainGain) {
+                    this.rainGain.gain.setTargetAtTime(val, audioCtx.currentTime, 1);
+                }
+            },
+
+            playFootstep: function() {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                const filter = audioCtx.createBiquadFilter();
+                
+                // 둔탁한 소리
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.1);
+                
+                // 잡음 섞기 (Noise Burst)
+                const bufferSize = audioCtx.sampleRate * 0.1;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for(let i=0; i<bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+                
+                const noiseGain = audioCtx.createGain();
+                noiseGain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                noiseGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                
+                filter.type = 'lowpass';
+                filter.frequency.value = 150;
+
+                osc.connect(gain);
+                noise.connect(noiseGain);
+                noiseGain.connect(filter);
+                filter.connect(gain);
+
+                gain.connect(audioCtx.destination);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+
+                osc.start();
+                noise.start();
+                osc.stop(audioCtx.currentTime + 0.1);
+                noise.stop(audioCtx.currentTime + 0.1);
+            },
+
+            playEat: function() {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+                
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            },
+
+            playThunder: function() {
+                const bufferSize = audioCtx.sampleRate * 2;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for(let i=0; i<bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+                
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = 200; // 낮은 주파수만 (우르릉)
+
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(1.0, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 2);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                noise.start();
+            }
+        };
+
+        // --- 텍스처 생성기 ---
+        function createTexture(type) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+
+            if (type === 'grass') {
+                ctx.fillStyle = '#1a331a'; // 조금 더 어두운 잔디
+                ctx.fillRect(0, 0, 512, 512);
+                for (let i = 0; i < 20000; i++) {
+                    ctx.fillStyle = Math.random() > 0.5 ? '#2d5a27' : '#0d260d';
+                    const x = Math.random() * 512;
+                    const y = Math.random() * 512;
+                    const w = Math.random() * 4 + 1;
+                    const h = Math.random() * 4 + 1;
+                    ctx.fillRect(x, y, w, h);
+                }
+            } 
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            return texture;
+        }
+
+        // --- 전역 변수 ---
+        let scene, camera, renderer;
+        let playerGroup, playerLight; // 플레이어 그룹과 손전등
+        let hunter, treasure;
+        let items = [];
+        let obstacles = [];
+        let clock = new THREE.Clock();
+        let simplex = new SimplexNoise();
+        
+        // 날씨/환경 변수
+        let rainSystem;
+        let isRaining = false;
+        let sunLight, ambientLight;
+        let weatherTimer = 0;
+        let lightningTimer = 0; // 번개 타이머
+
+        let isGameRunning = false;
+        let isPaused = false;
+        let health = 100;
+        let maxHealth = 100;
+        let speedMultiplier = 1.0;
+        let speedBuffTimer = 0;
+        let treasureSpawned = false;
+        let selectedChar = '';
+
+        // 이동 및 물리
+        const keys = { w: false, a: false, s: false, d: false, space: false };
+        let velocity = new THREE.Vector3();
+        let direction = new THREE.Vector3();
+        let canJump = false;
+        const gravity = 25; 
+        const jumpForce = 12;
+        let headBobTimer = 0;
+        let lastStepTime = 0; // 발자국 소리 타이밍
+
+        const charStats = {
+            elephant: { baseSpeed: 10, height: 2.8, color: 0x999999, maxHp: 150 },
+            fox: { baseSpeed: 16, height: 1.6, color: 0xFF8C00, maxHp: 80 },
+            hippo: { baseSpeed: 12, height: 2.2, color: 0x8A2BE2, maxHp: 120 }
+        };
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB);
+            scene.fog = new THREE.Fog(0x87CEEB, 10, 80);
+
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('game-container').appendChild(renderer.domElement);
+
+            // 조명 설정
+            ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+            scene.add(ambientLight);
+
+            sunLight = new THREE.DirectionalLight(0xffdfba, 1.0);
+            sunLight.position.set(50, 80, 50);
+            sunLight.castShadow = true;
+            // 그림자 해상도와 범위 최적화
+            sunLight.shadow.mapSize.width = 2048;
+            sunLight.shadow.mapSize.height = 2048;
+            sunLight.shadow.camera.near = 0.5;
+            sunLight.shadow.camera.far = 200;
+            sunLight.shadow.camera.left = -100;
+            sunLight.shadow.camera.right = 100;
+            sunLight.shadow.camera.top = 100;
+            sunLight.shadow.camera.bottom = -100;
+            scene.add(sunLight);
+
+            createTerrain();
+            createVegetation();
+            createRain();
+            
+            // 오디오 초기화 (사용자 인터랙션 후 활성화됨)
+            soundManager.init();
+
+            window.addEventListener('resize', onWindowResize, false);
+            document.addEventListener('keydown', (e) => onKeyChange(e, true));
+            document.addEventListener('keyup', (e) => onKeyChange(e, false));
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('pointerlockchange', onPointerLockChange);
+
+            animate();
+        }
+
+        function createRain() {
+            const rainGeo = new THREE.BufferGeometry();
+            const rainCount = 10000;
+            const posArray = new Float32Array(rainCount * 3);
+            for(let i=0; i<rainCount * 3; i+=3) {
+                posArray[i] = (Math.random() - 0.5) * 200; 
+                posArray[i+1] = Math.random() * 100;       
+                posArray[i+2] = (Math.random() - 0.5) * 200; 
+            }
+            rainGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            const rainMat = new THREE.PointsMaterial({ color: 0xaaaaaa, size: 0.2, transparent: true, opacity: 0.6 });
+            rainSystem = new THREE.Points(rainGeo, rainMat);
+            rainSystem.visible = false;
+            scene.add(rainSystem);
+        }
+
+        function changeWeather(toRain) {
+            isRaining = toRain;
+            const icon = document.getElementById('weather-icon');
+            const text = document.getElementById('weather-text');
+            const flashUI = document.getElementById('flashlight-ui');
+
+            if (isRaining) {
+                // 비 + 밤 효과
+                rainSystem.visible = true;
+                scene.background.setHex(0x111115); // 아주 어두운 밤
+                scene.fog.color.setHex(0x111115);
+                scene.fog.near = 2;
+                scene.fog.far = 30; // 시야 매우 좁아짐
+                
+                ambientLight.intensity = 0.05; // 거의 안 보임
+                sunLight.intensity = 0.0; // 태양 꺼짐
+                
+                // 손전등 켜기
+                if(playerLight) playerLight.intensity = 1.5;
+                flashUI.style.display = 'inline';
+
+                // 빗소리 켜기
+                soundManager.setRainVolume(0.3);
+                
+                icon.innerText = "🌧️";
+                text.innerText = "폭우 (밤)";
+                showMessage("밤이 되고 비가 내려요... 손전등을 켰어요! 🔦");
+            } else {
+                // 맑음 + 낮 효과
+                rainSystem.visible = false;
+                scene.background.setHex(0x87CEEB);
+                scene.fog.color.setHex(0x87CEEB);
+                scene.fog.near = 20;
+                scene.fog.far = 100;
+                
+                ambientLight.intensity = 0.5;
+                sunLight.intensity = 1.0;
+                sunLight.color.setHex(0xffdfba);
+                
+                // 손전등 끄기
+                if(playerLight) playerLight.intensity = 0;
+                flashUI.style.display = 'none';
+
+                // 빗소리 끄기
+                soundManager.setRainVolume(0);
+                
+                icon.innerText = "☀️";
+                text.innerText = "맑음";
+                showMessage("해가 떴어요! ☀️");
+            }
+        }
+
+        // 지형 및 식물 생성 (이전과 동일)
+        function createTerrain() {
+            const geometry = new THREE.PlaneGeometry(300, 300, 64, 64);
+            const posAttribute = geometry.attributes.position;
+            for (let i = 0; i < posAttribute.count; i++) {
+                const x = posAttribute.getX(i);
+                const y = posAttribute.getY(i);
+                const dist = Math.sqrt(x*x + y*y);
+                let noise = 0;
+                if (dist > 20) {
+                    noise = simplex.noise2D(x * 0.02, y * 0.02) * 4; 
+                    noise += simplex.noise2D(x * 0.1, y * 0.1) * 1; 
+                }
+                posAttribute.setZ(i, noise);
+            }
+            geometry.computeVertexNormals();
+            const texture = createTexture('grass');
+            texture.repeat.set(30, 30);
+            const material = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.9, metalness: 0.1 });
+            const ground = new THREE.Mesh(geometry, material);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+        }
+
+        function createVegetation() {
+            const woodMat = new THREE.MeshStandardMaterial({ color: 0x3d2817, roughness: 0.9 });
+            const leafMat = new THREE.MeshStandardMaterial({ color: 0x1d4a17, roughness: 0.8 });
+            
+            const treeGeo = new THREE.Group();
+            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.7, 3, 7), woodMat);
+            trunk.position.y = 1.5; trunk.castShadow = true;
+            treeGeo.add(trunk);
+            const l1 = new THREE.Mesh(new THREE.ConeGeometry(2.5, 4, 7), leafMat);
+            l1.position.y = 3.5; l1.castShadow = true;
+            treeGeo.add(l1);
+            const l2 = new THREE.Mesh(new THREE.ConeGeometry(2, 3, 7), leafMat);
+            l2.position.y = 5.5; l2.castShadow = true;
+            treeGeo.add(l2);
+
+            for (let i = 0; i < 100; i++) { // 나무 더 많이
+                const tree = treeGeo.clone();
+                const x = (Math.random() - 0.5) * 260;
+                const z = (Math.random() - 0.5) * 260;
+                if (Math.abs(x) < 15 && Math.abs(z) < 15) continue; 
+
+                let y = 0;
+                const dist = Math.sqrt(x*x + z*z);
+                if (dist > 20) y = simplex.noise2D(x * 0.02, -z * 0.02) * 4 + simplex.noise2D(x * 0.1, -z * 0.1); 
+                tree.position.set(x, y, z);
+                const scale = 0.7 + Math.random() * 0.6;
+                tree.scale.set(scale, scale, scale);
+                tree.rotation.y = Math.random() * Math.PI;
+                scene.add(tree);
+                obstacles.push(tree); 
+            }
+        }
+
+        function requestPointerLock() { 
+            document.body.requestPointerLock();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+        function onPointerLockChange() {
+            if (document.pointerLockElement === document.body) {
+                isPaused = false;
+                document.getElementById('click-overlay').style.display = 'none';
+            } else {
+                if (isGameRunning) {
+                    isPaused = true;
+                    document.getElementById('click-overlay').style.display = 'flex';
+                }
+            }
+        }
+        function onMouseMove(event) {
+            if (isPaused || !isGameRunning) return;
+            if (document.pointerLockElement === document.body) {
+                playerGroup.rotation.y -= event.movementX * 0.002;
+                camera.rotation.x -= event.movementY * 0.002;
+                camera.rotation.x = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, camera.rotation.x));
+            }
+        }
+
+        function startGame(charType) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            selectedChar = charType;
+            maxHealth = charStats[charType].maxHp;
+            health = maxHealth;
+            updateHealthUI();
+            
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('hud').style.display = 'block';
+            document.getElementById('crosshair').style.display = 'block';
+
+            createPlayer(charType);
+            createHunter();
+            spawnItems(); 
+
+            isGameRunning = true;
+            requestPointerLock();
+
+            showMessage("모험을 시작해! 🏃💨");
+            setTimeout(spawnTreasure, 20000); 
+        }
+
+        function createPlayer(type) {
+            playerGroup = new THREE.Group();
+            playerGroup.position.set(0, 5, 0); 
+            scene.add(playerGroup);
+            playerGroup.add(camera);
+            
+            camera.position.y = charStats[type].height;
+
+            // ** 손전등 (SpotLight) 추가 **
+            playerLight = new THREE.SpotLight(0xffffff, 0); // 처음엔 0 (꺼짐)
+            playerLight.position.set(0, 0, 0);
+            playerLight.target = camera; // 카메라 방향(처럼 보이게 처리 필요)
+            playerLight.angle = 0.5;
+            playerLight.penumbra = 0.3;
+            playerLight.distance = 50;
+            playerLight.castShadow = true;
+            camera.add(playerLight);
+            playerLight.target.position.set(0, 0, -5); // 카메라 앞쪽을 비춤
+            camera.add(playerLight.target);
+
+            // 캐릭터 신체 부위
+            const handGroup = new THREE.Group();
+            camera.add(handGroup);
+            handGroup.position.set(0.5, -0.6, -1);
+            handGroup.rotation.y = -0.2;
+            
+            const mat = new THREE.MeshStandardMaterial({ color: charStats[type].color, roughness: 0.5 });
+
+            if (type === 'elephant') {
+                const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.05, 1.2, 8), mat);
+                trunk.rotation.x = Math.PI / 2.2;
+                trunk.position.set(-0.5, -0.4, -0.8);
+                camera.add(trunk);
+                playerGroup.userData.part = trunk; 
+            } else if (type === 'fox') {
+                const paw = new THREE.Mesh(new THREE.SphereGeometry(0.25), mat);
+                paw.scale.set(1, 0.6, 1.5);
+                handGroup.add(paw);
+                playerGroup.userData.part = handGroup;
+            } else if (type === 'hippo') {
+                const snout = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.4, 0.5), mat);
+                const noseGroup = new THREE.Group();
+                noseGroup.add(snout);
+                noseGroup.position.set(0, -0.5, -0.8);
+                camera.add(noseGroup);
+                playerGroup.userData.part = noseGroup;
+            }
+        }
+
+        function createHunter() {
+            hunter = new THREE.Group();
+            const mat = new THREE.MeshStandardMaterial({ color: 0x111111 }); // 더 어두운 색
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 1.8, 8), mat);
+            body.position.y = 0.9;
+            hunter.add(body);
+            
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.4), new THREE.MeshStandardMaterial({color: 0xffccaa}));
+            head.position.y = 2.1;
+            hunter.add(head);
+
+            // 사냥꾼 눈 (밤에 빛남)
+            const eyeGeo = new THREE.SphereGeometry(0.08);
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+            const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+            leftEye.position.set(0.15, 2.15, 0.35);
+            const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+            rightEye.position.set(-0.15, 2.15, 0.35);
+            hunter.add(leftEye);
+            hunter.add(rightEye);
+
+            const hat = new THREE.Mesh(new THREE.ConeGeometry(0.6, 0.5, 8), new THREE.MeshStandardMaterial({color: 0x550000}));
+            hat.position.y = 2.5;
+            hunter.add(hat);
+
+            hunter.position.set(-40, 5, -40);
+            hunter.castShadow = true;
+            scene.add(hunter);
+        }
+
+        function spawnItems() {
+            for (let i = 0; i < 15; i++) createItem('apple');
+            for (let i = 0; i < 5; i++) createItem('speed');
+        }
+
+        function createItem(type) {
+            const group = new THREE.Group();
+            let mesh;
+            if (type === 'apple') {
+                mesh = new THREE.Mesh(new THREE.SphereGeometry(0.4, 16, 16), new THREE.MeshStandardMaterial({ color: 0xff4444, metalness: 0.1 }));
+                const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.3, 4), new THREE.MeshStandardMaterial({ color: 0x00ff00 }));
+                leaf.position.y = 0.4; leaf.rotation.z = 0.5;
+                mesh.add(leaf);
+            } else {
+                mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 0.6, 8), new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x004444 }));
+                const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.1, 8), new THREE.MeshStandardMaterial({ color: 0x885522 }));
+                cap.position.y = 0.35;
+                mesh.add(cap);
+            }
+            group.add(mesh);
+            const x = (Math.random() - 0.5) * 200;
+            const z = (Math.random() - 0.5) * 200;
+            let y = 0;
+            const dist = Math.sqrt(x*x + z*z);
+            if (dist > 20) y = simplex.noise2D(x * 0.02, -z * 0.02) * 4 + simplex.noise2D(x * 0.1, -z * 0.1);
+            group.position.set(x, y + 1, z);
+            group.userData = { type: type, floatOffset: Math.random() * Math.PI };
+            scene.add(group);
+            items.push(group);
+        }
+
+        function spawnTreasure() {
+            if (!isGameRunning) return;
+            const x = (Math.random() - 0.5) * 180;
+            const z = (Math.random() - 0.5) * 180;
+            let y = 0;
+            const dist = Math.sqrt(x*x + z*z);
+            if (dist > 20) y = simplex.noise2D(x * 0.02, -z * 0.02) * 4 + simplex.noise2D(x * 0.1, -z * 0.1);
+
+            const boxGroup = new THREE.Group();
+            const box = new THREE.Mesh(new THREE.BoxGeometry(2, 1.5, 1.5), new THREE.MeshStandardMaterial({ color: 0xFFD700, metalness: 0.9, roughness: 0.1 }));
+            boxGroup.add(box);
+            // 더 밝은 빛기둥
+            const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 100, 8), new THREE.MeshBasicMaterial({ color: 0xFFFF00, transparent: true, opacity: 0.4 }));
+            beam.position.y = 50;
+            boxGroup.add(beam);
+
+            boxGroup.position.set(x, y + 1, z);
+            treasure = boxGroup;
+            scene.add(treasure);
+            treasureSpawned = true;
+            showMessage("✨ 보물 상자 발견! 노란 빛기둥을 찾아가세요! ✨");
+        }
+
+        function onKeyChange(event, isDown) {
+            switch (event.code) {
+                case 'KeyW': keys.w = isDown; break;
+                case 'KeyS': keys.s = isDown; break;
+                case 'KeyA': keys.a = isDown; break;
+                case 'KeyD': keys.d = isDown; break;
+                case 'Space': if(isDown && !keys.space) keys.space = true; if(!isDown) keys.space = false; break;
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (!isGameRunning || isPaused) return;
+
+            const delta = Math.min(clock.getDelta(), 0.1);
+            const time = clock.getElapsedTime();
+            
+            // 날씨 변경 로직
+            weatherTimer += delta;
+            if (weatherTimer > 30) { // 30초마다 날씨 체크
+                weatherTimer = 0;
+                if (Math.random() > 0.4) changeWeather(!isRaining);
+            }
+
+            // 번개 효과 (비 올 때만)
+            if (isRaining) {
+                lightningTimer += delta;
+                if (lightningTimer > 5 + Math.random() * 10) { // 5~15초 랜덤
+                    lightningTimer = 0;
+                    // 번쩍!
+                    const originalColor = scene.background.clone();
+                    scene.background.setHex(0xFFFFFF); // 하얀색 섬광
+                    scene.fog.color.setHex(0xFFFFFF);
+                    
+                    soundManager.playThunder(); // 천둥 소리
+
+                    setTimeout(() => {
+                        scene.background = originalColor; // 복구
+                        scene.fog.color = originalColor;
+                    }, 100); // 0.1초 지속
+                }
+
+                // 빗방울 애니메이션
+                rainSystem.position.x = playerGroup.position.x;
+                rainSystem.position.z = playerGroup.position.z;
+                const positions = rainSystem.geometry.attributes.position.array;
+                for(let i=1; i<positions.length; i+=3) {
+                    positions[i] -= 50 * delta;
+                    if (positions[i] < 0) positions[i] = 80;
+                }
+                rainSystem.geometry.attributes.position.needsUpdate = true;
+            }
+
+            // 스피드 버프
+            if (speedBuffTimer > 0) {
+                speedBuffTimer -= delta;
+                if (speedBuffTimer <= 0) {
+                    speedMultiplier = 1.0;
+                    document.getElementById('speed-buff-ui').style.display = 'none';
+                    document.getElementById('normal-status').style.display = 'inline';
+                    showMessage("스피드 효과 종료.");
+                }
+            }
+
+            const speed = charStats[selectedChar].baseSpeed * speedMultiplier;
+
+            velocity.x -= velocity.x * 10.0 * delta;
+            velocity.z -= velocity.z * 10.0 * delta;
+            
+            direction.z = Number(keys.w) - Number(keys.s);
+            direction.x = Number(keys.d) - Number(keys.a);
+            direction.normalize();
+
+            if (keys.w || keys.s || keys.a || keys.d) {
+                velocity.z -= direction.z * speed * 10.0 * delta;
+                velocity.x -= direction.x * speed * 10.0 * delta;
+                
+                // Head Bobbing & 발자국 소리
+                headBobTimer += delta * (15 * speedMultiplier);
+                const bobOffset = Math.sin(headBobTimer);
+                camera.position.y = charStats[selectedChar].height + bobOffset * 0.15;
+                if (playerGroup.userData.part) playerGroup.userData.part.rotation.z = bobOffset * 0.1;
+                
+                // 발이 땅에 닿는 시점(sin파의 최저점 부근)에 소리 재생
+                if (bobOffset < -0.8 && time - lastStepTime > 0.3) {
+                    soundManager.playFootstep();
+                    lastStepTime = time;
+                }
+
+            } else {
+                camera.position.y = THREE.MathUtils.lerp(camera.position.y, charStats[selectedChar].height, delta * 10);
+            }
+
+            playerGroup.translateX(-velocity.x * delta); 
+            playerGroup.translateZ(velocity.z * delta); 
+
+            const pX = playerGroup.position.x;
+            const pZ = playerGroup.position.z;
+            
+            let terrainHeight = 0;
+            const dist = Math.sqrt(pX*pX + pZ*pZ);
+            if (dist > 20) {
+                terrainHeight = simplex.noise2D(pX * 0.02, -pZ * 0.02) * 4 + simplex.noise2D(pX * 0.1, -pZ * 0.1);
+            }
+
+            velocity.y -= gravity * delta;
+            playerGroup.position.y += velocity.y * delta;
+
+            if (playerGroup.position.y < terrainHeight) {
+                velocity.y = 0;
+                playerGroup.position.y = terrainHeight;
+                canJump = true;
+            }
+
+            if (keys.space && canJump) {
+                velocity.y = jumpForce;
+                canJump = false;
+            }
+
+            // 사냥꾼 로직
+            if (hunter) {
+                hunter.lookAt(playerGroup.position);
+                let hY = 0;
+                const hDist = Math.sqrt(hunter.position.x**2 + hunter.position.z**2);
+                if (hDist > 20) hY = simplex.noise2D(hunter.position.x * 0.02, -hunter.position.z * 0.02) * 4 + simplex.noise2D(hunter.position.x * 0.1, -hunter.position.z * 0.1);
+                hunter.position.y = hY;
+
+                const distToP = hunter.position.distanceTo(playerGroup.position);
+                if (distToP > 2) {
+                    hunter.translateZ(4.5 * delta); 
+                } else {
+                    health -= 100 * delta; 
+                    updateHealthUI();
+                    if (health <= 0) gameOver(false);
+                }
+            }
+
+            // 아이템 습득
+            const pPos = playerGroup.position;
+            items.forEach((item, i) => {
+                item.userData.floatOffset += delta * 2;
+                item.position.y += Math.sin(item.userData.floatOffset) * 0.01;
+                item.rotation.y += delta;
+
+                if (pPos.distanceTo(item.position) < 2.5) {
+                    soundManager.playEat(); // 먹는 소리
+                    if (item.userData.type === 'apple') {
+                        health = Math.min(health + 30, maxHealth);
+                        showMessage("🍎 냠냠! 체력 회복!");
+                    } else if (item.userData.type === 'speed') {
+                        speedMultiplier = 2.0;
+                        speedBuffTimer = 5.0; 
+                        document.getElementById('speed-buff-ui').style.display = 'inline';
+                        document.getElementById('normal-status').style.display = 'none';
+                        showMessage("⚡️ 스피드 업!");
+                    }
+                    scene.remove(item);
+                    items.splice(i, 1);
+                    updateHealthUI();
+                }
+            });
+
+            if (treasureSpawned && treasure) {
+                treasure.rotation.y += delta;
+                if (pPos.distanceTo(treasure.position) < 4) {
+                    gameOver(true);
+                }
+            }
+            
+            if (Math.abs(playerGroup.position.x) > 145) playerGroup.position.x = Math.sign(playerGroup.position.x) * 145;
+            if (Math.abs(playerGroup.position.z) > 145) playerGroup.position.z = Math.sign(playerGroup.position.z) * 145;
+
+            renderer.render(scene, camera);
+        }
+
+        function showMessage(text) {
+            const el = document.getElementById('message-area');
+            el.innerText = text;
+            el.style.opacity = 1;
+            el.style.transform = "translateY(0)";
+            setTimeout(() => { 
+                el.style.opacity = 0; 
+                el.style.transform = "translateY(20px)";
+            }, 2500);
+        }
+
+        function updateHealthUI() {
+            const pct = Math.max(0, (health / maxHealth) * 100);
+            document.getElementById('health-fill').style.width = pct + '%';
+        }
+
+        function gameOver(win) {
+            isGameRunning = false;
+            document.exitPointerLock();
+            document.getElementById('end-screen').style.display = 'flex';
+            const title = document.getElementById('end-title');
+            const msg = document.getElementById('end-message');
+            
+            if (win) {
+                title.innerText = "🏆 탈출 대성공! 🏆";
+                title.style.color = "#FFD700";
+                msg.innerHTML = "보물을 찾았어! 이제 안전해!";
+            } else {
+                title.innerText = "😢 잡혔다...";
+                title.style.color = "#ff6b6b";
+                msg.innerText = "사냥꾼이 너무 빨랐어.";
+            }
+            document.getElementById('click-overlay').style.display = 'none';
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        init();
+    </script>
+</body>
+</html>
