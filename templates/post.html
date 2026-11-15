@@ -2,19 +2,19 @@
 block content %}
 <div class="container">
     <div class="content-wrapper">
-        <article class="article animate-fade-in">
+        <article class="article">
             <header class="article-header">
                 {% if page_section %}
                 <a
                     href="{{ base_url }}/{{ page_section }}/"
                     class="article-category"
-                    >{{ page_section }}</a
+                    >블로그</a
                 >
                 {% endif %}
                 <h1 class="article-title">{{ page_title }}</h1>
                 <div class="article-meta">
                     {% if page_date %}
-                    <span class="article-meta-item">{{ page_date }}</span>
+                    <span class="article-meta-item">{{ page_date | date("%Y.%m.%d") }}</span>
                     {% endif %}
                 </div>
             </header>
@@ -42,7 +42,7 @@ block content %}
         </article>
 
         <div class="mt-xl text-center">
-            <a href="{{ base_url }}/posts/" class="btn btn-secondary"
+            <a href="{{ base_url }}/posts/" class="btn"
                 >← 목록으로 돌아가기</a
             >
         </div>

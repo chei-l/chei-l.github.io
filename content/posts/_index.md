@@ -1,6 +1,7 @@
 +++
 title = "블로그"
 template = "section"
+page_template = "post"
 paginate = 10
 pagination_enabled = true
 sort_by = "date"
