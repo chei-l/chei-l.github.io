@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>체리냥 - Tags: 달리기</title>
+    <link>/tags/%EB%8B%AC%EB%A6%AC%EA%B8%B0/</link>
+    <description>개발, 일상, 그리고 다양한 이야기들을 기록하는 블로그입니다.</description>
+    <atom:link href="/tags/%EB%8B%AC%EB%A6%AC%EA%B8%B0/rss.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>빨리 달리기</title>
+      <link>/posts/fast_run/</link>
+      <guid>/posts/fast_run/</guid>
+      <description>달리기 비법</description>
+      <content:encoded><![CDATA[<p>일단 공기를 충분히 'ㅅ' 자 모양으로 만드는 게 좋아요!</p>
+<p>닌자처럼 팔을 뒤로 쭉~ 뻗고 달리는 게 최고예요.</p>
+<p>그리고 또 다른 방법은</p>
+<p>팔을 앞뒤로 빠르게 반복해서 흔들어주고,</p>
+<p>달릴 때 앞에 있는 다리는 살짝 접고</p>
+<p>뒤에 있는 다리는 쭉 펴세요!</p>
+<p>빨리리리리리리〜!!!</p>
+]]></content:encoded>
+      <pubDate>Fri, 16 Jan 2026 00:00:00 +0000</pubDate>
+      <category>달리기</category>
+    </item>
+  </channel>
+</rss>

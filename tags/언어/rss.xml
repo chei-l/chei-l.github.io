@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>체리냥 - Tags: 언어</title>
+    <link>/tags/%EC%96%B8%EC%96%B4/</link>
+    <description>개발, 일상, 그리고 다양한 이야기들을 기록하는 블로그입니다.</description>
+    <atom:link href="/tags/%EC%96%B8%EC%96%B4/rss.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>인사하기</title>
+      <link>/posts/hi/</link>
+      <guid>/posts/hi/</guid>
+      <description>한국어, 영어, 일본어</description>
+      <content:encoded><![CDATA[<p>안녕하세요.</p>
+<p>こんにちは。(곤니치와)</p>
+<p>Hello.</p>
+]]></content:encoded>
+      <pubDate>Sun, 25 Jan 2026 00:00:00 +0000</pubDate>
+      <category>언어</category>
+    </item>
+  </channel>
+</rss>

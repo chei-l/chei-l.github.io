@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>생생한 몸속 세균 퇴치 작전!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #7f1d1d; /* 어두운 혈관 색 */
+            font-family: 'Arial', sans-serif;
+            touch-action: none;
+        }
+        canvas {
+            display: block;
+        }
+        #ui-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #ffffff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            pointer-events: none;
+            user-select: none;
+            z-index: 10;
+        }
+        #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.85);
+            padding: 2.5rem;
+            border-radius: 2rem;
+            text-align: center;
+            display: none;
+            color: white;
+            box-shadow: 0 0 30px #f43f5e;
+            z-index: 20;
+        }
+        button {
+            pointer-events: auto;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        button:hover {
+            transform: scale(1.1);
+            filter: brightness(1.2);
+        }
+        .instruction {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px black;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui-overlay">
+        <div class="text-3xl font-black mb-1">정화 완료: <span id="score">0</span></div>
+        <div class="text-xl font-bold mb-1 text-pink-300">면역 군단: <span id="friend-count">0</span>명</div>
+        <div class="text-xl font-bold text-green-400">심장 박동: <span id="health">100</span>%</div>
+    </div>
+
+    <div class="instruction">세균을 직접 터치해서 없애세요! 10마리마다 동료가 생깁니다.</div>
+
+    <div id="game-over">
+        <h1 class="text-5xl font-black mb-4 text-rose-500">몸속 정화 완료!</h1>
+        <p class="text-2xl mb-6">구미호가 지켜낸 세포: <span id="final-score">0</span>개</p>
+        <button onclick="resetGame()" class="bg-gradient-to-r from-rose-500 to-pink-600 text-white font-black py-4 px-10 rounded-full text-xl shadow-2xl">
+            다시 몸 지키기
+        </button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const healthElement = document.getElementById('health');
+        const friendCountElement = document.getElementById('friend-count');
+        const gameOverScreen = document.getElementById('game-over');
+        const finalScoreElement = document.getElementById('final-score');
+
+        let score = 0;
+        let health = 100;
+        let gameActive = true;
+        let particles = [];
+        let germs = [];
+        let friends = [];
+        let bloodCells = [];
+        let lastGermSpawn = 0;
+
+        const player = {
+            x: 0,
+            y: 0,
+            radius: 38,
+            color: '#ffffff',
+            pulse: 0
+        };
+
+        const mouse = { x: 0, y: 0 };
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            player.x = canvas.width / 2;
+            player.y = canvas.height / 2;
+
+            // 배경 혈구들 생성 (현실감 있는 배경)
+            bloodCells = [];
+            for(let i=0; i<30; i++) {
+                bloodCells.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: 10 + Math.random() * 15,
+                    speed: 0.5 + Math.random() * 1
+                });
+            }
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        const updateInput = (e) => {
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            mouse.x = clientX;
+            mouse.y = clientY;
+        };
+
+        window.addEventListener('mousemove', updateInput);
+        window.addEventListener('touchmove', (e) => { e.preventDefault(); updateInput(e); }, { passive: false });
+        window.addEventListener('touchstart', updateInput);
+
+        class Friend {
+            constructor(x, y) {
+                this.x = x; this.y = y;
+                this.radius = 28;
+                this.angle = Math.random() * Math.PI * 2;
+                this.distance = 90 + Math.random() * 50;
+                this.rotSpeed = 0.02 + Math.random() * 0.015;
+            }
+            draw() {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.shadowBlur = 15; ctx.shadowColor = 'white';
+                ctx.fill();
+
+                // 귀여운 눈
+                ctx.fillStyle = '#334155';
+                ctx.beginPath();
+                ctx.arc(this.x - 7, this.y - 4, 3, 0, Math.PI * 2);
+                ctx.arc(this.x + 7, this.y - 4, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+            update() {
+                this.angle += this.rotSpeed;
+                const targetX = player.x + Math.cos(this.angle) * this.distance;
+                const targetY = player.y + Math.sin(this.angle) * this.distance;
+                this.x += (targetX - this.x) * 0.1;
+                this.y += (targetY - this.y) * 0.1;
+                this.draw();
+            }
+        }
+
+        class Germ {
+            constructor() {
+                this.radius = 18 + Math.random() * 18;
+                const colors = ['#4ade80', '#a855f7', '#fb923c', '#f43f5e'];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.wiggle = 0;
+                this.wiggleSpeed = 0.1 + Math.random() * 0.2;
+
+                const side = Math.floor(Math.random() * 4);
+                if (side === 0) { this.x = Math.random() * canvas.width; this.y = -this.radius; }
+                else if (side === 1) { this.x = Math.random() * canvas.width; this.y = canvas.height + this.radius; }
+                else if (side === 2) { this.x = -this.radius; this.y = Math.random() * canvas.height; }
+                else { this.x = canvas.width + this.radius; this.y = Math.random() * canvas.height; }
+
+                this.speed = 1.2 + (score / 120);
+            }
+
+            draw() {
+                this.wiggle += this.wiggleSpeed;
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                // 살아있는 듯한 세균 몸체
+                ctx.beginPath();
+                for (let i = 0; i < 12; i++) {
+                    const angle = (i / 12) * Math.PI * 2;
+                    const r = this.radius + Math.sin(this.wiggle + i) * 5;
+                    const px = Math.cos(angle) * r;
+                    const py = Math.sin(angle) * r;
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                ctx.fillStyle = this.color;
+                ctx.fill();
+
+                // 징그러운 촉수/꼬리 표현
+                for (let i = 0; i < 3; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    const tx = Math.cos(this.wiggle + i) * (this.radius + 15);
+                    const ty = Math.sin(this.wiggle + i) * (this.radius + 15);
+                    ctx.quadraticCurveTo(tx/2, ty/2 + 10, tx, ty);
+                    ctx.strokeStyle = this.color;
+                    ctx.lineWidth = 4;
+                    ctx.stroke();
+                }
+
+                // 화난 눈
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(-6, -5, 4, 0, Math.PI * 2);
+                ctx.arc(6, -5, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.arc(-6, -5, 2, 0, Math.PI * 2);
+                ctx.arc(6, -5, 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
+
+            update() {
+                const angle = Math.atan2(player.y - this.y, player.x - this.x);
+                this.x += Math.cos(angle) * this.speed;
+                this.y += Math.sin(angle) * this.speed;
+                this.draw();
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x; this.y = y; this.color = color;
+                this.radius = Math.random() * 6;
+                this.velocity = { x: (Math.random() - 0.5) * 10, y: (Math.random() - 0.5) * 10 };
+                this.alpha = 1;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+            update() {
+                this.x += this.velocity.x; this.y += this.velocity.y;
+                this.alpha -= 0.025;
+                this.draw();
+            }
+        }
+
+        function resetGame() {
+            score = 0; health = 100; germs = []; particles = []; friends = [];
+            gameActive = true;
+            scoreElement.innerText = score;
+            healthElement.innerText = health;
+            friendCountElement.innerText = 0;
+            gameOverScreen.style.display = 'none';
+            animate();
+        }
+
+        function animate(timestamp) {
+            if (!gameActive) return;
+            requestAnimationFrame(animate);
+
+            // 현실적인 혈관 배경 (그라데이션과 흐르는 혈구)
+            const grd = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 10, canvas.width/2, canvas.height/2, canvas.width);
+            grd.addColorStop(0, "#991b1b");
+            grd.addColorStop(1, "#450a0a");
+            ctx.fillStyle = grd;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 배경 혈구 흐름
+            bloodCells.forEach(bc => {
+                bc.x -= bc.speed;
+                if(bc.x < -bc.radius) bc.x = canvas.width + bc.radius;
+                ctx.beginPath();
+                ctx.arc(bc.x, bc.y, bc.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(220, 38, 38, 0.2)';
+                ctx.fill();
+            });
+
+            // 플레이어 업데이트
+            player.x += (mouse.x - player.x) * 0.15;
+            player.y += (mouse.y - player.y) * 0.15;
+            player.pulse = Math.sin(Date.now() * 0.005) * 6;
+
+            // 메인 면역 세포
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius + player.pulse, 0, Math.PI * 2);
+            ctx.fillStyle = player.color;
+            ctx.shadowBlur = 30; ctx.shadowColor = 'rgba(255,255,255,0.8)';
+            ctx.fill();
+
+            // 얼굴
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.arc(player.x - 12, player.y - 6, 6, 0, Math.PI * 2);
+            ctx.arc(player.x + 12, player.y - 6, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(player.x, player.y + 10, 10, 0, Math.PI, false);
+            ctx.lineWidth = 3; ctx.strokeStyle = '#1e293b'; ctx.stroke();
+            ctx.restore();
+
+            friends.forEach(f => f.update());
+
+            particles.forEach((p, i) => {
+                if (p.alpha <= 0) particles.splice(i, 1);
+                else p.update();
+            });
+
+            if (timestamp - lastGermSpawn > Math.max(350, 2200 - score * 4)) {
+                germs.push(new Germ());
+                lastGermSpawn = timestamp;
+            }
+
+            // 구미호의 "안전하게" 규칙 (데미지 대폭 감소)
+            let currentDamage = Math.max(0.02, 0.4 - (score * 0.015));
+
+            germs.forEach((germ, gIdx) => {
+                germ.update();
+
+                const dist = Math.hypot(player.x - germ.x, player.y - germ.y);
+
+                // 잡았을 때 효과
+                if (dist < player.radius + germ.radius) {
+                    score += 1;
+                    scoreElement.innerText = score;
+                    for (let i = 0; i < 15; i++) particles.push(new Particle(germ.x, germ.y, germ.color));
+                    germs.splice(gIdx, 1);
+                    health = Math.min(100, health + 2);
+
+                    if (score % 10 === 0) {
+                        friends.push(new Friend(player.x, player.y));
+                        friendCountElement.innerText = friends.length;
+                    }
+                }
+
+                // 친구들이 잡았을 때
+                friends.forEach(friend => {
+                    const fDist = Math.hypot(friend.x - germ.x, friend.y - germ.y);
+                    if (fDist < friend.radius + germ.radius) {
+                        score += 1;
+                        scoreElement.innerText = score;
+                        for (let i = 0; i < 15; i++) particles.push(new Particle(germ.x, germ.y, germ.color));
+                        germs.splice(gIdx, 1);
+                        if (score % 10 === 0) {
+                            friends.push(new Friend(player.x, player.y));
+                            friendCountElement.innerText = friends.length;
+                        }
+                    }
+                });
+
+                // 너무 가까우면 아파요! 하지만 잡을수록 안 아파요!
+                if (dist < player.radius + germ.radius + 60) {
+                    health -= currentDamage;
+                    healthElement.innerText = Math.max(0, Math.ceil(health));
+                }
+
+                if (health <= 0) {
+                    gameActive = false;
+                    finalScoreElement.innerText = score;
+                    gameOverScreen.style.display = 'block';
+                }
+            });
+        }
+
+        requestAnimationFrame(animate);
+    </script>
+</body>
+</html>

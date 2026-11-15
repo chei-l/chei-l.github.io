@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>행운의 네잎클로버 기록장</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Gaegu', cursive;
+            background: linear-gradient(180deg, #87CEEB 0%, #E0F2F1 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .sun-rays {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: repeating-conic-gradient(from 0deg, rgba(255,255,224,0.05) 0deg 20deg, transparent 20deg 40deg);
+            pointer-events: none;
+            z-index: 5;
+            mask-image: radial-gradient(circle at top right, black 20%, transparent 80%);
+        }
+
+        .meadow {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 48vh;
+            background: linear-gradient(to bottom, #2d6a4f 0%, #081c15 100%);
+            z-index: -1;
+            border-top-left-radius: 50% 10%;
+            border-top-right-radius: 50% 10%;
+        }
+
+        .grass {
+            position: fixed;
+            bottom: 0;
+            background: linear-gradient(to top, #14532d, #22c55e);
+            width: 4px;
+            border-radius: 2px;
+            z-index: -1;
+            transform-origin: bottom center;
+            animation: grassSway 3s ease-in-out infinite;
+        }
+
+        @keyframes grassSway {
+            0%, 100% { transform: rotate(-3deg) scaleY(1); }
+            50% { transform: rotate(3deg) scaleY(1.05); }
+        }
+
+        /* 성장 단계 애니메이션 */
+        .growth-stage {
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .clover-btn {
+            cursor: pointer;
+            filter: drop-shadow(0 20px 30px rgba(0,0,0,0.3));
+            transition: transform 0.3s;
+        }
+
+        .clover-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .clover-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 말풍선 */
+        .bubble {
+            background: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: white transparent transparent;
+        }
+
+        /* 럭키 카드 */
+        .lucky-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.9) translateY(30px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* 도구 버튼 */
+        .tool-btn {
+            background: white;
+            border-radius: 50%;
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .tool-btn:hover { transform: translateY(-5px); background: #f0fff0; }
+        .tool-btn:active { transform: scale(0.9); }
+        .tool-btn.disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; }
+
+        .progress-bar {
+            width: 200px;
+            height: 12px;
+            background: #eee;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+            border: 2px solid white;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #22c55e;
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body class="p-6">
+
+    <div class="sun-rays"></div>
+    <div class="meadow"></div>
+    <div id="grass-container"></div>
+
+    <div class="text-center mb-6 relative z-20">
+        <h1 class="text-5xl font-bold text-white drop-shadow-[0_4px_4px_rgba(0,0,0,0.3)] mb-2">🍀 행운 키우기 🍀</h1>
+        <p class="text-xl text-green-900 font-bold bg-white/40 backdrop-blur-md px-6 py-1 rounded-full inline-block">씨앗을 정성껏 키워 네잎클로버를 찾아봐!</p>
+    </div>
+
+    <!-- 성장 영역 -->
+    <div class="flex flex-col items-center mb-10 z-10 relative">
+        <div id="status-bubble" class="bubble text-2xl font-bold text-green-800">
+            안녕! 행운의 씨앗을 심었어 🌱
+        </div>
+
+        <div id="growth-target" class="clover-btn mb-4" onclick="handleCloverInteraction(event)">
+            <!-- 씨앗 단계 -->
+            <div id="stage-0" class="growth-stage">
+                <div class="w-12 h-12 bg-amber-800 rounded-full shadow-inner relative overflow-hidden">
+                    <div class="absolute top-1 left-2 w-3 h-3 bg-white opacity-30 rounded-full"></div>
+                </div>
+            </div>
+
+            <!-- 새싹 단계 (숨김) -->
+            <div id="stage-1" class="growth-stage hidden">
+                <svg width="80" height="80" viewBox="0 0 100 100">
+                    <path d="M50,80 Q50,40 60,30" stroke="#064e3b" stroke-width="4" fill="none" />
+                    <path fill="#4ade80" d="M50,50 C65,35 80,45 50,55 C20,45 35,35 50,50" />
+                </svg>
+            </div>
+
+            <!-- 다 자란 클로버 (숨김) -->
+            <div id="stage-2" class="growth-stage hidden">
+                <svg width="240" height="240" viewBox="0 0 100 100">
+                    <defs>
+                        <radialGradient id="leafGrad" cx="50%" cy="50%" r="60%">
+                            <stop offset="0%" style="stop-color:#86efac; stop-opacity:1" />
+                            <stop offset="40%" style="stop-color:#22c55e; stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#14532d; stop-opacity:1" />
+                        </radialGradient>
+                    </defs>
+                    <g transform="translate(50,50)">
+                        <path d="M0,0 C12,45 8,50 0,60" stroke="#064e3b" stroke-width="5" fill="none" stroke-linecap="round" />
+                        <symbol id="leaf">
+                            <path fill="url(#leafGrad)" d="M0,0 C-22,-30 -45,-25 -45,8 C-45,35 -22,30 0,0 Z" />
+                        </symbol>
+                        <use href="#leaf" transform="rotate(45)" />
+                        <use href="#leaf" transform="rotate(135)" />
+                        <use href="#leaf" transform="rotate(225)" />
+                        <use href="#leaf" transform="rotate(315)" />
+                        <circle fill="white" cx="0" cy="0" r="3" opacity="0.4"/>
+                    </g>
+                </svg>
+            </div>
+        </div>
+
+        <!-- 성장 게이지 -->
+        <div id="gauge-container" class="flex flex-col items-center">
+            <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+            <div class="text-green-950 font-bold mt-2">성장도: <span id="progress-text">0</span>%</div>
+        </div>
+
+        <!-- 도구들 -->
+        <div id="tool-box" class="flex gap-6 mt-6">
+            <div id="tool-water" class="tool-btn shadow-lg" onclick="useTool('water')">💧</div>
+            <div id="tool-sun" class="tool-btn shadow-lg" onclick="useTool('sun')">☀️</div>
+            <div id="tool-love" class="tool-btn shadow-lg" onclick="useTool('love')">❤️</div>
+        </div>
+    </div>
+
+    <!-- 입력창 (평상시 숨김) -->
+    <div id="input-area" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center z-[100] p-6 backdrop-blur-md">
+        <div class="bg-white rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl text-center border-t-[12px] border-green-500">
+            <div class="text-7xl mb-5">🌈</div>
+            <h2 class="text-4xl font-bold text-green-900 mb-6">나만의 행운 소원</h2>
+            <input type="text" id="lucky-input" placeholder="여기에 행복한 일 적기..."
+                   class="w-full border-4 border-green-100 rounded-[1.5rem] p-5 text-2xl focus:outline-none focus:border-green-500 mb-8 text-center bg-green-50/30">
+            <div class="flex gap-4">
+                <button onclick="saveLucky()" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-2xl font-bold py-5 rounded-[1.5rem] shadow-xl">
+                    보관하기
+                </button>
+                <button onclick="closeInput()" class="bg-gray-100 hover:bg-gray-200 text-gray-500 text-xl font-bold py-5 px-8 rounded-[1.5rem]">
+                    닫기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 리스트 영역 -->
+    <div class="w-full max-w-md z-20">
+        <div class="flex items-center justify-between mb-4 bg-white/20 backdrop-blur-xl p-4 rounded-[1.5rem] border border-white/40 shadow-xl">
+            <span class="text-2xl font-bold text-green-950">🍀 수확한 행운</span>
+            <span id="lucky-count" class="bg-green-900 text-white px-5 py-1 rounded-full font-bold text-lg">0</span>
+        </div>
+        <div id="lucky-list" class="space-y-4 max-h-[30vh] overflow-y-auto pr-2">
+            <!-- 리스트 아이템 -->
+        </div>
+    </div>
+
+    <script>
+        let growthLevel = 0;
+        let stage = 0; // 0: 씨앗, 1: 새싹, 2: 다 자람
+        let myLuckies = [];
+        let audioCtx;
+
+        // 초기 풀숲 생성
+        function createGrass() {
+            const container = document.getElementById('grass-container');
+            for (let i = 0; i < 60; i++) {
+                const g = document.createElement('div');
+                g.className = 'grass';
+                g.style.height = `${40 + Math.random() * 80}px`;
+                g.style.left = `${Math.random() * 100}%`;
+                g.style.animationDelay = `${Math.random() * 3}s`;
+                g.style.opacity = 0.4 + Math.random() * 0.4;
+                container.appendChild(g);
+            }
+        }
+        window.onload = createGrass;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function playTone(freq, duration) {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function useTool(type) {
+            if (stage === 2) {
+                document.getElementById('status-bubble').innerText = "이미 다 자랐어! 클로버를 눌러줘!";
+                return;
+            }
+
+            let msg = "";
+            let points = 10;
+
+            if (type === 'water') {
+                msg = "물을 주니 시원해 보여! 💧";
+                playTone(1000, 0.2);
+            } else if (type === 'sun') {
+                msg = "햇살을 받아서 튼튼해져! ☀️";
+                playTone(1200, 0.2);
+            } else {
+                msg = "사랑을 듬뿍 주었어! ❤️";
+                playTone(1500, 0.3);
+                points = 15;
+            }
+
+            growthLevel += points;
+            if (growthLevel > 100) growthLevel = 100;
+
+            updateGrowth();
+            document.getElementById('status-bubble').innerText = msg;
+            createEffect(type === 'water' ? '💧' : (type === 'sun' ? '☀️' : '💖'));
+        }
+
+        function updateGrowth() {
+            const fill = document.getElementById('progress-fill');
+            const text = document.getElementById('progress-text');
+            fill.style.width = growthLevel + '%';
+            text.innerText = growthLevel;
+
+            if (growthLevel >= 40 && stage === 0) {
+                stage = 1;
+                document.getElementById('stage-0').classList.add('hidden');
+                document.getElementById('stage-1').classList.remove('hidden');
+                document.getElementById('status-bubble').innerText = "와! 새싹이 돋아났어! 🌱";
+                playTone(800, 0.5);
+            } else if (growthLevel >= 100 && stage === 1) {
+                stage = 2;
+                document.getElementById('stage-1').classList.add('hidden');
+                document.getElementById('stage-2').classList.remove('hidden');
+                document.getElementById('status-bubble').innerText = "네잎클로버 완성! 행운을 적어봐! 🍀";
+                document.getElementById('gauge-container').classList.add('hidden');
+                document.getElementById('tool-box').classList.add('hidden');
+                playTone(1046, 0.7);
+            }
+        }
+
+        function handleCloverInteraction(e) {
+            if (stage < 2) {
+                document.getElementById('status-bubble').innerText = "조금 더 정성이 필요해! 도구를 써봐!";
+                playTone(400, 0.2);
+                return;
+            }
+
+            // 다 자란 경우 입력창 띄우기
+            for(let i=0; i<20; i++) createSparkle(e.clientX, e.clientY);
+            setTimeout(() => {
+                document.getElementById('input-area').classList.remove('hidden');
+                document.getElementById('lucky-input').focus();
+            }, 300);
+        }
+
+        function createEffect(emoji) {
+            const effect = document.createElement('div');
+            effect.className = 'fixed pointer-events-none text-4xl z-50';
+            effect.innerText = emoji;
+            effect.style.left = '50%';
+            effect.style.top = '40%';
+            document.body.appendChild(effect);
+            effect.animate([
+                { transform: 'translate(-50%, 0) scale(1)', opacity: 1 },
+                { transform: 'translate(-50%, -100px) scale(2)', opacity: 0 }
+            ], { duration: 1000 }).onfinish = () => effect.remove();
+        }
+
+        function createSparkle(x, y) {
+            const sparkle = document.createElement('div');
+            sparkle.className = 'fixed pointer-events-none z-[110] text-3xl';
+            sparkle.innerText = '✨';
+            sparkle.style.left = x + 'px';
+            sparkle.style.top = y + 'px';
+            document.body.appendChild(sparkle);
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 100 + Math.random() * 150;
+            sparkle.animate([
+                { transform: 'translate(0,0) scale(0)', opacity: 1 },
+                { transform: `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px) scale(2)`, opacity: 0 }
+            ], { duration: 1000 }).onfinish = () => sparkle.remove();
+        }
+
+        function saveLucky() {
+            const input = document.getElementById('lucky-input');
+            const text = input.value.trim();
+            if(!text) return;
+
+            myLuckies.unshift({ id: Date.now(), content: text, time: new Date().toLocaleTimeString('ko-KR', {hour: '2-digit', minute:'2-digit'})});
+            updateList();
+            closeInput();
+
+            // 수확 후 다시 씨앗으로 리셋 (무한 반복 가능하게)
+            growthLevel = 0;
+            stage = 0;
+            document.getElementById('stage-2').classList.add('hidden');
+            document.getElementById('stage-0').classList.remove('hidden');
+            document.getElementById('gauge-container').classList.remove('hidden');
+            document.getElementById('tool-box').classList.remove('hidden');
+            updateGrowth();
+            document.getElementById('status-bubble').innerText = "행운을 수확했어! 새로운 씨앗을 심었단다 🌱";
+        }
+
+        function updateList() {
+            document.getElementById('lucky-count').innerText = myLuckies.length;
+            const list = document.getElementById('lucky-list');
+            list.innerHTML = "";
+            myLuckies.forEach(l => {
+                const div = document.createElement('div');
+                div.className = 'lucky-card p-4 rounded-2xl flex justify-between items-center mb-3 border-l-8 border-green-500';
+                div.innerHTML = `<div><p class="text-xl font-bold">${l.content}</p><small class="text-green-700 font-bold">${l.time} 수확</small></div>
+                                 <button onclick="deleteLucky(${l.id})" class="text-gray-300 text-2xl">×</button>`;
+                list.appendChild(div);
+            });
+        }
+
+        function deleteLucky(id) {
+            myLuckies = myLuckies.filter(l => l.id !== id);
+            updateList();
+        }
+
+        function closeInput() { document.getElementById('input-area').classList.add('hidden'); document.getElementById('lucky-input').value = ""; }
+    </script>
+</body>
+</html>
