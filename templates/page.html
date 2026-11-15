@@ -3,13 +3,10 @@
     <div class="content-wrapper">
         <article class="article">
             <header class="article-header">
-                {% if page_section %}
-                <span class="article-category">{{ page_section }}</span>
-                {% endif %}
                 <h1 class="article-title">{{ page_title }}</h1>
                 {% if page_date %}
                 <div class="article-meta">
-                    <span class="article-meta-item">{{ page_date }}</span>
+                    <span class="article-meta-item">{{ page_date | date("%Y.%m.%d") }}</span>
                 </div>
                 {% endif %}
             </header>
